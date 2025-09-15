@@ -1,4 +1,5 @@
-\documentclass{exercices}
+% \documentclass{exercices}
+\documentclass[solutions]{exercices}
 
 \usepackage[french]{babel}
 \usepackage[T1]{fontenc}
@@ -61,6 +62,63 @@ Alors, $X$ est une variable al\'eatoire de loi discr\`ete $\mu=p_1\delta_{x_1}+p
 \end{exercice}
 
 \begin{solution}
+\begin{enumerate}
+\item L'algorithme se base sur la méthode d'inversion généralisée. On définit les sommes cumulées des probabilités : $s_1 = 0,3$, $s_2 = 0,3 + 0,1 = 0,4$, $s_3 = 0,4 + 0,6 = 1,0$.
+\begin{center}
+\begin{tabular}{l}
+\hline
+\textbf{Algorithme 1} : Simulation de X \\
+\hline
+Générer $U \sim \mathcal{U}([0,1])$ \\
+\textbf{Si} $U \leq 0,3$ \textbf{alors} \\
+\hspace{1cm} Renvoyer 1 \\
+\textbf{Sinon si} $U \leq 0,4$ \textbf{alors} \\
+\hspace{1cm} Renvoyer 2 \\
+\textbf{Sinon} \\
+\hspace{1cm} Renvoyer 3 \\
+\textbf{Fin Si} \\
+\hline
+\end{tabular}
+\end{center}
+\item Le nombre de comparaisons $N$ dépend de la valeur de $U$.
+\begin{itemize}
+    \item Si $U \leq 0,3$ (probabilité 0,3), on fait une seule comparaison. $N=1$.
+    \item Si $0,3 < U \leq 0,4$ (probabilité 0,1), on fait deux comparaisons. $N=2$.
+    \item Si $U > 0,4$ (probabilité 0,6), on fait deux comparaisons. $N=2$.
+\end{itemize}
+L'espérance du nombre de comparaisons est donc :
+\[ \mathbb{E}(N) = 1 \times 0,3 + 2 \times 0,1 + 2 \times 0,6 = 0,3 + 0,2 + 1,2 = 1,7. \]
+\item Pour minimiser le nombre moyen de comparaisons, il faut tester les événements les plus probables en premier. On réordonne les valeurs possibles par probabilité décroissante : $X=3$ (0,6), $X=1$ (0,3), $X=2$ (0,1).
+Les nouvelles sommes cumulées sont $s'_1=0,6$ (pour $X=3$), $s'_2=0,6+0,3=0,9$ (pour $X=1$).
+\begin{center}
+\begin{tabular}{l}
+\hline
+\textbf{Algorithme 2} : Version optimisée \\
+\hline
+Générer $U \sim \mathcal{U}([0,1])$ \\
+\textbf{Si} $U \leq 0,6$ \textbf{alors} \\
+\hspace{1cm} Renvoyer 3 \\
+\textbf{Sinon si} $U \leq 0,9$ \textbf{alors} \\
+\hspace{1cm} Renvoyer 1 \\
+\textbf{Sinon} \\
+\hspace{1cm} Renvoyer 2 \\
+\textbf{Fin Si} \\
+\hline
+\end{tabular}
+\end{center}
+Calculons la nouvelle espérance $\mathbb{E}(N')$ :
+\begin{itemize}
+    \item Si $U \leq 0,6$ (probabilité 0,6), on fait une seule comparaison. $N'=1$.
+    \item Si $0,6 < U \leq 0,9$ (probabilité 0,3), on fait deux comparaisons. $N'=2$.
+    \item Si $U > 0,9$ (probabilité 0,1), on fait deux comparaisons. $N'=2$.
+\end{itemize}
+\[ \mathbb{E}(N') = 1 \times 0,6 + 2 \times 0,3 + 2 \times 0,1 = 0,6 + 0,6 + 0,2 = 1,4. \]
+Cette version est bien plus efficace en moyenne.
+\item En général, pour des probabilités $p_1, \dots, p_n$ testées dans cet ordre, il faut $k$ comparaisons pour obtenir $x_k$ (pour $k < n$) et $n-1$ comparaisons pour $x_n$. Le nombre moyen est $\mathbb{E}(N) = \sum_{k=1}^{n-1} k \cdot p_k + (n-1) \cdot p_n$. Pour minimiser cette somme, il faut trier les probabilités par ordre décroissant.
+\item \textbf{TP -} Le script Python ci-dessous implémente ces fonctions. La comparaison des temps d'exécution montrera que l'algorithme optimisé est plus rapide.
+\item \textbf{TP -} La fonction générique doit d'abord trier les probabilités (et les valeurs associées) par ordre décroissant avant d'appliquer la méthode d'inversion.
+\item \textbf{TP -} Il s'agit d'un appel à la fonction générique avec les vecteurs correspondants. Notez que $\sum_{i=1}^{10} i = \frac{10(11)}{2} = 55$, donc les probabilités somment bien à 1.
+\end{enumerate}
 \end{solution}
 
 \begin{exercice}[Loi binomiale]
@@ -73,6 +131,27 @@ Soit $n \in \N$ et $p \in [0,1]$.
 \end{enumerate}
 \end{exercice}
 
+\begin{solution}
+\begin{enumerate}
+  \item Une variable de loi binomiale $\mathcal{B}(n,p)$ représente le nombre de succès dans une série de $n$ épreuves de Bernoulli indépendantes, où la probabilité de succès est $p$. On peut simuler une variable de Bernoulli $\mathcal{B}(p)$ en tirant $U \sim \mathcal{U}([0,1])$ et en posant $B=1$ si $U < p$ et $B=0$ sinon.
+  L'algorithme pour simuler $X \sim \mathcal{B}(n,p)$ est donc :
+  \begin{itemize}
+      \item Initialiser un compteur de succès $S=0$.
+      \item Pour $i$ de 1 à $n$ :
+      \begin{itemize}
+          \item Simuler une variable de Bernoulli $B_i$ de paramètre $p$.
+          \item Ajouter $B_i$ à $S$.
+      \end{itemize}
+      \item Renvoyer $S$.
+  \end{itemize}
+  \item On a $q_{n,k} = \binom{n}{k} p^k (1-p)^{n-k}$.
+  \[ \frac{q_{n,k+1}}{q_{n,k}} = \frac{\binom{n}{k+1} p^{k+1} (1-p)^{n-k-1}}{\binom{n}{k} p^k (1-p)^{n-k}} = \frac{n!}{(k+1)!(n-k-1)!} \frac{k!(n-k)!}{n!} \frac{p}{1-p} = \frac{n-k}{k+1} \frac{p}{1-p}. \]
+  On peut utiliser cette relation pour calculer récursivement toutes les probabilités $q_{n,k}$ en partant de $q_{n,0}=(1-p)^n$. Une fois le vecteur de probabilités $(q_{n,0}, \dots, q_{n,n})$ obtenu, on peut simuler la loi binomiale en utilisant la méthode d'inversion généralisée pour les lois discrètes (comme dans l'exercice 1).
+  \item \textbf{TP -} Voir le script Python. `binom1` implémente la somme de Bernoulli. `binom2` calcule d'abord le vecteur de probabilités puis applique la méthode d'inversion.
+  \item \textbf{TP -} La première méthode (`binom1`) requiert $n$ tirages aléatoires par variable binomiale générée. La seconde (`binom2`) n'en requiert qu'un seul, mais demande un calcul préalable des probabilités. Pour générer un grand nombre de variables, `binom2` peut être plus rapide si $n$ n'est pas trop grand, car le calcul des probabilités est fait une seule fois. Pour un $n$ très grand, le calcul et le stockage du vecteur de probabilités peuvent devenir coûteux.
+\end{enumerate}
+\end{solution}
+
 
 \begin{exercice}[Loi géométrique paire]
 Soit $p \in (0,1)$, on note $G$ une variable aléatoire de loi géométrique de paramètre $p$.
@@ -83,6 +162,33 @@ Soit $p \in (0,1)$, on note $G$ une variable aléatoire de loi géométrique de 
   \item \textbf{TP -} Comparer les vitesses d'exécution de ces deux algorithmes.
 \end{enumerate}
 \end{exercice}
+
+\begin{solution}
+\begin{enumerate}
+  \item La fonction de répartition d'une loi géométrique de paramètre $p$ (sur $\{1, 2, \dots\}$) est $F(k) = \mathbb{P}(G \le k) = 1 - (1-p)^k$. Par la méthode d'inversion, on cherche $k$ tel que $F(k-1) < U \le F(k)$, où $U \sim \mathcal{U}([0,1])$. Cela donne $k = \lceil \frac{\ln(1-U)}{\ln(1-p)} \rceil$. Comme $1-U$ a la même loi que $U$, on peut utiliser $k = \lceil \frac{\ln(U)}{\ln(1-p)} \rceil$. En utilisant la fonction partie entière `floor`, on peut écrire $k = \lfloor \frac{\ln(U)}{\ln(1-p)} \rfloor + 1$. Cet algorithme ne nécessite qu'un seul appel à `rand`.
+  \item C'est une application directe de la méthode du rejet. On veut simuler $G$ conditionnellement à l'événement $A = \{G \text{ est pair}\}$.
+  \begin{itemize}
+      \item \textbf{Étape 1 :} Simuler une variable $k$ de loi géométrique $\mathcal{G}(p)$ avec la méthode ci-dessus.
+      \item \textbf{Étape 2 :} Si $k$ est pair (i.e., $k \pmod 2 = 0$), on accepte et on renvoie $k$.
+      \item \textbf{Étape 3 :} Sinon, on rejette $k$ et on retourne à l'étape 1.
+  \end{itemize}
+  \item La probabilité que $G$ soit paire est :
+  \[ \mathbb{P}(G \in 2\mathbb{N}) = \sum_{k=1}^{\infty} \mathbb{P}(G=2k) = \sum_{k=1}^{\infty} p(1-p)^{2k-1} = \frac{p}{1-p} \sum_{k=1}^{\infty} ((1-p)^2)^k \]
+  C'est une série géométrique de raison $(1-p)^2$. La somme vaut $\frac{(1-p)^2}{1-(1-p)^2} = \frac{(1-p)^2}{2p-p^2}$.
+  \[ \mathbb{P}(G \in 2\mathbb{N}) = \frac{p}{1-p} \frac{(1-p)^2}{p(2-p)} = \frac{1-p}{2-p}. \]
+  La loi de $G$ conditionnée à être paire est $Y$. Pour $k \in \mathbb{N}^*$,
+  \[ \mathbb{P}(Y=2k) = \mathbb{P}(G=2k | G \text{ pair}) = \frac{\mathbb{P}(G=2k)}{\mathbb{P}(G \text{ pair})} = \frac{p(1-p)^{2k-1}}{(1-p)/(2-p)} = p(2-p)(1-p)^{2k-2}. \]
+  Posons $H = Y/2$. Alors $H$ est à valeurs dans $\{1,2,\dots\}$.
+  \[ \mathbb{P}(H=k) = \mathbb{P}(Y=2k) = p(2-p) \left((1-p)^2\right)^{k-1}. \]
+  On reconnaît une loi géométrique de paramètre $p' = p(2-p)$.
+  L'algorithme est donc :
+  \begin{itemize}
+      \item Simuler $H \sim \mathcal{G}(p(2-p))$.
+      \item Renvoyer $Y=2H$.
+  \end{itemize}
+  \item \textbf{TP -} La seconde méthode sera plus rapide. La probabilité de rejet de la première méthode est $1 - \frac{1-p}{2-p} = \frac{1}{2-p}$. Le nombre moyen de tirages géométriques nécessaires est donc $2-p$.
+\end{enumerate}
+\end{solution}
 
 \begin{exercice}[Loi sur un ensemble fini]
 On dispose d'un sac à dos, dans lequel on souhaite mettre un certain nombre d'objets dont le poids total ne dépassera pas 10kg. Les objets sont énumérés $1, 2, 3 \cdots, n$, et le poids de chaque objet, exprimé en kg, est noté $m_1,m_2,\cdots, m_n$.
@@ -99,6 +205,39 @@ On dispose d'un sac à dos, dans lequel on souhaite mettre un certain nombre d'o
 \end{enumerate}
 
 \end{exercice}
+
+\begin{solution}
+\begin{enumerate}
+  \item Pour chaque objet, on a deux choix : le prendre ou ne pas le prendre. Comme il y a $n$ objets et que les choix sont indépendants, il y a $2^n$ remplissages possibles (ce qui correspond au nombre de sous-ensembles d'un ensemble à $n$ éléments).
+  \item On peut représenter un remplissage par un vecteur binaire de taille $n$, où le $i$-ème élément vaut 1 si l'objet $i$ est dans le sac, et 0 sinon. Pour choisir un tel vecteur uniformément, il suffit de choisir chaque composante indépendamment et uniformément dans $\{0,1\}$.
+  \begin{itemize}
+      \item Créer un vecteur $V$ de taille $n$.
+      \item Pour $i$ de 1 à $n$ :
+      \begin{itemize}
+          \item Tirer $U \sim \mathcal{U}([0,1])$.
+          \item Si $U < 0.5$, mettre $V[i] = 1$, sinon $V[i] = 0$.
+      \end{itemize}
+      \item Renvoyer $V$.
+  \end{itemize}
+  \item \textbf{TP -} Voir le script.
+  \item Le poids total est la somme des poids des objets présents dans le sac. Si $M=(m_1, \dots, m_n)$ est le vecteur des poids et $V=(v_1, \dots, v_n)$ le vecteur binaire du remplissage, le poids total est $P = \sum_{i=1}^n m_i v_i$. C'est le produit scalaire des deux vecteurs.
+  \item \textbf{TP -} Voir le script.
+  \item On utilise la méthode de rejet. L'ensemble de base (facile à simuler) est l'ensemble des $2^n$ remplissages possibles. La condition d'acceptation est que le poids total ne dépasse pas 10 kg.
+  \begin{itemize}
+      \item \textbf{Tant que} VRAI :
+      \begin{itemize}
+          \item Générer un remplissage aléatoire $V$ uniformément parmi les $2^n$ possibles (algorithme 2).
+          \item Calculer le poids total $P$ de ce remplissage (algorithme 4).
+          \item Si $P \le 10$, accepter et renvoyer $V$.
+          \item (Sinon, la boucle continue et on réessaye).
+      \end{itemize}
+  \end{itemize}
+  \item \textbf{TP -} Voir le script.
+  \item $N$ est le nombre de remplissages valides (poids $\le 10$). $B$ est un remplissage choisi uniformément parmi les $2^n$ possibles. L'événement $B=\emptyset$ correspond au vecteur ne contenant que des 0. Il n'y a qu'un seul remplissage de ce type. La probabilité est donc $\mathbb{P}(B = \emptyset) = 1/2^n$.
+  \item La probabilité d'accepter un remplissage tiré uniformément est $p_{accept} = N / 2^n$. On peut estimer $p_{accept}$ par une méthode de Monte-Carlo : on tire un grand nombre $M$ de remplissages, on compte combien sont valides ($M_{valide}$), et on approxime $p_{accept} \approx M_{valide}/M$.
+  On en déduit une estimation de $N$ : $\hat{N} = \frac{M_{valide}}{M} \times 2^n$.
+\end{enumerate}
+\end{solution}
 
 \subsection*{Lois à densité, inversion de la fonction de répartition}
 
@@ -120,9 +259,27 @@ $\tt Y$ de loi de Weibull de densité $3x^{2} e^{-x^3}$ sur $\mathbb{R}^+$.
 \item \textbf{TP -} Tracer les moyennes empiriques successives de $\tt Y$ et v\'erifier qu'elles convergent presque sûrement.
 \item \textbf{TP -} Que se passe-t-il pour les moyennes empiriques successives de $\tt Z$ ?
 \item \textbf{TP -} A l'aide d'un histogramme, observer quelle est la loi de la moyenne empirique associ\'ee \`a $\tt Z$ ?
-%\item Appliquer la méthode d'inversion de la fonction de répartition pour simuler une variable aléatoire $\tt A$ de loi de l'arcsinus, de densité $\frac{1}{\sqrt{\pi x(1-x)}}$ sur $[0,1]$.
 \end{enumerate}
 \end{exercice}
+
+\begin{solution}
+\begin{enumerate}
+\item Soit $f_Y(x) = 3x^2 e^{-x^3}$ pour $x>0$. La fonction de répartition est :
+\[ F_Y(x) = \int_0^x 3t^2 e^{-t^3} dt = [-e^{-t^3}]_0^x = 1 - e^{-x^3}. \]
+Pour inverser $F_Y$, on pose $u = 1 - e^{-x^3}$. On obtient $e^{-x^3} = 1-u$, d'où $x^3 = -\ln(1-u)$ et finalement $x = (-\ln(1-u))^{1/3}$.
+Si $U \sim \mathcal{U}([0,1])$, alors $1-U$ a la même loi que $U$. On peut donc simuler $Y$ par la formule $Y = (-\ln(U))^{1/3}$.
+\item \textbf{TP -} Voir le script Python.
+\item La densité de la loi de Cauchy $\mathcal{C}(c)$ est $f_Z(x) = \frac{c}{\pi(c^2+x^2)} = \frac{1}{c\pi} \frac{1}{1+(x/c)^2}$.
+La fonction de répartition est :
+\[ F_Z(x) = \int_{-\infty}^x \frac{1}{c\pi} \frac{1}{1+(t/c)^2} dt = \frac{1}{\pi} [\arctan(t/c)]_{-\infty}^x = \frac{1}{\pi} (\arctan(x/c) - (-\pi/2)) = \frac{1}{\pi}\arctan(x/c) + \frac{1}{2}. \]
+Pour inverser, on pose $u = \frac{1}{\pi}\arctan(x/c) + \frac{1}{2}$. On a $\arctan(x/c) = \pi(u-1/2)$, et donc $x = c \tan(\pi(u-1/2))$.
+Si $U \sim \mathcal{U}([0,1])$, on simule $Z$ par la formule $Z = c \tan(\pi(U-1/2))$.
+\item \textbf{TP -} Voir le script Python.
+\item \textbf{TP -} La loi de Weibull ici a une espérance finie. D'après la loi forte des grands nombres, la moyenne empirique $\frac{1}{N}\sum_{i=1}^N Y_i$ converge presque sûrement vers $\mathbb{E}(Y)$ lorsque $N \to \infty$. Le graphique devrait montrer cette stabilisation.
+\item \textbf{TP -} La loi de Cauchy est connue pour ne pas avoir d'espérance (l'intégrale $\int |x|f_Z(x) dx$ diverge). La loi des grands nombres ne s'applique pas. La moyenne empirique ne converge pas et présentera des sauts importants et erratiques, même pour de grandes valeurs de $N$.
+\item \textbf{TP -} La loi de Cauchy est une loi stable. La moyenne empirique de $N$ variables de Cauchy indépendantes suit elle-même une loi de Cauchy avec les mêmes paramètres. L'histogramme de la moyenne empirique aura donc la même forme que l'histogramme d'un échantillon de la loi de Cauchy elle-même, quelle que soit la taille $N$ de l'échantillon.
+\end{enumerate}
+\end{solution}
 
 \begin{exercice}[Méthode par troncature]
 Soit $X$ une v.a. réélle positive à densité, de fonction de répartition $F$, et $N$ est une variable al\'eatoire
@@ -136,12 +293,44 @@ $\mathbb{P}[N=n]=F(n)-F(n-1).$
 \end{enumerate}
 \end{exercice}
 
+\begin{solution}
+\begin{enumerate}
+    \item La somme des probabilités doit valoir 1. Supposons que $N$ prend ses valeurs dans $\{0, 1, 2, \dots\}$. On a $\sum_{n=0}^\infty \mathbb{P}(N=n) = \sum_{n=0}^\infty (F(n) - F(n-1)) = \lim_{k\to\infty} F(k) - F(-1) = 1 - F(-1)$. Pour que la somme soit 1, il faut $F(-1)=0$, ce qui signifie que $\mathbb{P}(X \le -1) = 0$. Donc $X$ doit prendre ses valeurs dans $]-1, \infty[$. Si on suppose que $N$ est dans $\{1, 2, \dots\}$, le même calcul donne $1 - F(0)=1$, soit $F(0)=0$ et $X$ doit être positive.
+    \item Soit $M = \lfloor X \rfloor + 1$. Pour $n \in \{1, 2, \dots\}$, l'événement $\{M=n\}$ est équivalent à $\{\lfloor X \rfloor = n-1\}$, qui est lui-même équivalent à $\{n-1 \le X < n\}$. La probabilité de cet événement est $\mathbb{P}(n-1 \le X < n) = F(n^-) - F(n-1)$. Comme $X$ a une densité, sa fonction de répartition $F$ est continue, donc $F(n^-)=F(n)$. Ainsi, $\mathbb{P}(M=n) = F(n) - F(n-1) = \mathbb{P}(N=n)$. Les deux variables ont la même loi. (Note : la définition de $N$ dans l'énoncé est un peu ambigüe sur l'ensemble des valeurs, mais le raisonnement s'adapte).
+    \item \textbf{Uniforme discrète :} Soit $X \sim \mathcal{U}([0,n])$. Sa fonction de répartition est $F(x) = x/n$ pour $x \in [0,n]$. Soit $N = \lfloor X \rfloor + 1$. $N$ prend ses valeurs dans $\{1, \dots, n\}$. Pour $k \in \{1, \dots, n\}$, $\mathbb{P}(N=k) = \mathbb{P}(\lfloor X \rfloor=k-1) = \mathbb{P}(k-1 \le X < k) = F(k) - F(k-1) = k/n - (k-1)/n = 1/n$. C'est bien la loi uniforme sur $\{1, \dots, n\}$.
+    \textbf{Loi géométrique :} Soit $X \sim \mathcal{E}(\lambda)$. $F(x) = 1 - e^{-\lambda x}$ pour $x>0$. Soit $N = \lfloor X \rfloor + 1$. Pour $k \in \{1, 2, \dots\}$, $\mathbb{P}(N=k) = F(k)-F(k-1) = (1-e^{-\lambda k}) - (1-e^{-\lambda(k-1)}) = e^{-\lambda(k-1)} - e^{-\lambda k} = (e^{-\lambda})^{k-1}(1-e^{-\lambda})$. C'est la loi géométrique de paramètre $p=1-e^{-\lambda}$. Donc, pour simuler une $\mathcal{G}(p)$, on peut simuler une $\mathcal{E}(\lambda)$ avec $\lambda = -\ln(1-p)$ et prendre la partie entière + 1.
+    \item Pour simuler $\mathcal{G}(p)$ :
+    \begin{itemize}
+        \item \textbf{Méthode par inversion :} La formule est $N = \lfloor \frac{\ln U}{\ln(1-p)} \rfloor + 1$.
+        \item \textbf{Méthode par troncature :} On simule $X \sim \mathcal{E}(-\ln(1-p))$. Par inversion, $X = \frac{-\ln U}{-\ln(1-p)} = \frac{\ln U}{\ln(1-p)}$. Puis on calcule $N = \lfloor X \rfloor + 1$.
+    \end{itemize}
+    Les deux méthodes sont rigoureusement identiques et donnent exactement le même algorithme. La comparaison est donc sans objet.
+\end{enumerate}
+\end{solution}
+
 \begin{exercice}[Identification de loi]
 Calculer la loi de $\sqrt{-\ln(U)}$, si $U\sim \mathcal{U}nif(0,1)$.\\
 En multipliant par une constante (à déterminer), en déduire une façon de simuler une loi de Rayleigh, de densité
 $\frac{x}{\sigma^2}e^{-x^2/2\sigma^2}$
 sur $\mathbb{R}^+$.
 \end{exercice}
+
+\begin{solution}
+Soit $X = \sqrt{-\ln(U)}$. Comme $U \in ]0,1[$, $-\ln(U) > 0$, donc $X$ est bien définie et positive.
+Cherchons la fonction de répartition de $X$. Pour $x>0$ :
+\[ F_X(x) = \mathbb{P}(X \le x) = \mathbb{P}(\sqrt{-\ln U} \le x) = \mathbb{P}(-\ln U \le x^2) = \mathbb{P}(\ln U \ge -x^2) = \mathbb{P}(U \ge e^{-x^2}). \]
+Comme $U \sim \mathcal{U}([0,1])$, $\mathbb{P}(U \ge y) = 1-y$. Donc, $F_X(x) = 1 - e^{-x^2}$.
+La densité de $X$ est $f_X(x) = F_X'(x) = 2xe^{-x^2}$ pour $x>0$.
+Ceci est une loi de Rayleigh de paramètre $\sigma = 1/\sqrt{2}$.
+
+Pour simuler une loi de Rayleigh de paramètre $\sigma$ quelconque, cherchons une constante $c$ telle que $Y=cX$ suive cette loi.
+$F_Y(y) = \mathbb{P}(cX \le y) = \mathbb{P}(X \le y/c) = F_X(y/c) = 1 - e^{-(y/c)^2}$.
+La densité de $Y$ est $f_Y(y) = \frac{2y}{c^2} e^{-y^2/c^2}$.
+On veut que cette densité soit égale à $\frac{y}{\sigma^2}e^{-y^2/2\sigma^2}$.
+En comparant les exposants, on doit avoir $c^2 = 2\sigma^2$, soit $c=\sqrt{2}\sigma$.
+Vérifions le terme devant l'exponentielle : $\frac{2y}{c^2} = \frac{2y}{2\sigma^2} = \frac{y}{\sigma^2}$, ce qui correspond.
+Donc, pour simuler une loi de Rayleigh de paramètre $\sigma$, on peut utiliser la variable $Y = \sqrt{2}\sigma \sqrt{-\ln(U)} = \sigma \sqrt{-2\ln(U)}$.
+\end{solution}
 
 \begin{exercice}[Mélange de lois]
 \begin{enumerate}
@@ -151,6 +340,32 @@ $\frac{1}{3}\mu_1+\frac{2}{3}\mu_2$ avec $\mu_1$ une loi exponentielle de param�
 \end{enumerate}
 
 \end{exercice}
+
+\begin{solution}
+\begin{enumerate}
+  \item La variable $X$ agit comme un interrupteur.
+  \begin{itemize}
+      \item Si $X=1$ (avec probabilité 1/4), alors $T=Y$, qui suit une loi $\mathcal{N}(0,1)$.
+      \item Si $X=0$ (avec probabilité 3/4), alors $T=Z$, qui suit une loi $\mathcal{E}(1)$.
+  \end{itemize}
+  La loi de $T$ est donc un mélange des lois de $Y$ et $Z$. Sa densité $f_T$ est donnée par :
+  \[ f_T(t) = \frac{1}{4} f_Y(t) + \frac{3}{4} f_Z(t) = \frac{1}{4} \frac{1}{\sqrt{2\pi}}e^{-t^2/2} + \frac{3}{4} e^{-t} \mathbbm{1}_{t \ge 0}. \]
+  \item Pour simuler une variable de loi $\mu = \frac{1}{3}\mu_1+\frac{2}{3}\mu_2$, on utilise l'algorithme suivant :
+  \begin{enumerate}
+      \item Tirer $U \sim \mathcal{U}([0,1])$.
+      \item Si $U < 1/3$ :
+        \begin{itemize}
+            \item Simuler une variable $V_1$ de loi $\mu_1 = \mathcal{E}(2)$. On peut le faire par inversion : $V_1 = -\frac{\ln(W)}{2}$ avec $W \sim \mathcal{U}([0,1])$.
+            \item Renvoyer $V_1$.
+        \end{itemize}
+      \item Sinon (avec probabilité 2/3) :
+        \begin{itemize}
+            \item Simuler une variable $V_2$ de loi $\mu_2 = \mathcal{U}([0,1])$. Il suffit de tirer $W \sim \mathcal{U}([0,1])$.
+            \item Renvoyer $V_2$.
+        \end{itemize}
+  \end{enumerate}
+\end{enumerate}
+\end{solution}
 
 \subsection*{Méthode du rejet}
 
@@ -173,9 +388,49 @@ Comment diminuer la probabilité de rejet ?
 \end{enumerate}
 \end{exercice}
 
+\begin{solution}
+\begin{enumerate}
+    \item Par définition, un point de coordonnées polaires $(r,\theta)$ a pour coordonnées cartésiennes $(r\cos\theta, r\sin\theta)$.
+    Pour la contenance dans le pavé, on a $r(\theta) = a(1+\cos\theta)$. Comme $-1 \le \cos\theta \le 1$, on a $0 \le r(\theta) \le 2a$.
+    Les coordonnées cartésiennes sont $x = r\cos\theta$ et $y = r\sin\theta$. On a donc $|x| \le r \le 2a$ et $|y| \le r \le 2a$.
+    Le point $(x,y)$ est donc toujours dans le disque de centre 0 et de rayon $2a$, qui est lui-même inclus dans le carré $[-2a, 2a] \times [-2a, 2a]$.
+    \item On utilise la méthode de rejet. On sait simuler uniformément sur le carré $C = [-2a,2a]^2$ qui contient la cardioïde $B$.
+    \begin{itemize}
+        \item \textbf{Étape 1 :} Simuler un point $(X,Y)$ de loi uniforme sur le carré $C$. Pour cela, on tire $U_1, U_2 \sim \mathcal{U}([0,1])$ et on pose $X = -2a + 4a U_1$ et $Y = -2a + 4a U_2$.
+        \item \textbf{Étape 2 :} Vérifier si le point $(X,Y)$ est dans la cardioïde $B$. On teste la condition $(X^2+Y^2-aX)^2 \le a^2(X^2+Y^2)$.
+        \item \textbf{Étape 3 :} Si la condition est vérifiée, on accepte et on renvoie $(X,Y)$. Sinon, on rejette et on retourne à l'étape 1.
+    \end{itemize}
+    \item \textbf{TP -} Voir le script Python.
+    \item La probabilité d'acceptation est $p_{accept} = \frac{\text{Aire}(B)}{\text{Aire}(C)}$. On peut l'estimer par Monte-Carlo en tirant $N$ points dans le carré $C$, en comptant le nombre $N_{accept}$ de points qui tombent dans $B$, et en calculant $\hat{p} = N_{accept}/N$.
+    L'aire de la cardioïde est alors estimée par $\widehat{\text{Aire}}(B) = \hat{p} \times \text{Aire}(C) = \hat{p} \times (4a)^2 = 16a^2 \hat{p}$.
+    La probabilité de rejet est $1-p_{accept}$, estimée par $1-\hat{p}$. L'aire théorique de la cardioïde est $\frac{3}{2}\pi a^2$. La probabilité théorique de rejet est $1 - \frac{3\pi a^2/2}{16a^2} = 1 - \frac{3\pi}{32} \approx 0.706$.
+    \item Pour diminuer la probabilité de rejet, il faut choisir un domaine de simulation plus petit qui contient toujours la cardioïde. Par exemple, on peut trouver les extrema de $x(\theta)$ et $y(\theta)$ pour définir un rectangle englobant plus juste. On a $x \in [-a/4, 2a]$ et $y \in [-3\sqrt{3}a/4, 3\sqrt{3}a/4]$. Utiliser le rectangle $[-a/4, 2a] \times [-3\sqrt{3}a/4, 3\sqrt{3}a/4]$ réduirait significativement le nombre de rejets.
+\end{enumerate}
+\end{solution}
+
 \begin{exercice}[Densité dominée]
 Proposer un algorithme de rejet pour générer une variable aléatoire de densité $f(x)=\frac{\pi}{2}\sin(\pi x)$ sur $[0,1]$.  Quelle est la probabilité de rejet ?
 \end{exercice}
+
+\begin{solution}
+On utilise la méthode de rejet.
+\begin{itemize}
+    \item \textbf{Loi cible :} $f(x)=\frac{\pi}{2}\sin(\pi x)$ sur $[0,1]$.
+    \item \textbf{Loi de proposition :} Choisissons une loi simple, la loi uniforme sur $[0,1]$. Sa densité est $g(x)=1$ pour $x \in [0,1]$.
+    \item \textbf{Constante c :} On doit trouver $c$ tel que $f(x) \le c \cdot g(x)$ pour tout $x$.
+    \[ \frac{f(x)}{g(x)} = \frac{\pi}{2}\sin(\pi x). \]
+    Le maximum de cette fonction sur $[0,1]$ est atteint en $x=1/2$, où $\sin(\pi/2)=1$. Le maximum vaut $\frac{\pi}{2}$. On choisit donc $c=\frac{\pi}{2}$.
+\end{itemize}
+L'algorithme de rejet est le suivant :
+\begin{enumerate}
+    \item Simuler $Y \sim \mathcal{U}([0,1])$ (la loi de proposition).
+    \item Simuler $U \sim \mathcal{U}([0,1])$.
+    \item Accepter $Y$ si $U \le \frac{f(Y)}{c g(Y)} = \frac{\frac{\pi}{2}\sin(\pi Y)}{\frac{\pi}{2} \cdot 1} = \sin(\pi Y)$.
+    \item Si $Y$ n'est pas accepté, recommencer à l'étape 1.
+\end{enumerate}
+La probabilité d'acceptation est $1/c = 1/(\pi/2) = 2/\pi \approx 0.637$.
+La probabilité de rejet est $1 - 2/\pi \approx 0.363$.
+\end{solution}
 
 \begin{exercice}[Simuler une loi à densité]
 On veut simuler une variable aléatoire $X$ de densité $f(x)=\frac{1}{Z}e^{-x^3}$ sur $\{x\in \mathbb{R}:x\geq 1\}$ à partir de la simulation d'une variable aléatoire $Y$ de densité $g(x)=\frac{1}{x^2}$ sur $\{x\in \mathbb{R}:x\geq 1\}$. La constante de normalisation $Z=\int_1^{+\infty}e^{-x^3}dx$ n'est pas calculable, mais on n'en aura pas besoin pour les simulations.
@@ -187,8 +442,31 @@ On veut simuler une variable aléatoire $X$ de densité $f(x)=\frac{1}{Z}e^{-x^3
 \end{enumerate}
 \end{exercice}
 
-%\subsection*{Lois normales : méthode de Box-Muller}
-%
+\begin{solution}
+\begin{enumerate}
+    \item Pour simuler $Y$ de densité $g(x)=1/x^2$ sur $[1, \infty[$, on calcule sa fonction de répartition :
+    \[ G(y) = \int_1^y \frac{1}{t^2} dt = [-\frac{1}{t}]_1^y = 1 - \frac{1}{y}. \]
+    On inverse en posant $u = 1 - 1/y$, ce qui donne $y = 1/(1-u)$.
+    Si $U \sim \mathcal{U}([0,1])$, on simule $Y$ par $Y = 1/(1-U)$ (ou plus simplement $Y=1/U$, car $1-U$ est aussi uniforme).
+    \item On étudie la fonction $h(x) = \frac{f(x)}{g(x)} = \frac{\frac{1}{Z}e^{-x^3}}{1/x^2} = \frac{1}{Z}x^2 e^{-x^3}$.
+    Sa dérivée est $h'(x) = \frac{1}{Z} (2x e^{-x^3} + x^2 e^{-x^3}(-3x^2)) = \frac{x e^{-x^3}}{Z}(2-3x^3)$.
+    Sur l'intervalle $[1, \infty[$, $x \ge 1$, donc $x^3 \ge 1$ et $2-3x^3 < 0$.
+    Par conséquent, $h'(x) < 0$ sur $[1, \infty[$, et la fonction $h(x)$ est bien décroissante.
+    \item Comme $h(x)$ est décroissante sur $[1, \infty[$, son maximum est atteint en $x=1$.
+    $M = \sup_{x\ge 1} h(x) = h(1) = \frac{1}{Z} (1^2) e^{-1^3} = \frac{1}{eZ}$.
+    On peut donc choisir la constante $c = \frac{1}{eZ}$. On a alors $f(x) \le c \cdot g(x)$ pour tout $x \ge 1$.
+    \item On applique la méthode de rejet :
+    \begin{enumerate}
+        \item Simuler une variable $Y$ de densité $g$ (par $Y=1/U_1$ avec $U_1 \sim \mathcal{U}([0,1])$).
+        \item Simuler $U_2 \sim \mathcal{U}([0,1])$.
+        \item Accepter $Y$ si $U_2 \le \frac{f(Y)}{c g(Y)} = \frac{h(Y)}{c}$.
+        \[ \frac{h(Y)}{c} = \frac{\frac{1}{Z}Y^2 e^{-Y^3}}{1/(eZ)} = e Y^2 e^{-Y^3}. \]
+        \item Si $Y$ est rejeté, recommencer.
+    \end{enumerate}
+    L'avantage est que la constante de normalisation inconnue $Z$ s'est simplifiée et n'apparaît pas dans l'algorithme final.
+\end{enumerate}
+\end{solution}
+
 
 \begin{exercice}[Méthode de Box-Muller]
 Si $U$ et $V$ sont deux variables
@@ -205,21 +483,42 @@ sont ind\'ependantes et de loi normale ${\mathcal N}(0,1)$.
 \end{enumerate}
 \end{exercice}
 
-%
-%
-%\begin{exercice}[Méthode de Box-Muller]
-%\begin{enumerate}
-%\item
-%Utiliser l'algorithme de Box-Muller pour g\'en\'erer $N$ r\'ealisations de variables
-%al\'eatoires ind\'ependantes
-%et de loi normale ${\mathcal N}(m,s^2)$ o\`u
-%la moyenne $m\in \R$ et la variance
-%$s^2>0$ sont affect\'ees par l'utilisateur.
-%\item
-%Proposer un algorithme de rejet pour générer une variable aléatoire standard en utilisant la méthode du rejet à partir de la loi de Cauchy de densité $\frac{1}{\pi(1+x^2)}.$ Quelle est la probabilité de rejet ?
-%\item \textbf{TP -}  Coder les deux méthodes proposées précédemment et vérifier par des histogrammes que les variables simulées suivent bien une loi gaussienne.
-%\item \textbf{TP -} Proposez une troisième méthode (plus approximative) utilisant le théorème central limite.
-%\item \textbf{TP -} Comparer les performances de ces trois manières de simuler des gaussiennes.
-%\end{enumerate}
-%\end{exercice}
+\begin{solution}
+\begin{enumerate}
+    \item Si $Z \sim \mathcal{N}(0,1)$, alors $X=m+\sigma Z \sim \mathcal{N}(m, \sigma^2)$. L'algorithme est donc :
+    \begin{enumerate}
+        \item Tirer deux variables $U, V \sim \mathcal{U}([0,1])$ indépendantes.
+        \item Calculer une variable normale centrée réduite $Z = \sqrt{-2\ln U}\cos(2\pi V)$.
+        \item Renvoyer $X=m+\sigma Z$.
+    \end{enumerate}
+    \item On veut simuler $Z \sim \mathcal{N}(0,1)$ de densité $f(z) = \frac{1}{\sqrt{2\pi}}e^{-z^2/2}$ en utilisant une loi de Cauchy $\mathcal{C}(0,1)$ de densité $g(z)=\frac{1}{\pi(1+z^2)}$.
+    On cherche $c \ge \frac{f(z)}{g(z)}$. Soit $h(z) = \frac{f(z)}{g(z)} = \sqrt{\frac{\pi}{2}}(1+z^2)e^{-z^2/2}$.
+    Pour trouver le max de $h(z)$, on étudie la dérivée de son logarithme : $(\ln h(z))' = \frac{2z}{1+z^2} - z = z(\frac{2}{1+z^2}-1) = \frac{z(1-z^2)}{1+z^2}$. La dérivée s'annule en $z=0, \pm 1$. Le maximum est atteint pour $z=\pm 1$, et vaut $c = h(1) = \sqrt{\frac{\pi}{2}}(2)e^{-1/2} = \sqrt{\frac{2\pi}{e}} \approx 1.52$.
+    L'algorithme de rejet est :
+    \begin{enumerate}
+        \item Simuler $Y$ selon la loi de Cauchy (par inversion : $Y=\tan(\pi(U_1-0.5))$).
+        \item Simuler $U_2 \sim \mathcal{U}([0,1])$.
+        \item Accepter $Y$ si $U_2 \le \frac{h(Y)}{c} = \frac{(1+Y^2)e^{-Y^2/2}}{2e^{-1/2}}$.
+        \item Une fois un $Z$ accepté, renvoyer $X=m+\sigma Z$.
+    \end{enumerate}
+    La probabilité d'acceptation est $1/c = \sqrt{e/(2\pi)} \approx 0.658$. La probabilité de rejet est $1-1/c \approx 0.342$.
+    \item \textbf{TP -} Voir le script Python.
+    \item \textbf{TP -} Le Théorème Central Limite (TCL) stipule que la somme de $n$ variables i.i.d (de variance finie) standardisée converge vers une loi normale. En utilisant des variables $U_i \sim \mathcal{U}([0,1])$, on a $\mathbb{E}(U_i)=1/2$ et $\mathbb{V}(U_i)=1/12$.
+    Alors $S_n = \sum_{i=1}^n U_i$ a pour espérance $n/2$ et variance $n/12$.
+    La variable standardisée $Z_n = \frac{S_n - n/2}{\sqrt{n/12}}$ suit approximativement une $\mathcal{N}(0,1)$ pour $n$ grand.
+    Un choix classique est $n=12$, car $\sqrt{12/12}=1$. L'algorithme est :
+    \begin{itemize}
+        \item Simuler $U_1, \dots, U_{12}$ de loi $\mathcal{U}([0,1])$.
+        \item Calculer $Z = \sum_{i=1}^{12} U_i - 6$.
+        \item Renvoyer $Z$ comme approximation d'une $\mathcal{N}(0,1)$.
+    \end{itemize}
+    \item \textbf{TP -}
+    \begin{itemize}
+        \item \textbf{TCL} : Très rapide (12 `rand` et des additions), mais c'est une approximation. La variable générée est bornée (entre -6 et 6).
+        \item \textbf{Box-Muller} : Exact, moyennement rapide. Coût de fonctions `log`, `sqrt`, `cos`.
+        \item \textbf{Rejet Cauchy} : Exact, mais généralement plus lent à cause des rejets et du coût de la fonction `tan`.
+    \end{itemize}
+\end{enumerate}
+\end{solution}
+
 \end{document}
