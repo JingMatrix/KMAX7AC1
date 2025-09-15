@@ -1,0 +1,2060 @@
+\documentclass[a4paper,12pt]{book}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english, francais]{babel}
+\usepackage{amssymb,amsmath,amsfonts,amsthm}
+\usepackage{color}
+\usepackage{dsfont}
+\usepackage[a4paper, textheight=23cm, textwidth=16cm, centering, hmarginratio=6:7]{geometry}
+%\usepackage{stmaryrd}
+\usepackage{graphicx}
+\usepackage{pdfpages}
+
+\newtheorem{thmfr}{Théorème}[section]
+%\newtheorem*{thmfr*}{Théorème}
+\newtheorem{defnfr}[thmfr]{Définition}
+\newtheorem{corfr}[thmfr]{Corollaire}
+\newtheorem{remfr}[thmfr]{Remarque}
+%\newtheorem*{remfr*}{Remarque}
+\newtheorem{propfr}[thmfr]{Proposition}
+\newtheorem{lemfr}[thmfr]{Lemme}
+
+\newtheorem{Hypfr}{Hypothèses}
+\renewcommand{\theHypfr}{\Alph{Hypfr}}
+
+\setcounter{secnumdepth}{3}
+\renewcommand{\thechapter}{\Roman{chapter}}
+\renewcommand{\thesection}{\arabic{section}}
+\renewcommand{\thesubsection}{\arabic{section}.\arabic{subsection})}
+\renewcommand{\thesubsubsection}{\alph{subsubsection})}
+\newcommand{\Var}{\text{Var}}
+
+
+\renewcommand{\baselinestretch}{1.2}
+
+\newcommand{\un}{\mathds{1}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Fc}{\mathcal{F}}
+\renewcommand{\P}{\mathbb{P}}
+\newcommand{\method}[2]{
+\begin{center}\fbox{%
+   \begin{minipage}{0.95\textwidth}
+   \noindent\textbf{#1} \\
+     \textit{#2}
+   \end{minipage}}\end{center}%
+}
+
+\newcommand{\ben}{\vspace{0mm}\begin{equation}}
+\newcommand{\een}{\vspace{0mm}\end{equation}}
+\newcommand{\be}{\vspace{0mm}\begin{equation*}}
+\newcommand{\ee}{\vspace{0mm}\end{equation*}}
+\newcommand{\ba}{\vspace{0mm}\begin{equation*}\begin{aligned}}
+\newcommand{\ea}{\vspace{0mm}\end{aligned}\end{equation*}}
+\newcommand{\ban}{\vspace{0mm}\begin{equation}\begin{aligned}}
+\newcommand{\ean}{\vspace{0mm}\end{aligned}\end{equation}}
+\newcommand{\bean}{\vspace{0mm}\begin{equation}\begin{aligned}}
+\newcommand{\eean}{\vspace{0mm}\end{aligned}\end{equation}}
+\newcommand{\bea}{\vspace{0mm}\begin{equation*}\begin{aligned}}
+\newcommand{\eea}{\vspace{0mm}\end{aligned}\end{equation*}}
+
+
+\date{}
+%opening
+\title{{\bf \huge M1 MAPI3 \\ Simulations aléatoires}\\~
+\\{2023-2024\\
+}}
+\author{}
+
+\begin{document}
+\maketitle
+\noindent
+
+\chapter[Simulation de v.a. et méthode de MC (2 semaines)]{Simulation d'une variable al\'eatoire- Méthode de Monte Carlo (2 semaines)}
+
+\textit{Pré-requis : variables aléatoires, loi des grands nombres, TCL}
+
+   Le but de ce chapitre est de pr\'esenter des m\'ethodes permettant à un programme informatique de donner des nombres
+se comportant comme des variables al\'eatoires qui suivent une loi de probabilit\'e donn\'ee.
+
+On utilisera ces nombres aléatoires pour divers types de tâches : principalement,
+\begin{itemize}
+\item se faire une idée qualitative du comportement d’un processus aléatoire (via une représentation graphique, en général) :
+observer une seule ou quelques simulations pour voir l’allure « typique » d’une réalisation (par exemple, pour suggérer
+une convergence presque sûre) ;
+\item estimer une quantité (non-aléatoire) qui peut s'écrire comme une probabilité, une espérance (voire une loi)  et peut donc être approchée par des nombres aléatoires (méthode de Monte-Carlo) ;
+\item simuler des données fictives pour ensuite éprouver sur celles-ci l’efficacité de méthodes statistiques, ou pour
+étalonner des tests.
+\end{itemize}
+
+\section{Simulations de variables aléatoires uniformes sur $[0,1]$}
+
+
+  Une remarque g\'enerale est que les
+  nombres g\'en\'er\'es par ordinateur sans donn\'ee ext\'erieure ne sont pas al\'eatoires, puisqu'ils correspondent au r\'esultat d'un programme
+  d\'eterministe. Le but est que ces nombres semblent al\'eatoires, c'est \`a dire qu'ils satisfont
+  un certain nombre de tests statistiques que des nombres vraiment al\'eatoires doivent satisfaire avec forte probabilit\'e.
+On parle de \textbf{nombres pseudo-al\'eatoires}.
+
+Ces suites sont définies en général par récurrence (ou sont déduites d’une suite définie par récurrence), tel l’exemple
+historique (et simpliste) des générateurs par congruence linéaire comme
+$$X_{n+1} = 16807 X_{n}\ \ (\mod 2^{31} - 1)$$
+(Ici, $2^{-31} X_n$ suit approximativement la loi uniforme sur $[0,1]$).
+Le premier terme $X_0$ de la suite est appelé la graine (en anglais, $\tt seed$) de l‘algorithme.
+
+\textbf{Remarque :} Il existe \'egalement des moyens d'introduire du ``vrai hasard'' dans la g\'en\'eration de nombres pseudo-al\'eatoires,
+an utilisant des \'el\'ements ext\'erieurs au programme: par exemple, on peut utiliser l'horloge de l'ordinateur, ou
+des ph\'enom\`enes physiques (radioactivit\'e, ph\'enom\`enes quantiques, etc.)
+
+En général, la graine est fixée en fonction du nombre de millisecondes de l’horloge
+de l’ordinateur au moment où l’on commence la simulation ($\tt seed(a=None)$). Attention, on n’utilise cette méthode que pour la graine,
+tandis que les tirages suivants s’en déduiront : c’est une forme de compromis entre l'aléas pur et le déterminisme.
+
+A partir de maintenant, nous allons supposer que le probl\`eme de la g\'en\'eration de nombres al\'eatoires est
+r\'esolu et donc que nous avons le moyen de simuler une suite arbitrairement longue de variables al\'eatoires
+ind\'ependantes, uniformes sur $[0,1]$ en utilisant successivement la même fonction $\tt uniform()$. On va maintenant décrire le moyen de simuler des variables suivant d'autres
+lois.
+
+\paragraph{Exemple :} $\tt X=(uniform()<p)$ simule une Bernoulli de paramètre $p$ car $X$ vaut $0$ ou $1$ avec
+$$\mathbb{P}[X=1]=\mathbb{P}[{\tt uniform}<p]=p.$$
+
+\paragraph{Simulation de variables binomiales :} On utilise le fait qu'une loi binomiale de param\`etre $p \in [0,1]$ et
+$n \geq 1$ est une somme de variables de Bernoulli ind\'ependantes de param\`etre $p$. \\ \\
+Ainsi, pour simuler une variable aléatoire $X \sim \mathcal{B}(n,p)$, on commence par tirer $n$ variables aléatoires $U_1,\dots,U_n$ indépendantes uniformes sur $[0,1]$, puis on construit les $n$ variables de Bernoulli $Y_k=\mathds{1}_{[0,p]}(U_k)$ , pour $1\le k\le n$ et on pose enfin
+$X=Y_1+\dots +Y_n$.
+\section{ Simulations de variables aléatoires sur $\mathbb{R}$}
+\subsection{Variables aléatoires discrètes}
+\begin{propfr}
+Soit $x_1,x_2,\cdots,x_n$ des nombres r\'eels
+tous diff\'erents et soit $p_1,p_2,\cdots,p_n$ des nombres r\'eels positifs
+tels que $\sum_{i=1}^n p_i=1$. On pose $s_0=0$ et pour tout
+$1\leq k \leq n$, $s_k=\sum_{i=1}^k p_i$. Soit $U$ est une variable al\'eatoire
+de loi uniforme ${\mathcal U}([0,1])$ et
+$$X=\sum_{k=1}^n x_k 1_{(s_{k-1}\leq U \leq s_k)}.$$
+Alors, $X$ est une variable al\'eatoire de loi discr\`ete
+$P=p_1\delta_{x_1}+p_2\delta_{x_2}+\cdots+p_n\delta_{x_n}$.
+\end{propfr}
+
+\begin{proof}
+On vérifie que pour tout $i\in\{1,\dots, n\}$,
+$$\mathbb{P}(X=x_i)=\mathbb{P}(s_{i-1}\leq U \leq s_i)=s_i-s_{i-1}=p_i.$$
+\end{proof}
+
+\method{Variables aléatoires discrètes}{Si on veut simuler la loi $p_1\delta_{x_1}+p_2\delta_{x_2}+\cdots+p_n\delta_{x_n}$ en utilisant le vecteur des $p_i$ et celui des $x_i$\\
+\ $\tt (s_i)_i=sommes\ cumulees\ des\ (p_i)_i ;$\\
+\ $\tt U=uniform();$\\
+\ $\tt i=1;$\\
+\ $\tt tant\ que\ U>s_i,\ i=i+1;$\\
+\ $\tt sortir\ x_i;$
+}
+
+
+\subsection{Calcul de lois}
+Si on $X$ a la même loi que $f(U_1,\ldots,U_n)$ avec $U_1,\ldots,U_n$ indépendantes et uniformes, alors on peut simuler $X$:
+\method{Simuler $X$ de loi $f(U_1,\ldots,U_n)$}{On applique $f$ à des variables aléatoires uniformes $U_1,\ldots,U_n$
+}
+\paragraph{Exemple 1 : v.a. uniformes sur un intervalle quelconque}
+\begin{propfr}
+Si $U$ est une variable uniforme sur $[0,1]$, alors $a+(b-a)U$ est uniforme sur $[a,b]$.
+\end{propfr}
+\begin{proof}
+Il suffit de remarquer que $$\mathbb{P}(a+(b-a)U\le t)=\mathbb{P}(U\le (t-a)/(b-a) )= (t-a)/(b-a).$$
+\end{proof}
+
+
+\paragraph{Exemple 2 :}On veut simuler une v.a. à valeurs dans $[0,1]$ et de densité $2x$. On se rend compte que si $U_1$ et $U_2$ sont deux variables indépendantes et uniformes sur $[0,1]$, alors $\max(U_1,U_2)$ a la bonne densité (calculer la fonction de répartition). On en déduit qu'il suffit de prendre le maximum entre deux uniformes pour simuler notre v.a.
+\paragraph{Changement de variable : }
+De manière générale, pour calculer la loi de $f(U_1,\ldots,U_n)$, qui est une mesure image, il est utile de rappeler la formule du changement de variable
+$$\int_a^b f(\varphi(t))\varphi'(t)dt=\int_{\varphi(a)}^{\varphi(b)} f(x)dx,$$
+qu'on utilise formellement en disant qu'on effectue le changement de variable $x=\varphi(t)$ et que par conséquent $dx=d(\varphi(t))=\varphi'(t)dt$.
+
+
+\paragraph{Exemple 3 :} Si $V$ est uniforme sur $[0, \pi/2]$, calculons la loi de $\sin^2(V)$. Pour toute fonction mesurable bornée $g$, on a
+\begin{align*}
+\mathbb{E}[\sin^2(V)]&= \frac{2}{\pi}\int_0^{\pi/2}g(\sin^2(\theta))d \theta\\
+&=\frac{2}{\pi}\int_0^1g(x)d\left(\arcsin(\sqrt{x})\right)\\
+&=\frac{2}{\pi}\int_0^1g(x)\frac{1}{2\sqrt{x}}\frac{1}{\sqrt{1-\sqrt{x}^2}}dx\\
+&=\int_0^1g(x)\frac{1}{\pi \sqrt{x(1-x)}}dx.
+\end{align*}
+On en d\'eduit que si $U$ est uniforme sur $[0, 1]$, $\sin^2(\pi U/2)$ suit la loi sur $[0,1]$, de densit\'e $x \mapsto 1/(\pi \sqrt{x(1-x)})$, c'est \`a dire la loi beta de param\`etres $1/2$ et $1/2$. Cette loi est \'egalement appel\'ee {\it loi de l'arc sinus}, car sa fonction de r\'epartition fait intervenir la fonction $x \mapsto \arcsin x$.
+
+
+\paragraph{Exemple 4 :} Simulation de variables aléatoires uniformes sur le disque unité. En coordonn\'ees cart\'esienne, la mesure uniforme sur le disque unit\'e peut \^etre donn\'ee par l'expression $(1/\pi) \mathds{1}_{x^2 + y^2 \leq 1} dx dy$, soit en
+coordonn\'ees polaires $(1/\pi) \mathds{1}_{r \leq 1} r dr d\theta$. En posant $s = r^2$, on obtient
+$(1/2\pi)  \mathds{1}_{s \leq 1} ds d\theta$ puisque $ds = 2 r dr$.
+
+Ainsi, pour $(x, y)$ uniforme sur le disque unit\'e, $s = r^2$ et $\theta$ sont ind\'ependant, uniformes respectivement sur $[0,1]$ et $[0, 2 \pi)$.
+
+\begin{propfr}
+Si $U$ et $V$ sont deux variables ind\'ependantes uniformes sur $[0,1]$, alors
+$(\sqrt{U} \cos(2 \pi V), \sqrt{U} \sin(2 \pi V))$ est uniforme sur le disque unit\'e.
+\end{propfr}
+
+\subsection{Méthode d'inversion de la fonction de répartition}
+Soit $\mu$ une loi de probablit\'e sur $\mathbb{R}$ (muni de la tribu bor\'elienne), et $F$ sa fonction de r\'epartition:
+$$F(x) :=  \mu( (-\infty, x]).$$
+On rappelle que $F$ est croissante, continue \`a droite, admet une limite \`a gauche
+en tout point,
+tend vers $0$ en $-\infty$ et vers $1$ en $+\infty$.
+
+\begin{defnfr}
+Pour $t \in (0,1)$, on définit la \textbf{pseudo-inverse} $G$ de $F$ (appelée aussi fonction de quantile de $\mu$) par
+$$G(t):= \inf \{x \in \mathbb{R},
+F(x) \geq t\}<\infty.$$
+\end{defnfr}
+On remarque en particulier que $G(t)$ est finie \`a cause des limites de $F$ en $\pm \infty$.
+
+Quelques propriétés
+\begin{propfr}
+\begin{enumerate}
+\item $G(t)\leq x \Leftrightarrow F(x)\geq t$
+\item Si $F$ restreint à $]a,b[$ établit une bijection de $]a,b[$ vers $]0,1[$, (d'inverse $F^{-1}$), alors $G=F^{-1}$ sur $]0,1[$.
+\end{enumerate}
+\end{propfr}
+
+\begin{proof}
+\begin{enumerate}
+\item Par définition de $G$, si on a $F(x)\geq t$ alors $G(t)\leq x$. Réciproquement, si $G(t)\leq x$, alors pour tout $\varepsilon >0$, on a $G(t)< x+\varepsilon$, ce qui implique que $t\leq F(x+\varepsilon)$. Comme $F$ est continue à droite, on peut faire tendre $\varepsilon$ vers $0$ et obtenir $t\leq F(x)$.
+\item Pour $t\in ]0,1[$, $F^{-1}(t)$ est l'unique réel $x$ tel que $F(x)=t$, et par croissance, c'est donc le plus petit réel $x$ tel que $F(x)\geq t$. On a donc $F^{-1}(t)=G(t)$ par définition de $G$.
+\end{enumerate}
+\end{proof}
+
+\begin{propfr}
+Soit $U$ une variable aléatoire uniforme sur $[0,1]$, alors, la variable aléatoire $G(U)$ suit la loi $\mu$.
+\end{propfr}
+\begin{proof}
+Si $U$ est uniforme sur $[0,1]$, $U$ est presque s\^urement
+dans $(0,1)$, donc la variable aléatoire $G(U)$ est bien définie. \\
+Calculons maintenant la fonction de répartition de la variable $G(U)$.
+
+$$\mathbb{P} [G(U) \leq x] = \mathbb{P} [U \leq F(x)] = F(x).$$
+Donc $G(X)$ suit la loi $\mu$.
+\end{proof}
+
+\method{Inversion de la fonction de répartition}{Soit maintenant une distribution sur $\R$
+\begin{itemize}\item On calcule sa fonction de répartition $F$,
+\item On calcule la fonction $G$
+\item On applique $G$ à des variables aléatoires uniformes $G(U_k)$
+\end{itemize}
+}
+
+
+\begin{corfr}
+Si $(X_n)_{n \geq 1}$ sont ind\'ependantes, uniformes sur $[0,1]$, alors $(G(X_n))_{n \geq 1}$ sont ind\'ependantes
+uniformes de loi $\mu$.
+\end{corfr}
+
+\begin{proof}
+En effet, si l'on applique la même fonction mesurable à une suite de variables aléatoires i.i.d. on obtient une suite de variables aléatoires i.i.d.\\
+Comme la fonction $G$ est mesurable, le résultat est immédiat.
+\end{proof}
+
+La m\'ethode pr\'esent\'ee ici s'applique \`a n'importe quelle distribution \`a valeurs dans $\mathbb{R}$, cependant
+elle demande d'inverser la fonction de r\'epartition, ce qui peut \^etre malais\'e (par exemple, pour une
+variable gaussienne). Nous allons voir certains cas particuliers o\`u cette m\'ethode peut \^etre utilis\'ee.
+
+
+
+
+\paragraph{Exemple : Simulation de variables exponentielles}
+\begin{propfr}
+Si $U_n$ est une variable uniforme sur $[0,1]$, et $\lambda > 0$, alors
+on a  $- (1/\lambda) \log (U_n) $  est une suite de v.a. indépendantes de loi exponentielle de paramètre $\lambda$.
+\end{propfr}
+\begin{proof}
+On rappelle que la fonction de répartition d'une variable exponentielle est
+$$F(t)=1-e^{-\lambda t}, \quad t\ge 0.$$
+Ainsi, si on inverse la relation on obtient
+$$u=1-e^{-\lambda t} \Leftrightarrow t= -\frac{1}{\lambda}\log(1-u).$$
+On en déduit donc que si $U$ suit une loi uniforme alors $-1/\lambda \log(1-U)$ suit une loi exponentielle.
+
+Il reste à remarquer que si $U$ suit une loi uniforme sur $[0,1]$ alors $1-U$ également, on en déduit donc la proposition.
+\end{proof}
+Alternativement on vérifie que pour tout $x \geq 0$,
+$$\mathbb{P} [ - (1/\lambda) \log (X_n) \leq x] = \mathbb{P} [X_n \geq e^{-\lambda x} ] =  1 - e^{-\lambda x},$$
+ce qui prouve que $-(1/\lambda) \log (X_n)$ est une variable exponentielle de param\`etre $\lambda$.
+
+
+
+\subsection{M\'elange de lois}
+Soit $N,X_1,X_2$ trois v.a. réelles indépendantes. On suppose que $N$ est à valeurs dans $\{1,2\}$, et que $X_1$ et $X_2$ sont à densité. Calculons la loi de $X_N$.
+
+On note $f_1$ et $f_2$ les densités de $X_1$ et $X_2$. Pour toute fonction mesurable bornée $g$, comme $g(X_N)=1\hspace{-1.2mm}1_{N=1}g(X_1)+1\hspace{-1.2mm}1_{N=2}g(X_2)$, on calcule
+\begin{align*}
+\mathbb{E}[g(X_N)]&=\mathbb{E}[1\hspace{-1.2mm}1_{N=1}g(X_1)+1\hspace{-1.2mm}1_{N=2}g(X_2)]\\
+&=\mathbb{E}[1\hspace{-1.2mm}1_{N=1}]\mathbb{E}[g(X_1)]+\mathbb{E}[1\hspace{-1.2mm}1_{N=2}]\mathbb{E}[g(X_2)]\\
+&=\mathbb{P}[N=1]\int_\mathbb{R}g(x)f_1(x)dx+\mathbb{P}[N=2]\int_\mathbb{R}g(x)f_2(x)dx\\
+&=\int_\mathbb{R}g(x)\left(\alpha_1 f_1(x)+\alpha_2 f_2(x)\right)dx
+\end{align*}
+ce qui montre que $X_N$ a pour densité $x\mapsto \alpha_1 f_1(x)+\alpha_2 f_2(x)$. Plus généralement, on a
+\begin{propfr}
+Si $N,X_1,\cdots,X_n$ sont des v.a. réelles avec $N$ à valeurs dans $\{1,\cdots,n\}$ de masses $\alpha_1, \dots, \alpha_n \geq 0$ et indépendante des autres, alors la v.a. $X_N$ a pour loi
+$$\alpha_1 P_{X_1}+\ldots+ \alpha_n P_{X_n}.$$
+\end{propfr}
+Pour simuler une variable al\'{e}atoire de loi $\mu$, o\`u
+$\mu = \alpha_1 \mu_1 + \dots + \alpha_n \mu_n$, avec $\alpha_1, \dots, \alpha_n \geq 0$, $\alpha_1 + \dots +
+\alpha_n = 1$, on peut donc faire comme ceci :
+
+\method{Mélange de loi}{On simule une réalisation $k$ de $N$ à valeurs dans $\{1,\cdots,n\}$ de probas $\alpha_1, \dots, \alpha_n$, puis on simule $X$ de loi $\mu_k$.
+}
+
+
+Par exemple, la loi $\mu$ sur $\mathbb{R}$ de densit\'e $\rho$ par rapport \`a la mesure
+de Lebesgue, avec $\rho(x) = e^{-x^2/2}/\sqrt{8 \pi}$ si
+$x \notin [0,1]$ et $\rho(x) =(1/2) +  e^{-x^2/2}/\sqrt{8 \pi}$ si $x \in [0,1]$, est la demi-somme de
+la loi uniforme sur $[0,1]$ et de la loi gaussienne centr\'ee r\'eduite. On en d\'eduit que si $Z_1$, $Z_2$, $J$
+sont des variables ind\'ependantes, respectivement uniforme sur $[0,1]$, gaussienne centr\'ee r\'eduite et uniforme
+sur $\{1,2\}$, alors $Z_J$ suit la loi $\mu$.
+
+
+On peut généraliser la proposition précédente pour un mélange infini de lois :
+\begin{propfr}
+Si $(X_t)_{t\in\mathbb{R}}$ sont des v.a. réelles de densités $f_t$, et si $T$ est une variable v.a. réelle de densité $g$, et indépendante des $(X_t)_{t\in\mathbb{R}}$, alors la v.a. $X_T$ a pour densité
+$$x \mapsto \int_\mathbb{R}f_t(x) g(t) d t.$$
+\end{propfr}
+Pour simuler une variable al\'{e}atoire de densité
+$$x \mapsto \int_\mathbb{R}f_t(x) g(t) d t,$$ on peut donc faire comme ceci :
+
+\method{Mélange de loi}{On simule une réalisation $t$ de $T$, puis on simule $X$ de densité $f_t$.
+}
+\subsection{Méthode de rejet}
+
+La méthode du rejet permet de simuler une variable aléatoire de loi $\eta$ en conditionnant une loi $\mu$ que l'on sait simuler facilement.
+
+\subsubsection{Conditionnement par un évènement}
+Pour obtenir une simulation de
+$Z$ sachant un événement
+$A$ qui dépend de $Z$ (on dit que c'est un évènement $\sigma(Z)$-mesurable), il suffit de simuler de
+manière répétée et indépendante $Z$ et de rejeter les résultats tant que
+$A$
+n’est pas
+réalisé ($Z$
+peut être une variable aléatoire multi-dimensionnelle).
+
+\begin{propfr}
+Soit $Z$ une v.a. et $A$ un évènement de probabilité non nul. Considérons $(Z_n,A_n)_{n\geq 1}$ une suite d'éléments aléatoires indépendants de même loi que $(Z,A)$. Notons $K=\inf \{n\geq 1:A_n \text{ est réalisé}\}$ : alors la v.a. $Z_K$ a pour loi la loi conditionnelle de $Z$ sachant $A$.
+\end{propfr}
+\begin{proof}
+Pour tout borélien $B$, on a
+\begin{align*}
+\mathbb{P}[Z_K\in B]&=\sum_{n\geq 1} \mathbb{P}[Z_n\in B; A_1^c;\ldots ; A_{n-1}^c;A_n]\\
+&=\sum_{n\geq 1} (1-\mathbb{P}[A])^{n-1}\cdot \mathbb{P}[Z_n\in B; A_n]=\frac{\mathbb{P}[Z\in B; A]}{\mathbb{P}[A]}=\mathbb{P}[Z\in B|A]
+\end{align*}
+\end{proof}
+
+
+\method{Conditionnement par $A$}{On répète la même simulation et on garde uniquement les valeurs qui vérifient $A$}
+On a
+$$\mathbb{P}[K=n]=(1-\mathbb{P}[A])^{n-1}\cdot \mathbb{P}[A], $$
+donc $K$ est un temps aléatoire qui suit une loi géométrique de paramètre $\mathbb{P}[A]$ (espérance $1/\mathbb{P}[A]$). Donc plus $A$ est probable, et plus la simulation est rapide.
+
+\paragraph{Exemple :} Par définition, la loi uniforme sur un ensemble de mesurable $B$ de $\mathbb{R}^d$ de mesure de Lebesgue $0<|B|<+\infty$ est la mesure de densité
+ $\frac{1}{|B|}1_B.$
+ Pour tout $A\in \mathbb{R}^d$, la mesure de $A$ sous la loi uniforme sur $B$ est donc donnée par
+ $$\int_A \frac{1}{|B|}1_B(x) dx=\frac{|A\cap B|}{|B|}.$$
+Maintenant, prenons une variable aléatoire $X$ uniforme dans $B$, et calculons la loi conditionnelle de $X$ sachant que $X\in C\subset B$. Pour tout borélien $A$,
+$$
+\mathbb{P}[X\in A|X\in C]=\frac{\mathbb{P}[X\in A\cap C]}{\mathbb{P}[X\in C]}=\frac{|A\cap C\cap B|}{|B|}\left(\frac{| C\cap B|}{|B|}\right)^{-1}=\frac{|A\cap C|}{|C|},$$
+donc la loi de $X$ uniforme sur $B$ sachant que $X\in C\subset B$ est en fait la loi uniforme sur $C$.
+\paragraph{Simulation de variables uniformes sur le disque unit\'e :}
+Nous allons utiliser la m\'ethode de rejet, en observant que la loi uniforme sur le disque unit\'e est la loi uniforme sur le carr\'e $[-1,1]^2$, conditionn\'ee par le fait que la variable prend ses valeurs sur le disque. \\
+La loi uniforme sur $[-1,1]^2$ est ais\'ement simul\'ee en prenant deux variables ind\'ependantes $(X,Y)$, uniformes sur $[-1,1]$.
+Dans cet exemple, la loi auxilliaire $\mu$ s'écrit
+$$\mu(dx,dy)=\mathds{1}_{[0,1]}(x) \mathds{1}_{[0,1]}(y) dx dy$$ et $\eta=\mu(\cdot |A)$ où
+$$A=\left\{ (x^2+y^2\le 1\right\}.$$
+
+On rejette donc avec probabilité $1-\pi/4\simeq0.21$ soit un peu plus de $20$ pourcent des indices.
+
+
+
+
+\paragraph{Simulation de variables uniformes sur la boule unit\'e et sur la sph\`ere unit\'e:} La m\'ethode de rejet s'applique pour la mesure uniforme sur la boule unit\'e en dimension $N$ pour tout $N \geq 1$, \`a partir de la mesure uniforme sur l'hypercube $[-1,1]^N$, obtenue en prenant $N$ variables ind\'ependantes uniformes sur $[-1,1]$.
+
+
+Il y a cependant un probl\`eme pour $N$ grand car la probabilit\'e de garder un indice $k$ tend rapidement vers $0$ quand $N$ tend vers l'infini. Cette probabilit\'e est le quotient du volume de la boule par celui de l'hypercube, et on peut montrer que cela donne $\pi^{N/2}/2^N\Gamma(N/2 - 1)$, qui tend vers z\'ero plus qu'exponentiellement vite.
+
+Enfin, si on a des variables uniformes sur la boule unit\'e de $\mathbb{R}^N$, on obtient des uniformes sur la sph\`ere unit\'e en divisant les uniformes sur la boule par leur norme (admis ici).
+
+\subsubsection{Méthode du rejet}
+Ici, nous supposons que la loi de la variable aléatoire
+$X$
+d’intérêt (éventuellement
+multidimensionnelle) possède une densité
+$f$
+connue, mais dont la simulation directe n’est pas facile. Le principe de la méthode consiste à simuler une autre variable aléatoire
+$Y$
+de densité
+$g$
+et de conditionner par un événement $A$ tel que la loi de $Y$ conditionnelle est celle de $X$. Cette idée remonte à Von Neumann en 1947. La propriété s’énonce précisément ainsi.
+
+\begin{propfr}
+Soit $X$ et $Y$ deux v.a. de densités respectives $f$ et $g$ telles que
+$$f(x)\leq c\cdot g(x)$$pour une certaine constante $c$.
+
+Soit $U$ une variable aléatoire de loi uniforme sur $[0,1]$. Alors la loi de $Y$ sachant $\{cU g(Y)<f(Y)\}$ est la loi de $X$. De plus,
+$$\mathbb{P}[cU g(Y)<f(Y)]=1/c. $$
+\end{propfr}
+\begin{proof}
+Posons $A= \{cU g(Y)<f(Y)\}$. Pour tout borélien $B$, on a
+\begin{align*}
+\mathbb{P}[Y\in B|A]&=\mathbb{P}[Y\in B;A]/\mathbb{P}[A]\\
+&=\frac{1}{\mathbb{P}[A]}\int_{(y,u)\in \mathbb{R}^d\times [0,1]:y\in B,c\ u\ g(y)<f(y),g(y)\neq 0 }g(y)dydu\\
+&=\frac{1}{\mathbb{P}[A]}\int_{y\in \mathbb{R}^d:y\in B,g(y)\neq 0 }g(y)\frac{f(y)}{c\ g(y)}dy\\
+&=\frac{1}{c\ \mathbb{P}[A]}\int_{y\in  B }f(y)dy.
+\end{align*}
+Comme $\mathbb{P}[A]=1/c$ (en prenant $B=\mathbb{R}^d$ dans l'égalité), on trouve bien
+$$\mathbb{P}[Y\in B|A]=\int_{y\in  B }f(y)dy.$$
+\end{proof}
+\method{Méthode du rejet}{On simule plusieurs fois $Y$ de densité $g$ et $U$ uniforme jusqu'à ce que $cUg(Y)\leq f(Y)$. La dernière variable $Y$ suit la loi de $X$ de densité $f$.}
+Pour avoir un algorithme
+aussi rapide que possible, il est souhaitable de ne pas trop rejeter d'indices, et donc que $c$ soit
+aussi petit que possible. L'optimum est en prenant pour $c$ le maximum de $\rho$ mais dans certains cas il
+n'est pas facile \`a calculer, on se contente alors d'un majorant ``raisonnable''.
+
+
+\paragraph{Simulation de variables al\'eatoires gaussiennes:}
+
+
+Pour simuler une variable gaussienne centr\'ee r\'eduite, il peut \^etre malais\'e d'utiliser la fonction de r\'epartition car elle n'a pas d'expression en termes de fonctions ``usuelles''. On va donner deux méthodes de simulations, d'abord par la méthode du rejet, puis en utilisant un changement de variables.\\
+
+Pour la m\'ethode de rejet on peut choisir comme loi auxiliaire, la loi d'un produit d'une variable exponentielle de param\`etre $\lambda >0 $ (simul\'ee pr\'ec\'edemment) par une variable uniforme sur $\{-1,1\}$.
+Cette loi a pour densité par rapport \`a la mesure de Lebesgue
+$$f(x)=\frac{\lambda}{2} e^{-\lambda|x|}.$$
+En effet,
+$$\begin{aligned}
+\mathbb{E}(\phi(sE))&=\frac{1}{2}\mathbb{E}(\phi(-E))+\frac{1}{2}\mathbb{E}(\phi(E))\\
+&=\frac{1}{2}\int_0^\infty \phi(-x)\lambda \exp(-\lambda x) dx +\frac{1}{2}\int_0^\infty \phi(x)\lambda \exp(-\lambda x) dx
+\end{aligned}$$
+Ainsi, la densité
+$$\rho(x) =\frac{f(x)}{g(x)}= \sqrt{\frac{2}{\pi }}\frac{1}{\lambda}e^{\lambda|x|-x^2/2},$$
+dont le maximum est obtenu pour $ x = \pm \lambda$ (étudier le logarithme de $\rho$). Ce maximum peut \^etre pris pour $c$ et on a alors
+$c =  \sqrt{\frac{2}{\pi }}\frac{e^{\lambda^2/2}}{ \lambda}$.
+
+Afin d'optimiser la méthode, il faut choisir $c$ pour avoir une probabilité de rejet la plus faible possible. On rappelle que la probabilité de rejet vaut $1-1/c$, c'est à dire qu'on souhaite minimiser $c$ (ou de manière équivalente, on minimise son logarithme). Le choix de $\lambda$ optimisant $c$ est $\lambda = 1$, qui donne $c \simeq 1.31$ et une probabilité de rejeter de l'ordre de $24\%$. \bigskip\\
+On peut \'egalement utiliser la m\'ethode suivante, due \`a  Box and M\"uller.
+\begin{propfr}[Méthode de Box and M\"uller]
+Si $U,V$ sont des ind\'ependantes uniformes sur $[0,1]$, alors les variables aléatoires définies par
+$$ \sqrt{- 2 \log (U)} \cos(2 \pi V)\text{ et }\sqrt{- 2 \log (U)} \sin(2 \pi V)$$
+sont deux variables ind\'ependantes gaussiennes centr\'ees r\'eduites.
+\end{propfr}
+\begin{proof}
+Montrons que si $(X,Y)$ est un couple de variables gaussiennes centrées réduites indépendantes alors
+$$ (X,Y) \overset{\text{(loi)}}{=} (\sqrt{- 2 \log (U)} \cos(2 \pi V),\sqrt{- 2 \log (U)} \sin(2 \pi V),$$
+où $U$ et $V$ sont des variables aléatoires indépendantes uniformes sur $[0,1]$.\medskip\\
+Pour cela, nous allons faire des changements de variables successifs dans la loi de $(X,Y)$:
+$$(1/2\pi) e^{-(x^2 + y^2)/2} dx dy.$$
+En coordonn\'ees polaires, cela donne
+$$(1/2\pi)e^{-r^2/2} r dr d\theta,$$
+soit pour $s = r^2/2$,
+$$(1/2\pi) e^{-s} ds d \theta.$$
+On voit ainsi que l'on obtient ainsi la loi de deux variables ind\'ependantes, l'une $S$ exponentielle de param\`etre $1$ et l'autre uniforme $\theta$ sur $[0, \pi)$. Pour conclure il suffit de rappeller qu'on peut obtenir une variable exponentielle à partir d'une variable uniforme $U$ par $-\log(U)$. En utilisant le changement de variable $x = r \cos (\theta) = \sqrt{2 s} \cos (\theta)$ et $y = \sqrt{2s} \sin (\theta)$, on en d\'eduit que si $U$ et $V$ sont deux variables ind\'ependantes, uniforme sur $[0,1]$, alors $\sqrt{- 2 \log (U)} \cos(2 \pi V)$ et $\sqrt{- 2 \log (U)} \sin(2 \pi V)$ sont deux variables gaussiennes centr\'ees r\'eduites ind\'ependantes.
+\end{proof}
+
+%\paragraph{Simulation de vecteurs gaussiens:} A partir de variables gaussiennes ind\'ependantes, il est possible de construire des vecteurs gaussiens avec n'importe quelle moyenne et matrice de covariance. En effet, soit $N \geq 1$, soient $\mu$ un vecteur de $\mathbb{R}^N$, $\Sigma$ une matrice $N \times N$, sym\'etrique positive et $L$ une matrice $N \times N$ telle que $L^{\, t}L = \Sigma$. Si $X_1, \dots, X_N$ sont des gaussiennes centr\'ees r\'eduites ind\'ependantes, si $X$ est le vecteur de $\mathbb{R}^N$ de composantes $X_1, \dots,  X_N$, alors $\mu + L X$ est un vecteur gaussien de moyenne $\mu$ et de matrice de covariance $\Sigma$.
+%On peut prendre pour $L$ la racine carr\'ee de $\Sigma$, c'est \`a dire l'unique matrice sym\'etrique telle que $L^2 = \Sigma$, ou alors chercher $L$ triangulaire inf\'erieure, ce qui donne la {\it d\'ecomposition de Choleski}.
+
+Toutes les variables gaussiennes \`a valeurs r\'eelles peuvent \^etre imm\'ediatement obtenues \`a partir de variables gaussiennes centr\'ees r\'eduites.
+\begin{propfr}
+Soit $X$ est une variable gaussienne centr\'ee r\'eduite, alors $\sigma X + \mu$ est une variable gaussienne de moyenne $\mu$ et de variance $\sigma^2$.
+\end{propfr}
+\begin{proof}
+Soit $f$ une fonction continue bornée, alors
+\begin{equation*}
+\begin{aligned}
+\mathbb{E}(f(m+\sigma X))&=\int_{-\infty}^{\infty} f(m+\sigma x) \frac{1}{\sqrt{2\pi}}\exp\left(-\frac{x^2}{2}\right) dx\\
+&=\int_{-\infty}^{\infty} f(y) \frac{1}{\sqrt{2\pi\sigma^2}}\exp\left(-\frac{(y-m)^2}{2\sigma^2}\right) dy
+\end{aligned}
+\end{equation*}\end{proof}
+
+\section{Méthode de Monte Carlo}
+\subsection{Principe de la méthode}
+La méthode de Monte-Carlo consiste à obtenir une valeur approchée de l'espérance $\mathbb{E}[X]$ d'une variable aléatoire (intégrable) $X$ en simulant un grand nombre $N$ de variables aléatoires $X_1,\ldots,X_N$ indépendantes et de même loi que $X$, afin d'appliquer la loi forte des grands nombres :
+$$\mathbb{E}[X]\simeq \frac{X_1+\ldots+X_N}{N}.$$
+Ne pas oublier que pour une fonction mesurable $\varphi$ telle que $\varphi(X)$ est intégrable, les variables aléatoires $\varphi(X_1),\ldots,\varphi(X_N)$ sont indépendantes et de même loi que $\varphi(X)$, donc la loi forte des grands nombres s'écrit alors
+$$\mathbb{E}[\varphi(X)]\simeq \frac{\varphi(X_1)+\ldots+\varphi(X_N)}{N}.$$
+En particulier, pour un mesurable $A$, l'égalité précédente appliquée à l'indicatrice $\varphi=\mathds{1}_A$ nous donne que
+$$\mathbb{E}[\varphi(X)]=\mathbb{P}[X\in A]\simeq \frac{1}{N}\text{Card} \Big(\{n \text{ entre }1\text{ et }N \text{ tels que } X_n\in A\}\Big).$$
+Ceci rejoint parfaitement l'intuition qu'on a d'une probabilité $\mathbb{P}[X\in A]$ : c'est la proportion de $X$ qui tombe dans $A$ lorsqu'on tire un grand nombre de fois $X$.
+\method{Méthode de Monte-Carlo}{On simule $X_1,\ldots,X_N$ indépendantes de même loi que $X$. La proportion $$\frac{1}{N}\text{Card} \Big(\{n \text{ entre }1\text{ et }N \text{ tels que } X_n\in A\}\Big)$$
+d'incides tels que $X_n\in A$ est une approximation de $\mathbb{P}[X\in A]$.}
+
+\textbf{Exemple :} Si on connaît la mesure $|B|$ d'un domaine $B\subset \mathbb{R}^n$, pour estimer la mesure $|A|$ d'un domaine $A\subset B$, on peut considérer un point uniforme $X$ dans $B$ et observer que
+$$\mathbb{P}[X\in A]= |A|/|B|.$$
+Pour estimer $|A|$, il suffit donc d'estimer $\mathbb{P}[X\in A]$ ce qui revient à calculer la proportion
+$\frac{1}{N}\text{Card} \Big(\{n \text{ entre }1\text{ et }N \text{ tels que } X_n\in A\}\Big)$
+pour $X_n$ points tirés uniformément dans $|B|$.
+\subsection{Intervalle de confiance}
+Si $\varphi(X)^2$ est intégrable, l'erreur d'estimation s'obtient par le théorème central limite :
+$$\sqrt{N}\left(\frac{\varphi(X_1)+\ldots+\varphi(X_N)}{N}-\mathbb{E}[\varphi(X)]\right)$$
+converge en loi vers une gaussienne centrée de variance $\sigma^2=\text{Var}(\varphi(X))$. En particulier,
+$$\mathbb{P}\left[\left|\frac{\varphi(X_1)+\ldots+\varphi(X_N)}{N}-\mathbb{E}[\varphi(X)]\right|\leq\frac{a\sigma}{\sqrt{N}}\right]\simeq \mathbb{P}\left[|Z|\leq a\right],$$
+où $Z$ est une gaussienne centrée réduite. On en déduit alors l'intervalle de confiance suivant : avec probabilité $\mathbb{P}\left[|Z|\leq a\right]$, la vraie valeur $\mathbb{E}[\varphi(X)]$ appartient à l'intervalle aléatoire de centre $\frac{\varphi(X_1)+\ldots+\varphi(X_N)}{N}$ et de demi-largeur $\frac{a\sigma}{\sqrt{N}}$.
+
+En pratique, on fixe un niveau de confiance $\mathbb{P}\left[|Z|\leq a\right]$ proche de $1$ (par exemple $0,95$), et on cherche le $a$ qui nous donne ce niveau à l'aide de tables de valeurs (par exemple, pour $a=1,96$, $\mathbb{P}\left[|Z|\leq a\right]\simeq 0.95$). Ceci nous donne : avec probabilité $0,95$, la vraie valeur $\mathbb{E}[\varphi(X)]$ appartient à l'intervalle aléatoire de centre $\frac{\varphi(X_1)+\ldots+\varphi(X_N)}{N}$ et de demi-largeur $\frac{1,96\sigma}{\sqrt{N}}$.
+
+L'écart-type $\sigma$ n'est pas forcément connu, et il faut parfois l'estimer, ou au moins le majorer, pour assurer le niveau de confiance. Dans le cas où on estime une probabilité $\mathbb{P}[X\in A]$ (c'est le cas particulier où $\varphi=\mathds{1}_A$,), la variance est celle d'une Bernoulli, que l'on peut toujours majorer par $1/4$. On en déduit alors l'intervalle de confiance suivant : avec probabilité supérieure à $\mathbb{P}\left[|Z|\leq a\right]$, la vraie valeur $\mathbb{P}[X\in A]$ appartient à l'intervalle aléatoire de centre $\frac{1}{N}\text{Card} \Big(\{n \text{ entre }1\text{ et }N \text{ tels que } X_n\in A\}\Big)$ et de demi-largeur $\frac{a}{2\sqrt{N}}$.
+
+Par exemple, pour $a=1,96$ de telle sorte que $\mathbb{P}\left[|Z|\leq a\right]\simeq 1,96$, ceci donne :
+\method{Intervalle de confiance pour Monte-Carlo}{On simule $X_1,\ldots,X_N$ indépendantes de même loi que $X$. Avec probabilité supérieure à $0,95$, la quantité $\mathbb{P}[X\in A]$ appartient à l'intervalle aléatoire de centre $\frac{1}{N}\text{Card} \Big(\{n \text{ entre }1\text{ et }N \text{ tels que } X_n\in A\}\Big)$ et de demi-largeur $\frac{0,98}{\sqrt{N}}$.}
+
+\textbf{Exemple :} Pour revenir à l'exemple de la section précédente, où on estime l'aire $|A|$ d'un domaine $A\subset B \subset \mathbb{R}^n$, on obtient donc un intervalle de confiance pour
+$$\mathbb{P}[X\in A]= |A|/|B|$$
+centré en $\frac{1}{N}\text{Card} \Big(\{n \text{ entre }1\text{ et }N \text{ tels que } X_n\in A\}\Big)$ et de demi-largeur $\frac{0,98}{\sqrt{N}}$. Pour en faire un intervalle de confiance pour $|A|$, il suffit de le multiplier par $|B|$.
+
+%\section{Quantification de Lloyd}
+%Fixons une variable aléatoire $X$ réelle à densité $f$ par rapport à la mesure de Lebesgue.
+%Dans ce contexte, la quantification
+%signifie l'approximation de $X$ par une variable aléatoire discrète.
+%
+%Soit $x=\{x_1\leq x_2\leq \ldots \leq x_N\}$ un $N$-uplet de réels. La famille de $N$ intervalles de $\mathbb{R}$ définis par
+%\begin{multline*} C_1(x)=\left]-\infty;\frac{x_1+x_2}{2}\right] , C_2(x)=\left[\frac{x_1+x_2}{2};\frac{x_2+x_3}{2}\right],\ldots,\\
+%C_{N-1}(x)=\left[\frac{x_{N-2}+x_{N-1}}{2};\frac{x_{N-1}+x_N}{2}\right],C_N(x)=\left[\frac{x_{N-1}+x_N}{2};+\infty\right[ \end{multline*}
+%est appelée mosaïque (ou diagramme) de Voronoï de $x$. Les $C_i(x)$ sont les
+%cellules fermées de Voronoï engendrées par $x$. Ainsi, $C_i(x)$ consiste en tous les réels
+%$y$ tels que $x_i$ est le plus proche de $y$ parmi les points $x_j$ de $x$.
+%
+%Pour un $N$-uplet $x=\{x_1\leq x_2\leq \ldots \leq x_N\}$ de réels, on appelle quantificateur de
+%Lloyd de $X$ par la mosaïque de Voronoï de $x$, une variable aléatoire discrète $\hat{X}^x$
+%à valeurs dans $\{x_1, x_2, \ldots , x_N\}$ dont la loi vérifie
+%$\mathbb{P}[\hat{X}^x=x_i]= \mathbb{P}[X\in C_i(x)]$($=\int_{C_i(x^{(n)})}f(t)dt$).
+%Autrement dit, $\hat{X}^x$ est la projection selon le plus proche voisin de la variable aléatoire
+%$X$ sur la mosaïque de Voronoï de $x$.
+%
+%A cette étape, le problème est de trouver un $N$-uplet $x=\{x_1\leq x_2\leq \ldots \leq x_N\}$ de telle sorte que le quantificateur $\hat{X}^x$ soit bon. L'approche du point fixe de Lloyd consiste à définir récursivement une suite de $N$-uplets $(x^{(n)})_{n\geq 0}$ partant d'un point initial $x^{(0)}=\{x_1^{(0)}\leq x_2^{(0)}\leq \ldots \leq x_N^{(0)}\}$ par la relation
+%$$x_i^{(n+1)}=\frac{1}{\int_{C_i(x^{(n)})}f(t)dt}\int_{C_i(x^{(n)})}t f(t)dt .$$
+%Autrement dit, chaque nouveau $x_i^{(n+1)}$ est calculé comme la moyenne de $X$ conditionné à être dans $ C_i(x^{(n)})$. On peut en déduire que les quantificateurs associés aux $N$-uplets $(X^{(n)})_{n\geq 0}$ satisfont la relation
+%$$\hat{X}^{x^{(n+1)}}=\mathbb{E}[X|\hat{X}^{x^{(n)}}],$$
+%ce qui en particulier implique que l'erreur en norme $L^2$ diminue :
+%$$ \|X-\hat{X}^{x^{(n+1)}}\|_2<\|X-\hat{X}^{x^{(n)}}\|_2.$$
+%Au bout d'un moment, le $N$-uplet tend à se stabiliser vers un minimiseur de l'erreur quadratique parmi les quantificateurs à $N$ points.
+%\method{Méthode de Lloyd}{
+%\ $\tt initialiser$ $\tt un$ $N$-$\tt uplet\ x_1\leq x_2\leq \ldots \leq x_N$\\
+%\ $\tt (C_i)_i=cellules\ de\ Voronoi\ engendrees\ par\ les\ x_i$\\
+%\ $\tt (p_i)_i=masses$ $\int_{C_i(x)}f(t)dt;$\\
+%\ ${\tt (x_i)_i=nouvelles\ positions }\frac{1}{\int_{C_i(x)}f(t)dt}\int_{C_i(x)}t f(t)dt$\\ (on pourra utiliser les fonctions d'intégration déjà implémentées pour ces étapes)\\
+%\ $\tt recommencer\ les$ $3$ $\tt dernieres\ etapes\ autant\ de\ fois\ qu'on\ veut$\\
+%\ $\tt (C_i)_i=cellules\ de\ Voronoi\ engendrees\ par\ les\ x_i$\\
+%\ $\tt (p_i)_i=masses$ $\int_{C_i(x)}f(t)dt;$\\
+%Le quantificateur  de Lloyd de $X$ à $N$ points est alors la variable qui donne une masse $p_i$ au point $x_i$.
+%En particulier, une approximation de $\mathbb{E}[\varphi(X)]$ donnée par ce quantificateur est la suivante
+%$\mathbb{E}[\varphi(X)]\simeq \sum_{i=1}^Np_i\varphi(x_i).$}
+\chapter{Modèle gaussien (2 semaine)}
+
+\section{Définitions et simulations}
+\begin{defnfr}Une variable aléatoire \textbf{gaussienne centrée réduite} est une variable aléatoire réelle de densité
+$$f(x)=\frac{1}{\sqrt{2\pi}}\exp\left(-\frac{x^2}{2}\right).$$
+Une variable aléatoire \textbf{gaussienne} est une variable aléatoire $X=\mu+\sigma Z$ avec $\mu,\sigma\in \mathbb{R}$ et $Z$ une variable aléatoire gaussienne centrée réduite. On note $X\sim \mathcal{N}(\mu,\sigma^2)$. Si $\sigma\neq 0$, la densité de $X$ est alors
+$$f(x)=\frac{1}{\sqrt{2\pi\sigma^2}}\exp\left(-\frac{(x-\mu)^2}{2\sigma^2}\right).$$
+\end{defnfr}
+Rappelons que pour simuler une variable aléatoire centrée réduite, on peut utiliser la méthode de Box-Müller :
+si $U,V$ sont des ind\'ependantes uniformes sur $[0,1]$, alors les variables aléatoires définies par
+$$ \sqrt{- 2 \log (U)} \cos(2 \pi V)\text{ et }\sqrt{- 2 \log (U)} \sin(2 \pi V)$$
+sont deux variables ind\'ependantes gaussiennes centr\'ees r\'eduites. Ensuite, en multipliant par $\sigma$ et en ajoutant $\mu$, on obtient une une variable aléatoire gaussienne de moyenne $\mu$ et de variance $\sigma^2$.
+\begin{defnfr}Un vecteur aléatoire $X=(X_1,\ldots,X_n)$ est un vecteur \textbf{gaussien} si toute combinaison linéaire de ses composantes est une variable aléatoire gaussienne. La moyenne $\mu$ de $X$, et la matrice de covariance $\Sigma$ de $X$ caractérisent la loi de $X$, et on note $X\sim \mathcal{N}(\mu,\Sigma)$.
+\end{defnfr}
+Pour rappel, le vecteur moyenne $\mu$ est
+$$\mathbb{E}[X]=\left(\begin{array}{c}
+\mathbb{E}[X_1] \\
+\vdots\\
+\mathbb{E}[X_n]
+\end{array} \right) $$
+et la matrice de covariance $\Sigma$ est la matrice $n\times n$
+\begin{align*}
+\mathbb{V}ar(X)&=\mathbb{E}\left[(X-\mathbb{E}[X])\cdot (X-\mathbb{E}[X])^T\right]\\
+&=\mathbb{E}\left[\left(\begin{array}{c}
+X_1-\mathbb{E}[X_1] \\
+\vdots\\
+X_n-\mathbb{E}[X_n]
+\end{array} \right)\cdot \left(\begin{array}{ccc}
+X_1-\mathbb{E}[X_1], \cdots, X_n-\mathbb{E}[X_n]
+\end{array} \right) \right],
+\end{align*}
+(autrement dit, $\Sigma_{i,j}=cov(X_i,X_j)$).
+
+
+Attention ! Il ne suffit pas que toutes les composantes d'un vecteur soit des gaussiennes pour que le vecteur soit gaussien. Pour montrer qu'un vecteur est gaussien, on peut mettre en place plusieurs stratégies :
+\begin{itemize}
+\item on l'exprime comme combinaisons linéaires d'un autre vecteur gaussien,
+\item ou bien on calcule la densité. Si $\det(\Sigma)\neq 0$, la densité de $X$ par rapport à la mesure de Lebesgue sur $\mathbb{R}^n$ est alors
+$$f(x)=\frac{1}{\sqrt{(2\pi)^d\det(\Sigma)}}\exp\left(-\frac{(x-\mu)^T\Sigma^{-1}(x-\mu)}{2}\right),$$
+où $(x-\mu)$ et $(x-\mu)^T$ désignent respectivement un vecteur colonne et un vecteur ligne.
+\item Une autre possibilité est de calculer la fonction caractéristique. La fonction caractéristique d'un vecteur gaussien $X$ de moyenne $\mu$ et de matrice de covariance $\Sigma$ est donnée par
+$$\varphi_X(z)\ \ (=\mathbb{E}[e^{i\langle z,X\rangle}])\ \ =\exp(i \langle z,\mu\rangle -\langle z,\Sigma z\rangle),$$
+ce qui est l'outil principal pour montrer des égalités en loi, notamment celles-ci.
+\end{itemize}
+\begin{propfr}\begin{enumerate}
+\item Si $X\sim \mathcal{N}(\mu,\Sigma)$ (en colonne), alors $AX+b\sim \mathcal{N}(A\mu+b,A \Sigma A^T)$
+\item Si $X\sim \mathcal{N}(\mu,\Sigma)$, alors pour tout $1\leq i,j\leq n$, on a $X_i$ et $X_j$ indépendants si et seulement si $\Sigma_{i,j}=0$.
+\end{enumerate}
+\end{propfr}
+\begin{proof}
+Il suffit à chaque fois de calculer la fonction caractéristique.
+\end{proof}
+On peut donc utiliser la simulation de variables gaussiennes indépendantes pour obtenir un vecteur $X\sim \mathcal{N}(\mu,I_n)$. Ensuite, on peut le multiplier par $A$ tel que $A A^T=\Sigma$ pour obtenir $AX\sim \mathcal{N}(\mu,AA^T)$. La décomposition $\Sigma=A A^T$ peut se faire par exemple à l'ordinateur via la \textbf{décomposition de Cholesky}.
+\section{Estimateur et conditionnement}
+Etant donné un couple de v.a. $(X,Y)$, on souhaite estimer $X$ en observant $Y$. Une stratégie naturelle est de prendre, parmi les fonctions $f(Y)$ de $Y$, la variable aléatoire $f(Y)$ qui minimise l'erreur quadratique
+$$\|X-f(Y)\|_{L^2}:=\mathbb{E}[(X-f(Y))^2]^{1/2}.$$
+On note $L^2(Y)$ l'espace vectoriel $\{f(Y):\text{fonction}\ f \ \text{telle que}\ f(Y)\ \text{soit de carré intégrable}\}.$ On cherche donc $Z\in L^2(Y)$ tel que $\|X-Z\|_{L^2}$ soit minimal.
+
+La réponse est donnée par la projection orthogonale de $X$ sur $L^2(Y)$ dans l'espace de Hilbert des variables de carré intégrable. En effet, en utilisant le produit scalaire
+$$\langle X,Z\rangle_{L^2}:=\mathbb{E}[XZ],$$
+on est dans le cadre suivant.
+\begin{propfr}[Projection dans un Hilbert] Soit $\big(H,\langle\cdot,\cdot\rangle,\|\cdot\|\big)$ un espace de Hilbert et $S$ un sous-espace vectoriel ferm\'e de $H$. Alors pour tout $x \in H$,  il existe un unique $p(x) \in S$ tel que $$\|x-p(x)\|=\inf_{z \in S}\|x-z\|.$$ De plus il v\'erifie $\forall z \in S, \left\langle x-p(x),z\right\rangle=0$ et cette propri\'et\'e le caract\'erise. On dit que $p(x)$ est la projection orthogonale de
+$x$ sur $S$.
+\end{propfr}
+
+\begin{defnfr}\'Etant donné une variable aléatoire $X$ et un vecteur $Y$ de variables aléatoires, on appelle espérance conditionnelle de $X$ sachant $Y$ la projection orthogonale de $X$ sur $L^2(Y)$, c'est-à-dire la seule variable aléatoire $E(X|Y)\in L^2(Y)$ qui vérifie
+ $$E\big((X-E(X|Y))Z\big)=0$$
+ pour tout $Z\in L^2(Y)$.
+\end{defnfr}
+L'espérance conditionnelle minimise l'erreur quadratique $\|X-\mathbb{E}[X|Y]\|_{L^2}$. Bien entendu, si $X$ est un vecteur colonne, on définit
+$$\mathbb{E}[X|Y]=\left(\begin{array}{c}
+\mathbb{E}[X_1|Y] \\
+\vdots\\
+\mathbb{E}[X_n|Y]
+\end{array} \right).$$
+%C'est la seule variable aléatoire $E(Y|X)\in L^2(Y)$ qui vérifie
+% $$E\big((E(Y|X)-Y)^TZ\big)=0$$
+% pour tout $Z$ vecteur de $L^2(Y)\times \ldots \times L^2(Y)$. Elle minimise l'erreur quadratique $\|X-\mathbb{E}[X|Y]\|_{L^2}$
+On est souvent amener à considérer des vecteurs gaussiens $(X_1,\ldots,X_n,Y_1,\ldots Y_m)\in \mathbb{R}^{n+m}$ et à n'en observer qu'une partie $Y=(Y_1,\ldots,Y_m)$. Un estimateur naturel de $X_i$ est alors donnée par l'espérance conditionnelle $\mathbb{E}[X_i|Y]$ de $X_i$ sachant $Y$. Les calculs sont particulièrement agréables comme le montre les propriétés suivantes :
+
+\begin{propfr}
+\label{prop:cond_gauss}
+Soit $(X,Y)=(X_1,\ldots,X_n,Y_1,\ldots Y_m)\in \mathbb{R}^{n+m}$ un vecteur gaussien. Alors la variable aléatoire $\mathbb{E}[X_i|Y]$ est une fonction affine de $Y=(Y_1,\ldots,Y_m)$.
+
+De plus, si $\left(\begin{array}{c}
+X\\
+Y
+\end{array}\right)\sim\mathcal{N}(\mu,\Sigma)$ (en vecteurs colonnes) avec
+$$\mu=\left(\begin{array}{c}
+\mu_X\\
+\mu_Y
+\end{array} \right),\ \ \Sigma=\left(\begin{array}{cc}
+\Sigma_X& \Sigma_{XY}\\
+\Sigma_{YX}& \Sigma_Y
+\end{array}\right), $$
+on a
+$$\mathbb{E}[X|Y]=\mu_X+\Sigma_{XY}\Sigma_Y^{-1}(Y-\mu_Y).$$
+\end{propfr}
+La première partie nous dit que la projection est en fait une projection sur un espace vectoriel de dimension fini, ce qui rend les calculs plus faciles.
+\begin{proof}
+Commençons par remarquer que le vecteur $X-\left(\mu_X+\Sigma_{XY}\Sigma_Y^{-1}(Y-\mu_Y)\right)$ est centré.
+En conséquence, sa covariance avec une variable aléatoire $Z$ s'écrit
+$$Cov(X-\left(\mu_X+\Sigma_{XY}\Sigma_Y^{-1}(Y-\mu_Y)\right), Z)=\E\left[(X-\left(\mu_X+\Sigma_{XY}\Sigma_Y^{-1}(Y-\mu_Y)\right))Z\right].$$
+
+On vérifie que les coordonnées de $X-\left(\mu_X+\Sigma_{XY}\Sigma_Y^{-1}(Y-\mu_Y)\right)$ sont orthogonales à $Y_1,\ldots,Y_n$ en calculant
+\begin{align*}
+\mathbb{E}&\left[\left(X-\mu_X-\Sigma_{XY}\Sigma_Y^{-1}(Y-\mu_Y)\right) Y^T\right]\\
+&=\E (X Y^T)-\mu_X\E(Y^T)+\Sigma_{XY}\Sigma_Y^{-1}\E((Y-\mu_Y)Y^T)\\
+&=\Sigma_{XY}+\mu_x\mu_Y^T-\mu_X\mu_Y^T+\Sigma_{XY}\Sigma_Y^{-1}(\Sigma_Y)\\
+&=0
+\end{align*}
+Grâce à la remarque précédente, on en déduit que les deux vecteurs ont une covariance nulle, et comme le vecteur est gaussien, cela signifie que les coordonnées sont indépendantes des $Y_i$.
+
+Chaque coordonnée est alors indépendantes de toute variable aléatoire $Z\in L^2(Y)$. On a donc
+$$E\big((X_i-E(X_i|Y))Z\big)=0$$
+pour tout $Z\in L^2(Y)$, comme voulu.
+\end{proof}
+
+Plus généralement, on peut montrer que
+\begin{propfr}
+Soit  $\left(\begin{array}{c}
+X\\
+Y
+\end{array}\right)\sim\mathcal{N}(\mu,\Sigma)$ un vecteur gaussien (en vecteurs colonnes) avec
+$$\mu=\left(\begin{array}{c}
+\mu_X\\
+\mu_Y
+\end{array} \right),\ \ \Sigma=\left(\begin{array}{cc}
+\Sigma_X& \Sigma_{XY}\\
+\Sigma_{YX}& \Sigma_Y
+\end{array}\right), $$
+La loi de $X-\mathbb{E}[X|Y]$ est un loi gaussienne $\mathcal{N}(0,\Sigma_{X|Y})$ avec
+$$\Sigma_{X|Y}=\Sigma_X-\Sigma_{XY}\Sigma_Y^{-1}\Sigma_{YX}.$$
+\end{propfr}
+
+\begin{proof}Le caractère gaussien vient du fait que tout  combinaison linéaire d'un vecteur gaussien l'est également. Ensuite, il suffit de calculer explicitement la covariance.
+\end{proof}
+
+\paragraph{Résumé}
+Dans le cadre des vecteurs gaussiens $\begin{pmatrix}
+X\\Y
+\end{pmatrix}$ on peut écrire
+\[ X= \E(X\lvert Y) + X-\E(X\lvert Y)\]
+avec $\E(X\lvert Y)$ et $X-\E(X\lvert Y)$ deux vecteurs gaussiens indépendants:
+\begin{itemize}
+\item $\mathbb{E}[X|Y]=\mu_X+\Sigma_{XY}\Sigma_Y^{-1}(Y-\mu_Y),$ et en particulier, on retrouve que $\E(\mathbb{E}[X|Y])=\mu_x$.
+\item $X-\E(X\lvert Y)$ a pour loi $\mathcal{N}(0,\Sigma_{X|Y})$ avec
+$$\Sigma_{X|Y}=\Sigma_X-\Sigma_{XY}\Sigma_Y^{-1}\Sigma_{YX}.$$
+Comme corollaire, on peut donc obtenir des intervalles de confiance pour l'estimateur $\mathbb{E}[X|Y=y]$ de $X$.
+\end{itemize}
+
+\textit{
+\textbf{Attention !} On dit parfois par abus de langage, que la loi de $X$ sachant $Y$ est celle d'un vecteur gaussien de moyenne $\E(X\lvert Y)$ et de matrice de covariance $\Sigma_{X\lvert Y}$.}
+
+
+
+
+
+
+\section{Filtre de Kalman}
+
+On s'intéresse à un état $x_k\in \mathbb{R}^n$ qui évolue selon un temps discret. On a donc une suite $(x_k)_{k\geq 0}$ de variables aléatoires. On veut
+\begin{itemize}\item une estimation de l'état $x_k$ au cours du temps ;
+\item à partir d'observations incomplètes ou bruitées de $x_k$ ;
+\item connaissant un modèle théorique d'évolution pour $x_k$.
+\end{itemize}
+
+\paragraph{Historiquement} Ce problème s'est posé dans les années 1960 pour suivre la trajectoire des modules Apollo. Il fallait estimer la position $x_k$ à partir des mesures terrestres $y_k$ (soumis à une certaine incertitude), et connaissant un modèle physique $x_{k+1}=Fx_k$ (déplacement d'un point dans un champ de gravité) soumis encore une fois à une certaine incertitude des forces environnantes.
+
+
+\paragraph{Le modèle}
+
+Précisons notre modèle théorique faisant intervenir un certain aléas. On a un modèle linéaire pour l'évolution de $(x_k)_{k\geq 0}$
+$$x_{k+1}=Fx_k+ \epsilon_k$$
+où $F$ est une matrice $n\times n$ connue et $(\epsilon_k)_{k\geq 0}$ une suite indépendantes de gaussiennes centrée $\mathcal{N}(0,Q)$ de taille $n$.
+
+Malheureusement on a ni accès aux $(\epsilon_k)_{k\geq 0}$ ni aux $(x_k)_{k\geq 0}$. Pour connaître $x_k$, on a des observations indirectes. On a accès à des mesures $y_k\in \mathbb{R}^m$ qui sont des transformations linéaires bruitées de $x_k$:
+$$y_{k}=Hx_k+ \eta_k$$
+où $H$ est une matrice $m\times n $ et $(\eta_k)_{k\geq 0}$ une suite indépendantes de gaussiennes centrée $\mathcal{N}(0,R)$ de taille $m$.
+
+Pour avoir un modèle théorique d'évolution, il est parfois utile d'intégrer dans l'état $x_k$ des grandeurs auxiliaires en plus des grandeurs d'intérêt, comme dans les deux exemples suivants, où on rajoute la vitesse en plus de la position.
+
+\paragraph{Exemple 1 :}
+
+Si on veut modéliser la position d'un véhicule avec deux coordonnées $(x,y)$, on utilise pour notre modèle une version discrétisée (avec un pas $h=\Delta t$) de l'équation position/vitesse $v^x=\frac{d}{dt}x$ et  $v^y=\frac{d}{dt}y$ : c'est-à-dire $x_{k+1}=x_{k}+h\cdot v^x_k$ et $y_{k+1}=y_{k}+h\cdot v^y_k$. Le modèle d'évolution des coordonnées positions/vitesses s'écrit alors
+$$\left(\begin{array}{c}
+x_{k+1}\\
+y_{k+1}\\
+v^x_{k+1}\\
+v^y_{k+1}
+\end{array} \right) =F\cdot \left(\begin{array}{c}
+x_{k}\\
+y_{k}\\
+v^x_{k}\\
+v^y_{k}
+\end{array} \right) +\epsilon_k,$$
+avec
+$$F=\left(\begin{array}{cccc}
+1&0&h&0\\
+0&1&0&h\\
+0&0&1&0\\
+0&0&0&1
+\end{array}\right).$$
+Le GPS nous donne la position, donc on récupère les coordonnées bruitées
+$$\left(\begin{array}{c}
+\tilde{x}_{k}\\
+\tilde{y}_{k}\\
+\end{array} \right) =H\cdot \left(\begin{array}{c}
+x_{k}\\
+y_{k}\\
+v^x_{k}\\
+v^y_{k}
+\end{array} \right) +\eta_k,$$
+avec
+$$H= \left(\begin{array}{cccc}
+1&0&0&0\\
+0&1&0&0
+\end{array}\right).$$
+
+\paragraph{Exemple 2 :}
+
+Si on veut modéliser les oscillations $x(t)$ d'un pendule soumis à l'équation
+$$x''(t)=-\omega^2 x(t),$$ on va formuler l'évolution sous la forme vectorielle
+$y'(t)=Ay(t)$
+pour le vecteur $y(t)=\left( \begin{array}{c}
+x(t)\\
+x'(t)
+\end{array}\right)$ et la matrice $A=\left( \begin{array}{cc}
+0& 1\\
+-\omega^2 & 0
+\end{array}\right).$
+On a donc $y(t+h)=e^{hA}y(t).$ Pour utiliser le filtre de Kalman, on écrit notre modèle sous une version discrétisée (avec un pas $h=\Delta t$) :
+$$z_{k+1}=e^{hA}z_k+\sigma \epsilon_k,$$
+pour des vecteurs gaussiens de $\mathbb{R}^2$, avec $\sigma>0$. La  variance du bruit $\sigma\epsilon_k$ est $\left(\begin{array}{cc}
+\sigma^2& 0\\
+0& \sigma^2
+\end{array}\right)$.
+On peut vérifier que
+$$e^{hA}=\left( \begin{array}{cc}
+\cos(\omega h)& \frac{1}{\omega}\sin(\omega h)\\
+-\omega \sin(\omega h) & \cos(\omega h)
+\end{array}\right)$$
+(en dérivant par rapport à $h$ par exemple, ou en diagonalisant $A$). On ne mesure que  la position, donc on récupère la première coordonnée de $z_n$  bruitée
+$$w_k =H\cdot z_k+\delta \eta_k,$$
+avec
+$H= \left(\begin{array}{cc}
+1&0
+\end{array}\right),$
+et $\eta_n$ des gaussiennes (la variance du bruit $\delta \eta_k$ est $\delta^2$).
+
+
+\paragraph{Idée générale du filtre de Kalman}
+On va estimer l'état $x_{k+1}$ à partir d'une estimation de $x_k$ (calculée précédemment) et de l'observation $y_{k+1}$.
+
+Cette estimation se fait en deux étapes :
+\begin{itemize}
+\item On appellera $\hat{x}_{k|k}$ l'estimation de $x_{k}$ à partir des données jusqu'à l'instant $k$ : c'est-à-dire l'espérance conditionnelle de $x_{k}$ sachant $(y_0,\ldots,y_{k})$.
+\item On va noter d'autre part $\hat{x}_{k+1|k}$ l'estimation de $x_{k+1}$ à partir des données jusqu'à l'instant $k$ : c'est-à-dire l'espérance conditionnelle de $x_{k+1}$ sachant $(y_0,\ldots,y_k)$.
+\item
+\end{itemize}
+
+D'après la section précédente,
+\[
+\hat{x}_{k|k}= \E\left(x_k\lvert (y_0,\ldots,y_k)\right)
+\]
+et
+\[
+x_k-\hat{x}_{k|k}\sim \mathcal{N}\left( 0, P_{k| k}\right)\,.\]
+on dit alors que la loi de $x_{k}$ sachant $(y_0,\ldots,y_k)$ est une gaussienne $\mathcal{N}(\hat{x}_{k|k},P_{k|k})$.
+
+De façon similaire,  on note
+\[\E(x_{k+1}|(y_0\cdots, y_k)) =\hat{x}_{k+1|k}\]
+et \[x_{k+1}-E(x_{k+1}|(y_0\cdots, y_k))\sim\mathcal{N}(0,P_{k+1|k})\]
+
+Les espérances conditionnelles $\hat{x}_{k|k}$ et $\hat{x}_{k+1|k}$ et les matrices de covariance $P_{k|k}$ et $P_{k+1|k}$ sont des quantités qu'on peut calculer au fur et à mesure grâce à la proposition suivante.
+
+\begin{propfr}[Filtre de Kalman]
+Récursivement, on a
+\begin{itemize}
+\item $\hat{x}_{k+1|k}=F\hat{x}_{k|k}$ ;
+\item $P_{k+1|k}=F \cdot P_{k|k}\cdot F^T+Q$ ;
+\end{itemize}
+et d'autre part on notera $K_{k+1}=P_{k+1|k}H^T(HP_{k+1|k} H^T+R)^{-1}$, on a alors
+\begin{itemize}
+\item $\hat{x}_{k+1|k+1}=\hat{x}_{k+1|k}+K_{k+1}(y_{k+1}-H\hat{x}_{k+1|k})$ ;
+\item $P_{k+1|k+1}=(I-K_{k+1}H)P_{k+1|k}$.
+\end{itemize}
+\end{propfr}
+
+
+Comme prévu, on utilise donc les formules en 2 temps :\begin{itemize}
+\item \textbf{Etape de prédiction} pour passer de $(\hat{x}_{k|k},P_{k|k})$ à $(\hat{x}_{k+1|k},P_{k+1|k})$ ;
+\item \textbf{Etape de correction} pour passer de $(\hat{x}_{k+1|k},P_{k+1|k})$ à $(\hat{x}_{k+1|k+1},P_{k+1|k+1})$.
+\end{itemize}
+\medskip
+
+Remarquons que l'estimation initiale $\hat{x}_{0|0}$ et sa variance  $P_{0|0}$ sont nécessaires mais pas toujours disponibles. Si l'état initial $x_0$ est connu avec certitude, prendre $\hat{x}_{0|0}=x_0$ et  $P_{0|0}=0$. Sinon, il faut utiliser une première mesure $y_0$ de $x_0$.
+
+
+\begin{proof}
+\textbf{Prédiction}
+Pour obtenir les formules remarquons que
+$x_{k+1}=Fx_k+\epsilon_k.$
+En conditionnant par $(y_0,\ldots,y_{k})$,
+on obtient
+\[ \E(x_{k+1}| (y_0,\ldots,y_{k})) = F\E(x_k|(y_0,\ldots,y_{k})) +\E(\epsilon_k|(y_0,\ldots,y_{k}))\]
+Comme $\epsilon_k$ est indépendant de $x_0, \cdots x_k$ et donc de $y_0, \cdots y_k$,  $\E(\epsilon_k|(y_0,\ldots,y_{k}))=\E(\epsilon_k)=0$. On en déduit donc que
+$$\hat{x}_{k+1|k}=F\hat{x}_{k|k}$$
+
+Pour ce qui est de la variance :
+\begin{align*}
+P_{k+1|k}&= \Var\left(x_{k+1} - \E(x_{k+1}|( y_0 \cdots y_k)\right) \\
+&= \Var(x_{k+1}-\hat{x}_{k+1|k})\\
+&=  \Var(F(x_k-\hat{x}_{k|k}) +\epsilon_k)
+\end{align*}
+Or comme les deux variables aléatoires sont indépendantes, leurs variances se somment :
+\begin{align*}
+P_{k+1|k} &= \Var(F(x_k-\hat{x}_{k|k}) )+\Var(\epsilon_k)\\
+&=F \cdot P_{k|k}\cdot F^T+Q\,.
+\end{align*}
+
+
+
+\textbf{Correction}Pour cette étape on utilise le fait que $$y_{k+1}=Hx_{k+1}+\eta_{k+1}$$
+Ainsi, on peut écrire que $$\left(\begin{array}{c}
+x_{k+1}\\
+y_{k+1}
+\end{array} \right)=\left( \begin{array}{c}
+I_n\\
+H
+\end{array}\right)\cdot x_{k+1}+\left(\begin{array}{c}
+0\\
+\eta_{k+1}
+\end{array} \right).$$
+En conditionnant par $(y_0,\ldots,y_{k})$,
+\begin{align*}
+\E\left(
+\begin{pmatrix}
+x_{k+1}\\y_{k+1}
+\end{pmatrix} |(y_0,\ldots,y_{k}) \right)
+& = \begin{pmatrix}\hat{x}_{k+1|k}\\ \E (y_{k+1}| (y_0,\ldots,y_{k}))\end{pmatrix} \\
+&=\begin{pmatrix}
+\hat{x}_{k+1|k}\\
+H\cdot \hat{x}_{k+1|k}
+\end{pmatrix}
+\end{align*}
+De plus
+\[\begin{pmatrix}
+x_{k+1}\\
+y_{k+1}
+\end{pmatrix} -\E\left(
+\begin{pmatrix}
+x_{k+1}\\
+y_{k+1}
+\end{pmatrix} |(y_0,\ldots,y_{k}) \right) \sim \mathcal{N} \left( 0, \left(\begin{array}{c}
+I_n\\
+H
+\end{array}\right)\cdot P_{k+1|k} \cdot  \left(\begin{array}{c}
+I_n\\
+H
+\end{array}\right)^T +\left(\begin{array}{cc}
+0&0\\
+0&R
+\end{array}\right) \right),\]
+ce qui se réécrit
+\[\begin{pmatrix}
+x_{k+1}-\hat{x}_{k+1|k}\\
+y_{k+1}-H\hat{x}_{k+1|k}
+\end{pmatrix}
+\sim \mathcal{N} \left( 0,\begin{pmatrix}
+P_{k+1|k}& P_{k+1|k}\cdot H^T\\
+H\cdot P_{k+1|k}& H\cdot P_{k+1|k}H^T+R
+\end{pmatrix}\right),
+\]
+En particulier , remarquons qu'en conditionnant la première coordonnée par rapport à la seconde, on obtient
+\begin{align*}
+& \E\left[ x_{k+1}-\hat{x}_{k+1|k}\Bigl|y_{k+1}-H\hat{x}_{k+1|k}\right] \\
+&\qquad=   P_{k+1|k}\cdot H^T [H\cdot P_{k+1|k}H^T+R]^{-1} (y_{k+1}-H\hat{x}_{k+1|k}) \\
+&\qquad=   K_{k+1}(y_{k+1}-H\hat{x}_{k+1|k})
+\end{align*}
+avec les notations de la proposition.
+
+Pour justifier les formules de cette deuxième étape, il faut revenir aux propriétés des vecteurs gaussiens. Par la proposition \ref{prop:cond_gauss}, on sait que $\hat{x}_{k+1|k+1} = \E(x_{k+1}|(y_0,\ldots,y_{k+1})$ est une combinaison linéaire de $y_0,\ldots, y_{k+1}$. Il existe donc des rééls $a_0,\ldots a_{k+1}$ tels que
+\[ \hat{x}_{k+1|k+1}= \sum_{i=0}^{k+1} a_iy_i\]
+En conditionnant par rapport à $(y_0,\ldots y_k)$, on obtient
+\[ \E[\hat{x}_{k+1|k+1}|(y_0,\ldots y_k) ] = \hat{x}_{k+1|k}= \sum_{i=0}^{k} a_iy_i + a_{k+1} \E(y_{k+1} |(y_0,\ldots y_k)]\]
+d'où en réinjectant dans l'équation précédente
+\begin{align*}
+\hat{x}_{k+1|k+1}&= \sum_{i=0}^{k} a_iy_i +a_{k+1}y_{k+1}\\
+&=\hat{x}_{k+1|k}-a_{k+1} \E(y_{k+1} |(y_0,\ldots y_k)] +a_{k+1}y_{k+1}\\
+&= \hat{x}_{k+1|k} +a_{k+1} (y_{k+1} -H\hat{x}_{k+1|k})
+\end{align*}
+Par unicité de l'espérance conditionnelle, on conclut que nécessairement $a_{k+1}  = K_{k+1}$.
+
+
+De façon similaire, on obtient que l'écart $x_{k+1}- \hat{x}_{k+1|k+1}$ a pour variance
+$$P_{k+1|k+1}=P_{k+1|k} -P_{k+1|k}H^T(H\cdot P_{k+1|k}H^T+R)^{-1}HP_{k+1|k} ,$$
+ce qui correspond exactement au formule annoncée dans la proposition.
+\end{proof}
+
+On peut aussi réunir les deux étapes et calculer directement $P_{k+1|k}$ en fonction de $P_{k|k-1}$. C'est ce qu'on appelle l'\emph{équation de Riccati}, qui s'écrit alors
+$$P_{k+1|k}=Q+FP_{k|k-1}F^T-FP_{k|k-1}H^T\cdot \left(HP_{k|k-1}H^T+R\right)^{-1}\cdot H P_{k|k-1} F^T. $$
+
+\chapter[Poisson et files d'attentes]{Processus de Poisson et Files d'attentes (1 semaine)}
+
+
+\textit{Pré-requis : } Lois de Poisson, Lois exponentielles.
+
+Dans cette partie, on introduit le processus de Poisson qui est le modèle le plus simple pour décrire les occurrences dans le temps d'un certain phénomène. Ce processus et ses extensions peuvent-être utilisés dans de nombreux domaines : modéliser les passages successifs d'un bus à un arrêt, les instants de pannes de composants électroniques, les arrivées successives de clients dans un magasin, l'évolution de tailles de population...
+
+\section{Simulations de variables aléatoires de loi de Poisson}
+Pour rappel une variable aléatoire de Poisson de paramètre $\lambda>0$ est une variable aléatoire $X$ à valeurs dans $\N=\{0,1,2,\cdots\}$ telle que
+$$\P(X=k)=\frac{\lambda^k}{k!}\exp(-\lambda),\quad \forall k\in \N.$$
+En particulier, $\E(X)=\lambda$ et $P(X=0)=\exp(-\lambda)$.\\
+Dans cette section, nous allons voir comment simuler de telles variables aléatoires.
+\subsection{Méthode récursive}
+ La méthode de simulation des variables alétaoires discrète à partir d'une variable uniforme est toujours possible :
+\begin{propfr}
+On pose $s_{-1}=0$ et pour tout
+$k\ge0$, $$s_k=\sum_{i=0}^k P(X=i)=\sum_{i=0}^k\frac{\lambda^i}{i!}\exp(-\lambda)$$
+Soit $U$ est une variable al\'eatoire
+de loi uniforme ${\mathcal U}([0,1])$ et
+$$X=\sum_{k=0}^\infty k 1_{(s_{k-1}\leq U < s_k)}.$$
+Alors, $X$ est une variable al\'eatoire de loi de Poisson de paramètre $\lambda$.
+\end{propfr}
+Toutefois cette méthode est difficile à implémenter telle quelle numériquement car elle nécessite de connaitre toutes les sommes cumulées de probabilités $s_k$. Un astuce consiste en fait à calculer récursivement uniquement les probabilités cumulées nécessaire :
+\method{Simulation récursive d'une variable de Poisson}{
+\ $U=${\tt uniform()}\\
+\ $s=\exp(-\lambda)$\\
+\ $p=s$\\
+\ $x=0$\\
+\ {\tt while } $(U>s)$:\\
+\ $\vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\
+x=x+1$\\
+\ $\vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ p=p\frac{\lambda}{x}$\\
+\ $\vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ s=s+p$\\
+\ ${\tt return}\ x;$
+}
+\textit{-> cf TD7 : Exercice 2}
+\subsection{A partir de variables exponentielles}
+\begin{thmfr}
+Soit $(X_n)_{n\ge1}$ une suite de variables aléatoires indépendantes de loi exponentielle de paramètre $\lambda$ et $$S_n=\sum_{i=1}^n X_i$$ avec par convention $S_0=0$. Alors
+$$N=\sum_{n\geq 1}\mathbf{1}_{\{S_n\leq 1\}}=\max \{n\text{ tels que } S_{n}\leq 1\}$$
+suit une loi de Poisson de paramètre $\lambda$.
+\end{thmfr}
+On déduit donc que l'on peut simuler une variable aléatoire de Poisson de la façon suivante:
+\method{Simulation exponentielle d'une variable de Poisson}{
+\ $x=0$\\
+\ $S=${\tt variable aléatoire de paramètre }$\lambda$\\
+\ {\tt while } $(S\le 1)$:\\
+\ $\vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\
+S=S+${\tt variable aléatoire de paramètre }$\lambda$\\
+\ $\vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ x=x+1$\\
+\ ${\tt sortir}\ x;$
+}
+
+\begin{proof}
+Soit $k\ge0$, comme la suite $(S_n)$ est une suite croissante (comme somme de variables aléatoires positives),
+\begin{align*}
+\P(N=k)&=\P(\sum_{n\geq 1}\mathbf{1}_{\{S_n\leq 1\}}=k)\\
+&=\P(S_{k}\le 1 <S_{k+1})\\
+\end{align*}
+Remarquons maintenant que $$S_{k+1}=\sum_{i=1}^{k+1} X_i=\sum_{i=1}^k X_i +X_{k+1}=S_k+X_{k+1}$$ et que par définition, les variables aléatoires $X_{k+1}$ et $S_k$ sont indépendantes.
+Aussi  si l'on note $f_{S_k}$ et $f_{X_{k+1}}$ leurs densités respectives, on a
+\begin{align*}
+P(S_{k}\le 1 <S_{k+1})&=\int \int \mathbf{1}_{s\le 1 < x+s} f_{S_k}(s) f_{X_{k+1}}(x) ds dx.\\
+&=\int \int \mathbf{1}_{s\le 1}\mathbf{1}_{x > 1-s} f_{S_k}(s) f_{X_{k+1}}(x) ds dx.\\
+&=\int_{0}^1 ds f_{S_k}(s)  \left( \int_{1-s}^\infty dx f_{X_{k+1}}(x)\right)
+\end{align*}
+Rappelons maintenant que $S_k$ est la somme de $k$ variables aléatoires exponentielles indépendantes, aussi $S_k$ suit une loi gamma de paramètres $(\lambda, k) $ et la densité $$f_{S_k}(s)=\lambda^ks^{k-1}\frac{\exp(-\lambda s)}{(k-1)!}.$$
+On en déduit que
+\begin{align*}
+\int_{0}^1 ds f_{S_k}(s)  \int_{1-s}^\infty dx f_{X_{k+1}}(x)
+&=
+\int_{0}^1 ds \lambda^ks^{k-1}\frac{\exp(-\lambda s)}{(k-1)!}  \int_{1-s}^\infty \lambda\exp(-\lambda(x))dx\\
+&=\int_{0}^1 ds \lambda^ks^{k-1}\frac{\exp(-\lambda s)}{(k-1)!} \exp(-(1-s)\lambda)\\
+&= \lambda^k\frac{\exp(-\lambda )}{k!}
+\end{align*}
+Ce qui conclut la preuve.
+\end{proof}
+
+
+\section{Processus de Poisson}
+Nous allons maintenant introduire le processus de Poisson. C'est un premier exemple de processus en temps continu.
+\begin{defnfr}
+Soit $(X_n)$ une suite de variables aléatoires i.i.d. de lois exponentielles de paramètre $\lambda$, on définit comme précédemment $S_n=\sum_{k=1}^n X_k$ et $S_0=0$.
+Pour chaque $t\ge0$ on définit un processus de Poisson de paramètre $\lambda$ par
+$$N_t=\sum_{n\geq 1}\mathbf{1}_{\{S_n\leq t\}}=\max \{n\ge0\text{ tels que } S_{n}\leq t\}.$$
+\end{defnfr}
+La définition ci-dessous correspond en fait à la construction du processus et non à sa vraie définition (mais c'est amplement suffisant).
+
+Le processus de Poisson est un processus de comptage, c'est à dire qu'il compte le nombre d'évènements qui se sont produits dans une fenêtre de temps $[0,t]$.
+\paragraph{Quelques propriétés}
+\begin{propfr}
+Soit $N_t$ un processus de Poisson de paramètre $\lambda>0$, alors
+\begin{itemize}
+\item[i)] La fonction $t\mapsto N_t$ est croissante, elle part de $N_0=0$ et prend ses valeurs dans $\N$.
+\item[ii)] Quelque soit $0\le  t$ la variable aléatoire $N_t$ est une variable aléatoire de Poisson de paramètre $\lambda t$.\\
+Plus généralement pour tout $0\le a\le b$, $N_b-N_a$ est une variable aléatoire de Poisson de paramètre $\lambda (b-a)$ qui représente le nombre de points dans l'intervalle $]a,b]$.
+\item[iiii)] Conditionnellement à l'évènement $\{N_t=n\}$, la loi des instants de saut $(S_1, \cdots S_n)$ est la loi d'un échantillon de $n$ variables aléatoires uniformes sur $[0,t]$ réordonnées par ordre croissant. C'est à dire qu'elle a la densité
+$$\frac{n!}{t^n}\mathbf{1}_{0\le t_1<t_2<t_n\le t}$$
+\end{itemize}
+\end{propfr}
+\begin{proof}
+$i)$ Pour tout $n$ fixé $\mathbf{1}_{S_n\le t }$ est une fonction croissante, en effet elle vaut $0$ si $S_n>t$ (donc pour $t$ petit), puis $1$ lorsque $t$ dépasse $S_n$.\\
+$ii)$ La preuve est très similaire à celle ci-dessus (en exercice).\\
+\begin{align*}
+\P(N_t=n)&=\P(T_n\le t<T_{n+1} )\\
+&=\exp(-\lambda t) \frac{(\lambda t)^n}{n!}
+\end{align*}
+$iii)$
+Commençons par calculer la densité de $(S_1, \cdots S_n)$.
+\begin{align*}
+\E(f(S_1, \cdots, S_n))&=\E(f(X_1, X_1+X_2, \cdots , X_1+.... +X_n))\\
+&= \int f(x_1, x_1+x_2, \cdots ,x_1+.... +x_n)) \lambda^n \exp(-\lambda x_1) ...\exp(-\lambda(x_n)) dx_1\cdots dx_n\\
+&= \int f(x_1, t_2, \cdots t_n) \lambda^n \exp(-\lambda t_n) \mathbf{1}_{0\le x_1<t_2<...<t_n} dt_1\cdots dt_n\\
+\end{align*}
+
+Maintenant  pour tout ensemble mesurable $\Gamma\subset\R^n$, on a
+\begin{align*}
+\P(&(S_1, \cdots S_n )\in\Gamma\lvert N_t=n)=\frac{\P((S_1, \cdots S_n )\in\Gamma, N_t=n)}{\P(N_t=n)}\\
+&=\frac{n!}{\lambda^nt^n\exp(\lambda t)} \int \mathbf{1}_{ s_n\le t<s_{n+1}} \mathbf{1}_{(s_1,..., s_n)\in \Gamma } \lambda^{n+1}\exp(-\lambda s_{n+1}) \mathbf{1}_{0\le s_1<s_2<...<s_n<s_{n+1}} ds_1\cdots ds_{n+1}\\
+&=\frac{n !\lambda}{t^n}\int_{\Gamma}\mathbf{1}_{0\le s_1<s_2<...<s_n<t} \int_t^\infty \exp(-\lambda s_{n+1}) ds_{n+1}\\
+&= \frac{n!}{t^n} \int_{\Gamma}\mathbf{1}_{0\le s_1<s_2<...<s_n<t} ds_1 ...ds_n
+\end{align*}
+Finalement il reste à montrer que si on considère un tirage de $(U_1, ... U_n)$ variables aléatoires uniformes indépendantes sur $[0,t]$, alors le n-uplet trié $(U_{(1)}, ... U_{(n)})$ a la même densité. Ceci provient simplement du fait qu'il existe $n!$ ordre pour ces tirages et que tous ont la même probabilité de ce produire, ce qui donne facilement le résultat.
+\end{proof}
+On déduit de cette proposition une seconde methode pour simuler un processus de Poisson sur un intervalle de temps $[0,T]$ :
+\begin{itemize}
+\item On tire le nombre de point $N_T$ suivant une loi de Poisson de paramètre $\lambda T$
+\item Sachant la valeur de $N_T$, on tire variables aléatoires uniformes sur $[0,T]$ et on les ordonne.
+\end{itemize}
+
+Le processus de Poisson se caractérise aussi par de bonnes propriétés d'indépendances
+\begin{propfr}Considérons deux intervalles de temps disjoints $]T_1, T_2]$ et $]T_3,T_4]$ alors les variables aléatoires $N_{T_2}-N_{T_1}$ et $N_{T_4}-N_{T_3}$ sont des variables aléatoires indépendantes de lois de Poisson de paramètres respectifs $(T_2-T_1)\lambda $ et $(T_4-T_3)\lambda$
+\end{propfr}
+
+\paragraph{Comportement en temps long}
+\begin{propfr}
+Soit $(N_t)_{t\ge0}$ un processus de Poisson de paramètre $\lambda>0$, alors $$\frac{N_t}{t} \underset{t\to\infty}{\longrightarrow} \lambda\qquad p.s. .$$
+\end{propfr}
+\begin{proof}
+Commençons par écrire pour un entier $n$
+$$N_n=\sum_{k=1}^n N_k-N_{k-1}$$
+Ainsi, comme les variables aléatoires $N_k-N_{k-1}$ sont indépendantes et de même lois $Poiss(\lambda)$, on peut appliquer la loi forte des grands nombre pour en déduire que $$\frac{N_n}{n}\underset{n\to\infty}{\longrightarrow} \lambda\qquad p.s..$$
+Ensuite, on utilise la croissance du processus $N_t$ pour en déduire que pour tout $t\in[n,n+1]$,
+$$\frac{N_n}{n+1}\frac{n}{n}\le \frac{N_t}{t} \le\frac{ N_{n+1}}{n}\frac{n+1}{n+1}$$
+En faisant tendre $n\to\infty$, on obtient la conclusion.
+\end{proof}
+
+Il existe de nombreuses généralisation des processus de Poisson, que ce soit dans des espaces spatiaux temporels, ou avec des fonctions d'intensités qui dépendent du temps.
+\section{Files d'attentes}
+Dans la suite, nous allons voir une utilisation des processus de Poisson à la modélisation des files d'attentes. L'étude des files d'attente est un domaine actif très utile notamment pour la gestion des serveurs, des requêtes et dans de nombreux domaines d'ingénierie.
+
+Une file d'attente est caractérisée par trois paramètres
+\begin{itemize}
+\item la loi décrivant les arrivées successives de clients dans la file. On utilise souvent un processus de Poisson, c'est à dire que l'on suppose qu'entre deux arrivées de clients, il se passe un temps exponentiel de paramètre $\lambda$.
+\item une loi décrivant le temps nécessaire pour servir un client. Ce sont des variables aléatoires que l'on considère en général comme indépendantes et de même loi. Là encore, c'est la loi exponentielle qui donne le traitement mathématique le plus simple.
+\item un paramètre qui décrit le nombre de serveurs disponibles : ce peut être un entier $N>0$ qui correspond au nombre de guichet ou bien l'infini. Lorsque le nombre de serveur est infini chaque client qui arrive est immédiatement pris en charge.
+\end{itemize}\medskip
+\subsection{File d'attente $M/M/1$  }
+L'exemple le plus simple de file d'attente s'appelle la file $M/M/1$ dans laquelle, il y a un unique serveur, les clients arrivent selon un processus de Poisson de paramètre $\lambda$ et sont servis en un temps exponentiel de paramètre $\beta$. Le 'M' représente alors le fait que la loi exponentielle est sans mémoire et donc la file d'attente est un processus de Markov à temps continu.
+
+%Ce modèle correspond également à ce que l'on appelle un processus de naissance et mort dont les taux de naissance et de mort sont constants (voir le dernier chapitre du cours).
+
+On souhaite étudier le nombre $W_t$ de personnes dans la file d'attente. C'est la différence entre le nombre d'arrivées $A_t$ et le nombre de départ $D_t$. Ainsi, lorsque $W_t=0$, la file comme le guichet sont libres, lorsque$W_t=1$ ceci signifie qu'une personne est au guichet, et personne en attente, et lorsque $W_t\ge2$, le guichet est occupé et $W_t-1$ personnes sont en attentes.\\
+
+
+Rappelons des propriétés importantes des variables exponentielles :
+\begin{propfr}
+Soit $A$ et $B$ deux variables exponentielles de paramètres $\lambda$ et $\beta$, alors
+\begin{itemize}
+\item $V=\min(A,B)$ est une variable exponentielle de paramètre $\lambda+\beta$
+\item D'autre part, la variable aléatoire $W=\mathbf{1}_{V=A}$ suit une loi de Bernoulli de paramètre $\frac{\lambda}{\lambda+\beta}$.
+\item $V$ et $W$ sont indépendantes.
+\end{itemize}
+\end{propfr}
+
+Ceci nous permet en particulier de simuler la file d'attente de la façon suivante. Partons d'une nombre $n$ de clients dans la file d'attente
+$W_0=n$.
+\begin{itemize}
+\item Si $n=0$ le prochain évènement est l'arrivée d'un client qui se produit après un temps exponentiel de paramètre $\lambda$.
+\item Si $n>0$, le prochain évènement se produit selon une loi exponentielle de paramètre $\lambda+\beta$. Avec probabilité $\frac{\lambda}{\lambda+\beta}$ on rajoute un nouveau client, et sinon on en enlève $1$.
+\end{itemize}
+Le mieux pour simuler une file d'attente est de construire deux vecteurs. Le premier vecteur contient les temps successifs $T_n$ des différents évènements, le second vecteur contient le nombre de clients $W_{T_n}$ dans la file à ces différents instants.
+
+\paragraph{Chaine de Markov incluse}
+On peut choisir de n'étudier que les variations du nombre de clients dans la file sans prendre en compte l'aspect temporel. On définit alors un processus à temps discret $Z_n=W_{T_n}$ où $T_n$ est le temps aléatoire du $n^{ème}$ évènement.
+
+On peut montrer que $Z_n$ est une chaine de Markov sur $\N$ dont les transitions sont décrites par
+\begin{align*}
+&Q(0,1)=1\\
+&Q(i,i+1)=\frac{\lambda}{\lambda+\beta}=1-Q(i,i-1), \quad i\ge1
+\end{align*}
+
+On a alors des résultats sur le comportement asymptotique de la chaine de Markov $(Z_n)_{n\ge0}$.
+
+Pour un processus irréductible, comme pour une chaîne irréductible apériodique, trois cas sont possibles en fonction du retour dans un état donné.
+\begin{itemize}
+\item Si le processus, partant d’un état donné, a une probabilité non nulle de
+ne jamais y retourner, il est dit \textit{transient}. En pratique cela signifie que le
+nombre que l’on étudie (taille de population ou nombre de clients) tend
+vers l’infini. Nous interprétons cette situation comme une saturation du
+système.
+\item Si le processus, partant d’un état donné, y revient nécessairement au
+bout d’un temps fini en moyenne, il est dit \textit{récurrent positif}. Dans ce
+cas, il converge en loi vers sa mesure stationnaire, interprétée comme
+une situation d’équilibre du système étudié.
+\item Si le processus, partant d’un état donné, y revient avec probabilité 1
+mais que l’espérance du temps de retour est infinie, il est dit \textit{récurrent
+nul.} \end{itemize}
+
+On peut alors montrer le résultat suivant :
+
+\begin{propfr}
+La chaine $Z_n$ est
+\begin{itemize}
+\item transiente si $\lambda>\beta$
+\item récurrente positive si $\lambda<\beta$
+\item récurrente nulle si $\lambda=\beta$
+\end{itemize}
+\end{propfr}
+\begin{proof}
+Voir en TD
+\end{proof}
+
+\paragraph{Comportement limite de la chaine en temps continu}
+
+On s'interesse à ce qui se passe lorsque  $\lambda<\beta$ pour le processus en temps continu. On admettra ici les résultats suivants
+\begin{propfr}
+Lorsque $\lambda<\beta$, la file d'attente $W_t\overset{(loi)}{\Longrightarrow} \pi$
+où $\pi$ est la mesure stationnaire donnée par $$\pi_n=\left( 1-\frac{\lambda}{\beta}\right)\left(\frac{\lambda}{\beta}\right)^n.$$
+\end{propfr}
+
+En particulier, on peut déduire de ce résultat plusieurs comportement de la file d'attente en régime stationnaire :
+\begin{itemize}
+\item  le nombre moyen de clients dans la file d'attente est donné par
+$$\E(\pi)=\frac{\lambda}{\beta-\lambda}.$$
+\item la loi du temps passé dans la file d'attente par un client est donnée en régime stationnaire par $\mathcal{E}(\beta-\lambda)$.
+\end{itemize}
+Pour ce dernier résultats, remarquons que quand la chaine est vide, le temps d'attente d'un client est $\mathcal{E}(\beta)$.
+\\
+Lorsqu'il y a déjà $n$ clients devant lui, son temps d'attente est donc la somme des $n+1$ services des $n$ clients précédents et du sien. Comme chaque service est i.i.d de loi $\mathcal{E}(\beta)$, la loi du temps de service a pour densité
+$$\frac{\beta^{n+1}t^n}{n!}\exp(-\beta t)$$
+Si le nombre de client suit la loi $\pi$ on en déduit donc que la densité du temps de service est
+\begin{align*}
+f_T(t)=\sum_{n\ge0}\pi_n \frac{\beta^{n+1}t^n}{n!}\exp(-\beta t)
+&= \sum_{n\ge0} \left(\frac{\lambda}{\beta}\right)^n\frac{\beta^{n+1}t^n}{n!}\exp(-\beta t)\\
+&= \beta\left( 1-\frac{\lambda}{\beta}\right) \exp(-\beta t)\exp(\lambda t)\\
+&=(\beta-\lambda)\exp(-(\beta-\lambda)t).
+\end{align*}
+
+
+\subsection{D'autres modèles}
+Il existe des modèles plus généraux qui prennent en compte différents serveurs, un nombre maximum de clients dans la file, des lois de services non exponentielles....
+Nous verrons en TP comment simuler ces files d'attentes.
+
+
+\chapter{Branchement (1 semaine)}
+
+\textit{Pré-requis : Martingales, espérance conditionnelle}
+\section{Fonction génératrice}
+Soit $X$ une variable aléatoire discrète sur $\mathbb{N}$, de loi déterminée par les probabilités
+$$p_X(k)=\mathbb{P}[X\in k], \ \ \forall k\in \mathbb{N}.$$
+\begin{defnfr}La \emph{fonction génératrice} de $X$ est la fonction $G_X: [-1,1]\to [-1,1]$ définie par
+$$G_X(s)=\mathbb{E}[s^X]=\sum_{k\geq 0} p_X(k)\cdot s^k .$$
+\end{defnfr}
+\paragraph{Exemples :}
+\begin{itemize}
+\item si $X$ suit la loi de Poisson $\mathcal{P}(\lambda)$ de paramètre $\lambda>0$. Alors
+$$G_X(k)=\sum_{k\geq 0} \frac{\lambda^k}{k!}e^{-\lambda}\cdot s^k =e^{s\lambda}e^{-\lambda}=e^{(s-1)\lambda}.$$
+\item si $X$ suit la loi Binomiale $\mathcal{B}(n,p)$ de paramètre $n\geq 1, 0<p<1$. Alors
+$$G_X(k)=\sum_{k= 0}^n {n \choose p} p^k(1-p)^{n-k}\cdot s^k =\Big((1-p)+ps\Big)^n.$$
+\item si $X$ suit la loi géométrique $\mathcal{G}(p)$ de paramètre $0<p<1$. Alors
+$$G_X(k)=\sum_{k\geq 1} (1-p)^{k-1}p\cdot s^k =\frac{sp}{1-(1-p)s}.$$
+\end{itemize}
+
+\begin{propfr}La fonction génératrice $G_X$ satisfait les propriétés suivantes :
+\begin{enumerate}\item elle est analytique sur $]-1,1[$ (c'est-à-dire développable en série entière au voisinage de chacun des points de $]-1,1[$).
+\item elle est croissante sur $[0,1]$.
+\item elle est convexe (et même strictement convexe si $\mathbb{P}[X\ge 2]>0$) sur $[0,1]$.
+\item elle caractérise la loi de $X$ car $ p_X(n)=\frac{1}{n!}G^{(n)}(0).$
+\item si $\mathbb{E}[X]<+\infty$, alors $G_X$ est dérivable (à gauche) en $1$ et $G_X'(1)=\mathbb{E}[X]$.
+\item $G_X(0)=p_X(0)=\mathbb{P}[X=0]$.
+\end{enumerate}
+\end{propfr}
+\begin{proof}
+\begin{enumerate}\item$G_X(1)=1<+\infty$ donc la série entière a un rayon de convergence supérieure ou égale à $ 1$.
+\item pour $s\in [0,1[$, on a donc
+$$G'(s)=\sum_{k\geq 1}kp_X(k)\cdot s^{k-1}\geq 0  $$
+\item pour $s\in [0,1[$, on a donc
+$$G''(s)=\sum_{k\geq 2}k(k-1)p_X(k)\cdot s^{k-2}\geq 0  $$
+et même $G''(s)>0$ dès que $s\in ]0,1[$ et qu'un des $p_X(k)$ est strictement positif pour $k\geq 2$.
+\item Plus généralement, sur $]-1,1[$,
+$$G^{(n)}(s)=\sum_{k\geq n}k(k-1)\cdots (k-n+1)p_X(k)\cdot s^{k-n}$$
+et donc seul le terme $k=n$ compte pour calculer $G^{(n)}(0)=n!\cdot p_X(n)$.
+\item on a $G'(s)=\sum_{k\geq 1}kp_X(k)\cdot s^{k-1}$ pour $s\in ]-1,1[$ et cette somme converge vers $\mathbb{E}[X]$ lorsque $s$ converge vers $1$ (par convergence monotone par exemple). On déduit alors du théorème des accroissements finis que cette limite est la dérivée à gauche $G_X'(1)$.
+\item Par définition, $G_X(0)=\mathbb{E}[s^X]=\mathbb{E}[\mathds{1}_{X=0}]=p_X(0)$.
+\end{enumerate}
+\end{proof}
+Les fonctions génératrice sont particulièrement adapté pour traiter la somme de variables aléatoires discrètes indépendantes.
+\begin{propfr}Si $X$ et $Y$ sont des variables aléatoires indépendantes à valeurs dans $\mathbb{N}$, on a $G_{X+Y}=G_XG_Y$.
+\end{propfr}
+\begin{proof}On écrit $\mathbb{E}[s^{X+Y}]=\mathbb{E}[s^Xe^Y]=\mathbb{E}[s^X]\mathbb{E}[s^Y]$.
+\end{proof}
+Plus généralement, il est possible de traiter une somme d'un nombre \emph{aléatoire} de variables aléatoires.
+\begin{thmfr} Soit $N$ une variable discrète sur $\mathbb{N}$ et $(X_n)_{n\geq 1}$ des variables aléatoires indépendantes à valeurs dans $\mathbb{N}$, de même loi et donc de même fonction génératrice $G_X$, et indépendantes de $N$. Alors, considérant la variable aléatoire
+$$S_N=\sum_{k=1}^NX_k,$$
+on a $G_{S_N}=G_N\circ G_X$, au sens où, pour $s\in [-1,1]$,
+$$G_{S_N}(s)=G_N( G_X(s)) .$$
+\end{thmfr}
+\begin{proof}L'idée est de décomposer selon les valeurs de $N$. On a $1=\sum_n \mathds{1}_{N=n}$ donc
+$$\mathbb{E}[s^{S_N}]=\sum_{n=0}^\infty \mathbb{E}[\mathds{1}_{N=n}s^{S_N}] =\sum_{n=0}^\infty \mathbb{E}\left[\mathds{1}_{N=n}s^{\left(\sum_{k=1}^NX_k\right)}\right]=\sum_{n=0}^\infty \mathbb{E}\left[\mathds{1}_{N=n}s^{\left(\sum_{k=1}^nX_k\right)}\right]$$
+mais comme
+$$\mathbb{E}\left[\mathds{1}_{N=n}s^{\left(\sum_{k=1}^nX_k\right)}\right]=\mathbb{P}[N=n]\mathbb{E}\left[s^{\left(\sum_{k=1}^nX_k\right)}\right]=\mathbb{P}[N=n]\prod_{k=1}^n\mathbb{E}\left[s^{X_k}\right]=\mathbb{P}[N=n] G_X(s)^n,$$
+on obtient
+$$\mathbb{E}[s^{S_N}]=\sum_{n=0}^\infty\mathbb{P}[N=n] G_X(s)^n=G_N(G_X(s)).$$
+\end{proof}
+
+
+\section{Processus de Galton-Watson}
+
+On considère une population d'individus (ce peut être n'importe quoi, des particules, des gènes, des animaux etc) dont la taille évolue au cours d'un temps discret. Pour encoder la taille, on va donc considérer une suite de variables aléatoires $(X_n)_{n\geq 0}$ discrètes sur $\mathbb{N}$. Ces variables ne sont pas indépendantes, puisque le nombre d'invidus à un certain instant $n+1$ dépend du nombre d'individus à l'instant d'avant $n$ avec une règle simple : chaque individu va engendrer $k$ individus avec la probabilité $p_k$, indépendamment des autres individus. On a donc le modèle suivant.
+
+\begin{defnfr}
+Soit $(Y_{n,k})_{n,k\in \mathbb{N}}$ une suite de variables aléatoires indépendantes de même loi. On définit le processus de Galton-Watson comme la suite de variables aléatoires $(X_n)_{n\geq 0}$ de la façon suivante : $ X_0=1$ et pour $n\geq 0$,
+$$X_{n+1}=\sum_{k=1}^{X_n}Y_{n,k}.$$
+\end{defnfr}
+Dans notre modèle, il y a un seul individu à la génération $0$. Chaque individu $k$ de la $n$-ième génération a un nombre $Y_{n,k}$ de descendants (pour $1\geq k \geq X_n$). Ce nombre de descendant suit toujours la même loi et est indépendant des autres. On va appeler $G$ la fonction génératrice commune des $Y_{n,k}$, et on va supposer que la moyenne $m=\mathbb{E}[Y_{n,k}]$ est finie, de telle sorte que
+$$G'(1)=m,$$
+et on va supposer que la probabilité de ne pas produire de descendant est strictement positive : $$G(0)>0.$$ Le théorème de la section précédente nous dit que
+$$G_{X_{n+1}}=G_{X_n}\circ G $$
+puisque $X_n$ est fonction des $(Y_{m,k})_{m<n,k}$ et est donc indépendant des $(Y_{n,k})_k$. De cette formule, on peut déduire que :
+\begin{propfr}La taille moyenne du processus est $\mathbb{E}[X_n]=m^n$.
+\end{propfr}
+\begin{proof}Il suffit de remarquer que $$\mathbb{E}[X_{n+1}]=G'_{X_{n+1}}(1)=G'(1)G'_{X_n}(G(1))=m\cdot G'_{X_n}(1)=m\mathbb{E}[X_{n}]$$
+et que par conséquent, $(\mathbb{E}[X_n])_n$ est une suite géométrique de raison $m$.
+\end{proof}
+Intéressons-nous maintenant à la probabilité d'extinction de la population. Remarquons que l’événement qui correspond au fait que la population s'éteigne au bout d'un moment s'écrit
+$\cup_n\{X_n=0\}.$
+C'est une union croissante d'événements et la probabilité $q$ correspondant à l'extinction de la population est donc la limite croissante de la suite $x_n:=\mathbb{P}[X_n=0],$ c'est-à-dire
+$$q=\lim_{n\to \infty}x_n.$$
+On a $x_n=\mathbb{P}[X_n=0]=G_{X_n}(0)$, et si on veut utiliser la formule
+$G_{X_{n+1}}=G_{X_n}\circ G$ pour calculer $x_n$, il faut la reformuler.
+\begin{propfr}Pour $n\geq 1$, $G_{X_n}=\underbrace{G\circ \cdots \circ G}_{n\ \text{fois}}$.
+\end{propfr}
+\begin{proof}On a d'abord $G_{X_1}=G_{Y_{0,1}}=G$, puis par récurrence, si
+$$G_{X_n}=\underbrace{G\circ \cdots \circ G}_{n\ \text{fois}}$$
+alors
+$$G_{X_{n+1}}=G_{X_n}\circ G=\underbrace{G\circ \cdots \circ G}_{n\ \text{fois}}\circ G=\underbrace{G\circ \cdots \circ G}_{n+1\ \text{fois}}.$$
+\end{proof}
+Une conséquence directe est que $$x_{n+1}=G_{X_{n+1}}=\underbrace{G\circ \cdots \circ G}_{n+1\ \text{fois}}(0)=G\circ \underbrace{G\circ \cdots \circ G}_{n\ \text{fois}}(0)=G(G_{X_{n}}(0))=G(x_n).$$ La limite de $x_n$ est donc nécessairement un point fixe de $G$ sur $[0,1]$ : $G(q)=q$. De la formule $x_{n+1}=G(x_n)$, on peut aussi en déduire que $q$ est en fait le plus petit point fixe sur $[0,1]$ car si $\tilde{q}$ est un autre point fixe de $G$ sur $[0,1]$, on a forcément $x_n\leq \tilde{q}$ pour tout $n\geq 1$ : ça vient du fait que $x_1=G(0)\leq G( \tilde{q})=\tilde{q}$, et par récurrence $x_n\leq \tilde{q}$ entraîne que $x_{n+1}=G(x_n)\leq G(\tilde{q})=\tilde{q}.$
+
+Chercher la probabilité d'extinction $q$ de $(X_n)_{n\geq 0}$, c'est donc chercher le plus petit point fixe de $G$ sur $[0,1]$. La proposition suivante distingue deux cas.
+
+\begin{propfr}Si $m=G'(1)\leq 1$, alors $q=1$ : la population s'éteint presque sûrement.
+
+Si $m=G'(1)>1$, alors $q<1$ : la population a une probabilité non-nulle de survivre.
+\end{propfr}
+\begin{proof}La série génératrice $G$ s'écrit
+$$G(s)=\sum_{k\geq 0}p_k\cdot s^k$$
+avec $G(1)=\sum_{k\geq 0} p_k=1$.
+ On va étudier la fonction $F(s)=G(s)-s$, qui va de $F(0)=G(0)>0$ à $F(1)=1-1=0$. En effet, les points fixes de $G$ sont les réels où $F$ s'annule. Sa dérivée est $F'(s)=G'(s)-1$ sur $[0,1]$, et on remarque que $F''(s)=G''(s)\geq 0$ donc cette dérivée $F'(s)$ est croissante (strictement si $\sum_{k\geq 2} p_k>0$).
+
+\textbf{Supposons d'abord que $m=G'(1)\leq 1$.}
+
+Ou bien $\sum_{k\geq 2} p_k=0$, et $F(s)$ est alors une fonction linéaire qui décroît de $F(0)>0$ à $F(1)=0$ et qui ne s'annule donc qu'en $s=1$ : le seul point fixe de $G$ est $q=1$.
+
+Ou bien $\sum_{k\geq 2} p_k>0$ et $F'$ est strictement croissante. Comme $F'(1)=G'(1)-1\leq 0$, on a $F'(s)<0$ pour $s\in [0,1[$ ce qui signifie que $F(s)$ est strictement décroissante de $F(0)>0$ à $F(1)=0$. Elle ne s'annule donc qu'en $s=1$ : le seul point fixe de $G$ est $q=1$.
+
+\textbf{Supposons maintenant que $m=G'(1)> 1$.}
+
+Comme $F'(1)>0$, la fonction $F'$ est strictement positive dans un voisinage de $1$ et donc $F$ est strictement croissante dans un voisinage de $1$. Il existe donc $s$ dans un voisinage autour de $1$ tel que $F(s)<F(1)=0$. Mais comme $F(0)>0$, le théorème des valeurs intermédiaire nous dit qu'il existe alors un réel $\tilde{q}\in ]0,s[$ tel que $F(\tilde{q})=0$ : il existe un point fixe de $G$ plus petit que $1$, donc $q<1$.
+\end{proof}
+\section{Cas sous-critique}
+On a vu que si $m\leq 1$, la population s'éteint presque sûrement. Pour autant, il y a une différence entre le cas $m<1$ et le cas $m=1$. On peut par exemple regarder l'espérance de la taille totale de la population
+$$\mathbb{E}\left[\sum_{n=0}^\infty Z_n\right]=\sum_{n=0}^\infty \mathbb{E}\left[Z_n\right] =\sum_{n=0}^\infty m^n $$
+qui est finie si $m<1$ et qui est infinie si $m=+\infty$. Le théorème suivant permet de quantifier la convergence de $\mathbb{P}[X_n>0]$ vers $0$ lorsque $n$ grandit.
+\begin{thmfr}
+Si $m=\mathbb{E}[Y_{n,k}]<1$, alors
+$$\mathbb{P}[X_n>0]\leq m^n.$$
+\end{thmfr}
+\begin{proof}
+Puisque $\mathbb{E}[X_n]=\mathbb{E}[X_n|X_n>0]\mathbb{P}[X_n>0]+0\times \mathbb{P}[X_n=0]$,
+On a
+$$\mathbb{P}[X_n>0]=\frac{\mathbb{E}[X_n]}{\mathbb{E}[X_n|X_n>0]}\leq \mathbb{E}[X_n]=m^n.$$
+\end{proof}
+\section{Cas critique}
+Si $m=1$, l'espérance $\mathbb{E}[X_n]$ reste toujours égale à $1$. La taille de $X_n$ lorsque la population n'est pas éteinte doit donc être très grande pour maintenir une espérance constante.  En fait, on peut montrer que $\sup_n X_n$ n'est pas intégrable, car sinon, on aurait par convergence dominée l'égalité absurde suivante
+$$1=\lim_n\mathbb{E}[X_n]=\mathbb{E}[\lim_n X_n]=0.$$
+Autrement dit, la martingale $X_n$ converge vers $0$ p.s. mais n'est pas convergente au sens $L^2$.
+Le théorème suivant permet de mieux comprendre la taille de $X_n$ lorsque la population n'est pas éteinte dans le cas critique.
+\begin{thmfr}
+Si $m=\mathbb{E}[Y_{n,k}]=1$ et $\sigma^2=\mathbb{V}ar[Y_{n,k}^2]<+\infty$, alors
+\begin{enumerate}
+\item $\lim_n n\mathbb{P}[X_n>0]=2/\sigma^2$;
+\item $\lim_n \frac{1}{n}\mathbb{E}[X_n|X_n>0]=\sigma^2/2$.
+\end{enumerate}
+\end{thmfr}
+\begin{proof}
+En dérivant deux fois $G$, on obtient $G''(s)=\sum_{k\geq 2}k(k-1)p(k)s^{k-2}$ qui converge vers $\mathbb{E}[Y_{n,k}(Y_{n,k}-1)]=\sigma^2$ lorsque $s$ tend vers $1$ (convergence monotone). Par conséquent, $G$ est deux fois dérivable à gauche en $1$, et on a la formule de Taylor avec reste intégral en $1$ à l'ordre $2$
+$$G(s)=s+\frac{1}{2}(s-1)^2\sigma^2+(s-1)^2R(s) $$
+ave $R(s)$ borné sur $[0,1]$ et qui tend vers $0$ quand $s\to 1$. Autrement dit, on a
+$$G(s)-s= (1-s)^2h(s)$$
+avec $h(s)=\sigma^2/2+R(s)$. On en déduit que
+\begin{align*}
+\frac{1}{1-G(s)}-\frac{1}{1-s}&=\frac{G(s)-s}{(1-G(s))(1-s)}\\
+&=\frac{h(s)(1-s)}{1-s-(1-s)^2h(s)}\\
+&=\frac{h(s)}{1-(1-s)h(s)}\\
+&=h(s)+\frac{(1-s)h(s)}{1-(1-s)h(s)}\\
+&=\sigma^2/2+k(s)
+\end{align*}
+avec $k(s)=R(s)+(1-s)\frac{h(s)}{1-(1-s)h(s)}$ qui est donc bornée et qui tend vers $0$ quand $s\to 1$. Par sommage téléscopique, on peut écrire
+$$\frac{1}{n}\left(\frac{1}{1-G_{X_{n}}(0)}-1\right)=\frac{1}{n}\sum_{k=0}^{n-1}\left(\frac{1}{1-G_{X_{n+1}}(0)}-\frac{1}{1-G_{X_n}(0)}\right)$$
+comme la moyenne de Césaro de la suite
+$$\left(\frac{1}{1-G(G_{X_n}(0))}-\frac{1}{1-G_{X_n}(0)}\right)=\sigma^2/2+k(G_{X_n}(0))$$
+qui tend donc vers la limite $\sigma^2/2$ puisque $G_{X_n}(0)=\mathbb{P}[X_n=0]$ tend vers $1$. On a donc $$n\mathbb{P}[X_n>0]=n(1-G_{X_n}(0))=\left(\frac{1}{n}\left(\frac{1}{1-G_{X_{n}}(0)}-1\right)+\frac{1}{n}\right)^{-1}$$ qui tend vers $2/\sigma^2$ puis par conséquent
+$$\frac{1}{n}\mathbb{E}[X_n|X_n>0]=\frac{\mathbb{E}[X_n]}{n\mathbb{P}[X_n>0]}$$
+qui tend vers $\sigma^2/2$.
+\end{proof}
+
+\section{Cas sur-critique}
+Rappelons que si $m> 1$, la probabilité d'extinction $q$ est l'unique point fixe $<1$ de la fonction génératrice associée à la loi de $Y_{n,k}$. Il y a donc une probabilité non-triviale que la population survive.
+
+Pour étudier plus finement $(X_{n})_{n\geq 0}$, on introduit la suite $(X_n/m^n)_{n\geq 0}$. Son utilité vient du fait que c'est une martingale pour la filtration naturelle $\mathcal{F}_n=\sigma(X_0,\ldots,X_n)$:
+$$\mathbb{E}\left[\left.\frac{X_{n+1}}{m^{n+1}}\right|\mathcal{F}_n\right]= \frac{\mathbb{E}\left[\left.X_{n+1}\right|X_n\right]}{m^{n+1}}$$
+car $X_n$ est une chaîne de Markov; or
+$\mathbb{E}\left[\left.X_{n+1}\right|X_n=\ell\right]=\sum_{k=1}^{\ell}\mathbb{E}[Y_{n,k}]=\ell m$
+donc $\mathbb{E}\left[\left.X_{n+1}\right|X_n\right]=X_n m$ et
+$$\mathbb{E}\left[\left.\frac{X_{n+1}}{m^{n+1}}\right|\mathcal{F}_n\right]= \frac{\mathbb{E}\left[\left.X_{n+1}\right|X_n\right]}{m^{n+1}}=\frac{mX_n}{m^{n+1}}=\frac{X_n}{m^{n}}.$$
+Comme c'est une martingale positive, elle converge p.s. vers une variable aléatoire réelle positive. En fait, contrairement au cas où $m=1$, on a même ici la convergence $L^2$.
+\begin{thmfr}
+Si $m=\mathbb{E}[Y_{n,k}]>1$ et $\sigma^2=\mathbb{V}ar[Y_{n,k}^2]<+\infty$, alors
+\begin{enumerate}
+\item la convergence de $(X_n/m^n)_{n\geq 0}$ vers $L$ a lieu en moyenne quadratique;
+\item $L$ est de moyenne $1$ et de variance $\sigma^2/(m^2-m)$;
+\item $\mathbb{P}[L=0]=q$.
+\end{enumerate}
+\end{thmfr}
+Le dernier point signifie en fait que l'événement $\{L>0\}$ est égal presque sûrement à l'événement de la survie de la population.
+\begin{proof}
+On vérifie que $(X_n/m^n)_{n\geq 0}$ est une martingale bornée dans $L^2$ en calculant la variance
+$$\mathbb{E}\left[(X_n/m^n-1)^2\right]=\sum_{k=0}^{n-1}\mathbb{E}[(X_{k+1}/m^{k+1}-X_k/m^k)^2].$$
+On calcule
+$$X_{n+1}/m^{n+1}-X_n/m^n=\frac{1}{m^{n+1}}\sum_{k=1}^{X_n}(Y_{n,k}-m)$$
+ce qui donne
+$$\mathbb{E}[(X_{k+1}/m^{k+1}-X_k/m^k)^2|X_n=\ell]=\frac{1}{m^{2n+2}}\mathbb{E}\left[\left(\sum_{k=1}^{\ell}(Y_{n,k}-m)\right)^2\right]=\frac{1}{m^{2n+2}}\ell\sigma^2$$
+par indépendance des $Y_{n,k}-m$,
+donc
+$$\mathbb{E}[(X_{k+1}/m^{k+1}-X_k/m^k)^2]=\frac{1}{m^{2n+2}}m\sigma^2$$
+puis
+$$\mathbb{E}\left[(X_n/m^n-1)^2\right]=\sum_{k=0}^{n-1}\frac{1}{m^{k+2}}\sigma^2\to_{n\to \infty}\frac{1}{m^2}\frac{\sigma^2}{1-1/m}.$$
+Le deuxième point est une conséquence de la moyenne constante $\mathbb{E}[X_n/m^n]=1$ et de la limite  $\sigma^2/(m^2-m)$ de la variance de $X_n/m^n$.
+
+Pour le dernier point, on va conditionner par rapport à $X_1$:
+$$\mathbb{P}[L=0]=\sum_{k=0}^\infty \mathbb{P}[L=0|X_1=k]\mathbb{P}[X_1=k]=\sum_{k=0}^\infty \mathbb{P}[L=0]^k\mathbb{P}[X_1=k]=G(\mathbb{P}[L=0]) .$$
+On a $\mathbb{P}[L=0]$ comme point fixe de $G$, donc $\mathbb{P}[L=0]=q$ ou $1$. Le deuxième cas étant impossible puisque $\mathbb{E}[L]=1$, on obtient $\mathbb{P}[L=0]=q$.
+\end{proof}
+
+
+
+
+\chapter[MCMC ]{Méthode de Monte-Carlo par chaînes de Markov (1,5 semaines)}
+
+\textit{Pré-requis : Chaines de Markov et théorèmes de convergence}\\
+
+Les méthodes de Monte-Carlo par chaînes de Markov proposent des estimateurs en utilisant des propriétés de convergence de chaînes de Markov vu dans le cours de probabilités, comme par exemple la loi des grands nombres.
+
+
+\section{Algorithme de Metropolis-Hastings}
+Le but de l'algorithme de Metropolis-Hastings est de simuler une mesure de probabilité $\pi$ sur un espace d'état $E$ en simulant une chaîne de Markov dont la mesure invariante est $\pi$. Sous de bonnes hypothèses, cette chaîne de Markov convergera donc en loi vers $\pi$ (ergodicité). Cet algorithme est en particulier utilisé dans le cas, où la mesure $\pi$ n'est pas connue exactement, mais \textbf{à constante près}.
+
+Le cadre général est donc le suivant :  la mesure de probabilité $\pi$ s'écrit
+$$\pi(dx)=\frac{f(x)\lambda(dx)}{\int_E f(x) \lambda(dx)},
+$$
+où \begin{itemize}
+\item $f$ est une fonction mesurable de $E\mapsto \R_+$
+\item $\lambda$ est une mesure positive de référence (la mesure de Lebesgue par exemple)
+\end{itemize}
+La constante de renormalisation ${\int_E f(x) \lambda(dx)}$ n'est pas connue. On écrit en général que la mesure $\pi$ est proportionnelle à $f(x)\lambda(dx)$:
+$$\pi\sim f(x)\lambda(dx).$$
+
+
+\subsection{Espace d'état fini}
+Soit $\pi$ une mesure de probabilité sur un espace d'état fini $E$.
+
+Trouver une chaîne de Markov dont la mesure invariante est $\pi$ n'est pas difficile : par exemple, on peut prendre $X_1,\ldots,X_n$ indépendants de loi $\pi$. Cette solution triviale ne nous intéresse pas. Notre but est de trouver une chaîne de Markov $(X_n)_{n\geq 0}$ qu'on sait simuler \emph{même dans les cas où on ne sait pas simuler} $\pi$.
+
+Partons du principe qu'on sache simuler simplement une chaîne de Markov auxiliaire (dont la mesure invariante n'est pas forcément $\pi$) d'après une matrice de transition $Q:E\times E \to [0,1]$. L'algorithme de Metropolis-Hastings modifie $Q$ pour obtenir une chaîne de Markov de mesure invariante $\pi$.
+
+\begin{defnfr}La chaîne de Markov $(X_n)_{n\geq 0}$ définie par Metropolis-Hastings à partir d'une mesure $\pi$ sur $E$ et d'une matrice de transition $Q$ est la chaîne de Markov homogène de matrice de transition
+$$P(x,y)=\left\lbrace\begin{array}{cc}
+Q(x,y) \min\left(1,\frac{\pi(y)Q(y,x)}{\pi(x)Q(x,y)}\right) & \text{ si }x\neq y \\
+1-\sum_{z\neq x}P(x,z) & \text{ si }x= y
+\end{array} \right. $$
+\end{defnfr}
+
+
+La probabilité $P(x,y)$ d'aller de $x$ à $y$ (pour $y\neq x$) est donc la probabilité d'aller de $x$ à $y$ en suivant la matrice de transition $Q$ multipliée par un facteur $\min\left(1,\frac{\pi(y)Q(y,x)}{\pi(x)Q(x,y)}\right)$ que l'on appelle probabilité d'acceptation rejet.
+
+
+ On peut donc simuler un saut partant de $x$ comme ceci : on choisit un candidat $y$ sur lequel sauter suivant la loi donnée par $Q(x,\cdot)$, et on saute effectivement sur $y$ avec probabilité  $\min\left(1,\frac{\pi(y)Q(y,x)}{\pi(x)Q(x,y)}\right)$, sinon on reste sur $x$.
+
+Remarquons que la probabilité de garder ou de rejeter le saut  fait intervenir le quotient $\pi(x)/\pi(y)$. En particulier, il suffit de connaître $\pi$ sur $E$ à constante près, ce qui s'avère très important dans certains cas.
+
+La procédure peut être retranscrite comme ceci.
+\method{Metropolis-Hastings}{
+\ $X_0={\tt \ simulation\ selon\ une\ loi\ initiale\  quelconque\ };$\\
+\ $\tt pour\ i\  entre\ 1\ et\ n,$\\
+\ $\vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ y={\tt tirage\ al\'eatoire\ selon\ la\ loi\ }Q(X_{i-1},\cdot)$\\
+\  $\vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ {\tt si\ }uniform()<\frac{\pi(y)Q(y,X_{i-1})}{\pi(X_{i-1})Q(X_{i-1},y)}$\\
+$\vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ X_i=y$\\
+\  $\vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ {\tt sinon\ faire\ }$\\
+\ $\vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ X_i=X_{i-1}$\\
+\ ${\tt sortir}\ (X_0,\ldots,X_n);$
+}
+
+
+\paragraph{Vérification } On veut vérifier que la chaine $X_n$ construite ci-dessus admet bien $P$ comme matrice de transition.
+
+Précisons un peu les notations. A chaque étape $i$, on notera $Y_i$ la variable aléatoire tirée selon la loi $Q(X_{i-1},\cdot)$ et $U_i$ la variable aléatoire uniforme utilisée dans le choix. En particulier, $U_i$ est indépendante et $Y_i$ et donc de $X_{i-1}$.\\
+Pour tout couple $(x,y)\in E$ avec $x\neq y$
+\begin{align*}\P(X_{n+1}=y\lvert X_n=x) &= \P(Y_{n+1}=y \text{ et } U_{n+1}\le \left(\frac{\pi(Y_{n+1})Q(Y_{n+1},X_{n})}{\pi(X_{n})Q(X_n,Y_{n+1})}\right) \lvert X_n=x)\\
+&= \P(Y_{n+1}=y \text{ et } U_{n+1}\le \left(\frac{\pi(y)Q(yx)}{\pi(x)Q(x,y)}\right) \lvert X_n=x)\\
+&= \min\left(1,\left(\frac{\pi(y)Q(yx)}{\pi(x)Q(x,y)}\right)\right) Q(x,y)
+\end{align*}
+où l'on a utilisé le fait que $U_{n+1}$ est indépendant de $X_n$ et $Y_{n+1}$.\\
+
+
+
+
+
+
+\paragraph{Justification de l'algorithme}
+Montrons que la mesure $\pi$ est bien la mesure invariante associée à la chaine de Markov de matrice $P$.
+\begin{propfr}On suppose que $\pi(x)\neq 0$ pour tout $x\in E$ et que $Q(x,y)>0 \Leftrightarrow Q(y,x)>0$.
+\begin{itemize}
+\item[$i)$] $\pi$ est la mesure de probabilité invariante pour la chaîne $(X_n)_{n\geq 0}$ de matrice de transition $P$.
+\item[$ii)$] Si de plus $Q$ est irréductible, alors $P$ l'est aussi et on a donc les convergences usuelles vers $\pi$ quand $n\to \infty.$
+\end{itemize}
+\end{propfr}
+\begin{proof}
+\underline{Preuve de $i)$ :} On commence par montrer que la mesure $\pi$ est réversible pour $P$ c'est à dire que pour tout couple  $(x,y) \mu(x)P(x,y)=\mu(y)P(y,x)$.\\
+Commençons par vérifier qu'une mesure réversible est invariante. Remarquons que
+\begin{align*}
+\mu P (y)&= \sum_{x\in E} \mu(x)P(x,y)\\
+&=\sum_{x\in E} \mu(y) P(y,x)\\
+&= \mu(y)\sum_{x\in E} P(y,x)=\mu(y).
+\end{align*}
+
+Vérifions maintenant cette propriété.
+La propriété est toujours vraie si $x=y$.\\
+Pour $x\neq y$, on a
+$\pi(x)P(x,y)=0=\pi(y)P(y,x)$ si $Q(x,y)=Q(y,x)=0$, et
+\begin{align*}
+\pi(x)P(x,y)&=\pi(x)Q(x,y) \min\left(1,\frac{\pi(y)Q(y,x)}{\pi(x)Q(x,y)}\right)\\
+&= \min\left(\pi(x)Q(x,y),\pi(y)Q(y,x)\right)\\
+&=\pi(y)Q(y,x) \min\left(\frac{\pi(x)Q(x,y)}{\pi(y)Q(y,x)},1\right)\\
+&=\pi(y)P(y,x)
+\end{align*}
+si $Q(x,y)$ et $Q(y,x)$ sont non nuls.\\
+
+\underline{Preuve de $ii)$ :} On a $P(x,y)>0$ dès que $Q(x,y)>0$ comme on a supposé que $\pi(x)\neq 0$. Par conséquent, toutes les trajectoires réalisables par $Q$ le sont par $P$, et l'irréductibilité de $Q$ entraîne l'irréductibilité de $P$.
+
+\end{proof}
+
+\paragraph{Exemple :}
+
+On veut simuler sur l'espace $\{1,\cdots\, n\}$ la mesure $\pi$ telle que $\pi(k)\propto\frac{1}{(k+1)^2}$. On se sert de la chaine de Markov auxiliaire définie comme suit : à chaque étape, lorsque la chaine se trouve en position $k$, elle se déplace avec une chance sur deux sur l'un des entiers voisins $k-1$ et $k+1$. Lorsque la chaine est sur un bord comme il n'y a qu'un seul voisin disponible, avec une chance sur deux elle reste sur place, et sinon elle va sur l'entier voisin. La matrice $Q$ de cette chaine s'écrit alors
+$$Q=\begin{pmatrix}
+1/2 & 1/2 & &  & \\
+1/2 & 0 & 1/2 & & \\
+ & 1/2 & \ddots & \ddots & \\
+ &  & \ddots & 0 & 1/2 \\
+ &  &  & 1/2 & 1/2
+\end{pmatrix}$$
+Notons que la chaine de Markov de noyau $Q$ est bien irréductible.
+
+Calculons par exemple
+$$P(1,2)= Q(1,2) \min (1, \frac{\pi(2)Q(2,1)}{\pi(1)Q(1,2)} )= \frac12 \min(1, \frac{2^2}{3^2}) =\frac{4}{18}$$
+On peut vérifier que pour tout $1\ge k\le n-1$ :
+$$P(k,k+1) = \frac12 \frac{(k+1)^2}{(k+2)^2}$$
+pour tout $2\le k\le n$, $$P(k,k-1)=\frac12$$
+
+Dans cet exemple, on remarque le fait que la matrice $Q$ soit symétrique, simplifie grandement les calculs.\\
+
+
+\textit{ $\rightarrow$ Exercice 1,2,3 du TD 6 /TP 4}
+
+
+
+\subsection{Espace d'état continu}
+Si la mesure cible $\pi$ est une mesure sur $\mathbb{R}$ de densité $f$, on peut encore définir la dynamique de type Métropolis Hastings. Dans ce cas, il faut utiliser une chaine de Markov sur un espace non dénombrable. On se donne alors une famille de densité $(q(x,y))_{x,y\in \mathbb{R}}$ indexée par $x\in \mathbb{R}$, c'est-à-dire que pour tout $x\in\mathbb{R}$, on a une mesure de probabilité $q(x,y)dy$, appelé \emph{noyau d'exploration}. Cette famille de densités va nous permettre de choisir un candidat pour l'évolution de l'algorithme.
+
+
+\method{Metropolis-Hastings (cas continu)}{
+\ $X_0={\tt \ simulation\ selon\ une\ loi\ initiale\  quelconque\ };$\\
+\ $\tt pour\ i\  entre\ 1\ et\ n,$\\
+\ $\vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ Y={\tt simulation\ selon\ la\ loi\ }q(X_{i-1},y)dy$\\
+\  $\vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ {\tt si\ }uniform()<\frac{f(y)q(Y,X_{i-1})}{f(X_{i-1})q(X_{i-1},Y)}$\\
+$\vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ X_i=Y$\\
+\  $\vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ {\tt sinon\ faire\ }$\\
+\ $\vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ X_i=X_{i-1}$\\
+\ ${\tt sortir}\ (X_0,\ldots,X_n);$
+}
+
+
+\paragraph{Cas particulier : Metropolis Hastings par marche aléatoire}
+Un cas particulier est celui où le noyau d'exploration $q(x,y)$ s'écrit sous la forme d'une unique loi, de densité $g:\mathbb{R}\to \mathbb{R}$, translatée par $x$:
+$$q(x,y)=g(y-x).$$
+
+C'est le cas dit de la \emph{marche aléatoire} : si $q(x,y)dy$ indique la loi de l'endroit où on saute en partant de $x$, $g$ désigne la loi de la taille du saut $y-x$.
+
+Plus précisément, on peut remarquer que pour $x$ fixé, la loi d'une variable $Y$ distribuée selon la mesure $q(x,y)dy=g(y-x)dy$ est celle de la variable aléatoire $x+Z$ où $Z$ est distribuée selon la densité $g$. \\
+Plutôt que de changer de noyau d'exploration quand l'état $x$ évolue, on peut donc toujours utiliser la même densité $g$, qui nous montre la taille du prochain saut.
+ De plus, on remarque que dans ce cas
+ $$\frac{q(y,x)}{q(x,y)}=\frac{g(x-y)}{g(y-x)}=\frac{g(-Z)}{g(Z)}$$
+
+ \method{Metropolis-Hastings (cas de la marche aléatoire)}{
+\ $X_0={\tt \ simulation\ selon\ une\ loi\ initiale\  quelconque\ };$\\
+\ $\tt pour\ i\  entre\ 1\ et\ n,$\\
+\ $\vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ Z={\tt simulation\ selon\ la\ densite\ }g$\\
+\ $\vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ Y=X_{i-1}+Z$\\
+\  $\vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ {\tt si\ }uniform()<\frac{f(Y)}{f(X_{i-1})}\frac{g(-Z)}{g(Z)}$\\
+$\vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ X_i=Y$\\
+\  $\vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ {\tt sinon\ faire\ }$\\
+\ $\vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ X_i=X_{i-1}$\\
+\ ${\tt sortir}\ (X_0,\ldots,X_n);$
+}
+
+
+\paragraph{Cas symétrique}
+Le cas symétrique, où $Q(x,y)=Q(y,x)$, est intéressant car certaines simplifications apparaissent. En effet, la probabilité d'acceptation/rejet devient tout simplement $\pi(y)/\pi(x)$.
+
+Pour le cas continu, un noyau symétrique signifie que $q(x,y)=q(y,x)$, et donne la probabilité d'acceptation/rejet $f(y)/f(x)$.
+
+\paragraph{Exemple :}Si on veut simuler une loi de densité $f(x)$ proportionnelle à $\exp(-|x|^4)$ en utilisant un noyau d'exploration gaussien (on saute de $x$ en suivant une gaussienne standard centrée en $x$), on a alors un noyau d'exploration
+$$q(x,y)=g(y-x)$$
+où $g$ est la densité gaussienne, qui est symétrique. On est donc dans le cas d'une marche aléatoire symétrique et on peut écrire (en remarquant que $f(y)/f(x)=\exp(|x|^4-|y|^4)$)
+ \method{Metropolis-Hastings (cas de la marche aléatoire symétrique)}{
+\ $X_0={\tt \ simulation\ selon\ une\ loi\ initiale\ };$\\
+\ $\tt pour\ i\  entre\ 1\ et\ n,$\\
+\ $\vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ Z={\tt simulation\ selon\ une\ gaussienne\ centree\ reduite\ }$\\
+\ $\vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ Y=X_{i-1}+Z$\\
+\  $\vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ {\tt si\ }uniform()<\exp(|X_{i-1}|^4-|Y|^4)$\\
+$\vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ X_i=Y$\\
+\  $\vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ {\tt sinon\ faire\ }$\\
+\ $\vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ X_i=X_{i-1}$\\
+\ ${\tt sortir}\ (X_0,\ldots,X_n);$
+}
+
+\subsection{Conclusions et questions non abordées ici}
+L'algorithme de Metroplis Hastings est utilisé pour approcher une loi cible $\pi$ qui est connue à constante près. On a justifier sa convergence dans le cas d'un espace d'état fini.\\
+ Toutefois, nous n'avons pas quantifié la vitesse de convergence de l'algorithme, qui permet de savoir au bout de combien d'itération de la chaine de Markov, la variable simulée est bien distribuée selon la loi invariante. Dans le cas des algorithmes de Métropolis Hastings, cette vitesse de convergence va dépendre de la chaine de Markov auxiliaire $Q$ choisie dans l'algorithme.
+\section{Algorithme du recuit simulé pour la minimisation d'une fonction}
+
+L'objectif de cette partie est de voir un algorithme permettant de trouver le minimum d'une fonction définie sur un espace d'état fini (mais grand). Cet algorithme est basé sur l'algorithme de Métropolis Hastings et la construction d'une famille de mesures de probabilités adaptée : les mesures de Gibbs.
+
+\subsection{Mesure de Gibbs}
+Soit $E$ un espace fini et $V:E\to \mathbb{R}$ une fonction appelée traditionnellement énergie (ou Hamiltonien) dont on cherche les points de l'espace $E$ où le minimum est réalisé.
+
+\begin{defnfr} La mesure de Gibbs $\mu_T$ associée à la température $T>0$ est alors la mesure de probabilité
+$$\mu_T(x)=\frac{1}{Z_T}\exp\left(-\frac{1}{T}V(x)\right) $$
+où $Z_T=\sum_{y\in E}\exp\left(-\frac{1}{T}V(y)\right)$ est une constante appelée fonction de partition.
+\end{defnfr}
+En général, l'espace d'états $E$ est très grand, et la constante $Z_T$ est inconnue.
+
+Soit $\mathcal{M}$ l'ensemble des points où $V$ atteint son minimum : $$\mathcal{M}=\{x\in E : V(x)=\min_y V(y)\}.$$
+
+\begin{propfr}
+\begin{itemize}
+\item[$i)$] Pour $x\in E$, $\displaystyle \lim_{T\to \infty} \mu_T(x)=\frac{1}{Card(E)}$.
+\item[$ii)$] Pour $x\in E$,
+$$ \lim_{T\to 0} \mu_T(x)=\left\{\begin{aligned}&\frac{1}{Card(\mathcal{M})}\text{ si }x\in \mathcal{M}\\
+&0\text{ sinon.}\end{aligned}\right.$$
+\end{itemize}
+\end{propfr}
+
+Lorsque la température $T$ est élevée, la mesure de Gibbs a tendance à s'uniformiser sur l'espace des états. Lorsque $T$ diminue, $\mu_T$ se concentre sur les points où $V$ atteint son minimum.
+\begin{proof}
+\begin{enumerate}
+\item Pour $x\in E$, $\displaystyle \lim_{T\to \infty} \exp\left(-\frac{1}{T}V(x)\right)=1$, donc
+$$\displaystyle \lim_{T\to \infty} Z_T=\lim_{T\to \infty} \sum_{x\in E}\exp\left(-\frac{1}{T}V(x)\right)=\sum_{x\in E}1=Card(E)$$
+puis $\displaystyle \lim_{T\to \infty} \mu_T(x)=\displaystyle \lim_{T\to \infty}\frac{1}{Z_T}\exp\left(-\frac{1}{T}V(x)\right)=\frac{1}{Card(E)}$.
+\item Soit $V^*=\min_y V(y)$. On peut écrire
+$$\mu_T(x)=\frac{e^{-V^*/T}}{Z_T}\exp\left(-\frac{1}{T}(V(x)-V^*)\right),$$
+ce qui implique (en sommant sur les $x$) que
+$$1=\frac{e^{-V^*/T}}{Z_T}\sum_{x\in E}\exp\left(-\frac{1}{T}(V(x)-V^*)\right),$$
+c'est-à-dire que
+$$\frac{Z_T}{e^{-V^*/T}}=\sum_{x\in E}\exp\left(-\frac{1}{T}(V(x)-V^*)\right).$$
+Du coup, on peut faire le même raisonnement que précédemment.
+Pour $x\in E$, $\displaystyle \lim_{T\to 0}\exp\left(-\frac{1}{T}(V(x)-V^*)\right)=1$ si $x\in \mathcal{M}$ et $\displaystyle \lim_{T\to 0}\exp\left(-\frac{1}{T}(V(x)-V^*)\right)=0$ sinon. D'où
+$$\displaystyle \lim_{T\to 0} \frac{Z_T}{e^{-V^*/T}}=\lim_{T\to 0} \sum_{x\in E}\exp\left(-\frac{1}{T}(V(x)-V^*)\right)=\sum_{x\in \mathcal{M}}1=Card(\mathcal{M}),$$
+ce qui permet d'écrire la limite de
+$$\mu_T(x)=\frac{e^{-V^*/T}}{Z_T}\exp\left(-\frac{1}{T}(V(x)-V^*)\right),$$
+c'est-à-dire $\displaystyle \lim_{T\to 0} \mu_T(x)=\frac{1}{Card(\mathcal{M})}$ si $x\in \mathcal{M}$ et $\displaystyle \lim_{T\to 0} \mu_T(x)=0$ sinon.
+\end{enumerate}
+\end{proof}
+\subsection{Metropolis-Hastings pour les mesures de Gibbs}
+Lorsque $E$ est grand, il peut être difficile de simuler une variable dans $E$ selon la loi de $\mu_T$, notamment quand on ne peut pas calculer $Z_T$. Dans ce cas-là, l'algorithme de Metropolis-Hastings est d'un grand secours.
+
+On considèrera dans la suite que la matrice $Q$ est symétrique et irréductible.  Dans ce cas remarquons que $$\frac{\mu_T(y)}{\mu_T(x)}=\exp\left(\frac{1}{T}(V(x)-V(y)\right)$$
+Aussi, si $V(x)>V(y)$ alors $\frac{\mu_T(y)}{\mu_T(x)}>1$ donc l'algorithme acceptera toujours les sauts qui diminuent la valeur de la fonction $V$.
+
+A l'inverse, si $V(x)<V(y)$, l'algorithme pourra quand même passer de $x$ à $y$. Cette propriété évite en général à l'algorithme de rester coincer dans des minimums locaux et permet de bien explorer tout l'espace d'état.
+
+\method{Metropolis-Hastings pour une mesure de Gibbs}{
+\ $X_0={\tt \ simulation\ selon\ une\ loi\ initiale\ quelconque\ };$\\
+\ $\tt pour\ i\  entre\ 1\ et\ n,$\\
+\ $\vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ y={\tt simulation\ selon\ la\ loi\ }Q(X_{i-1},y)$\\
+\  $\vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ {\tt si\ }uniform()<\exp\left(\frac{V(X_{i-1})-V(y)}{T}\right)$\\
+$\vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ X_i=y$\\
+\  $\vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ {\tt sinon\ faire\ }$\\
+\ $\vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ X_i=X_{i-1}$\\
+\ ${\tt sortir}\ X_n$
+}
+Lorsque $n$ est grand, la variable finale $X_n$ a alors une distribution proche de $\mu_T$.
+
+\subsection{Algorithme du recuit simulé}
+Nous allons maintenant voir comment modifier l'algorithme de Metropolis Hastings précédent pour qu'il converge vers les points de $E$ où $V$ est minimale (on parle \textit{d'argmin} de la fonction $V$).
+On sait que lorsque $T$ tend vers $0$, la mesure $\mu_T$ se concentre sur les points où $V$ est minimal.e
+L'idée du recuit simulé est alors de simuler $\mu_{T_n}$, à l'aide de l'algorithme de Metropolis-Hastings, et de faire baisser $T_n$ au fur et à mesure de l'algorithme.
+
+On fixe donc une dynamique Markovienne auxiliaire $Q$ facile à simuler, et de préférence symétrique, puis une suite $(T_n)_{n\geq 1}$ de températures qui tend vers $0$.
+
+Pour une matrice $Q$ symétrique, le probabilité d'acceptation/rejet s'écrit alors
+$$\min\left(1,\frac{\mu_{T_n}(y)Q(y,x)}{\mu_{T_n}(x)Q(x,y)}\right)=\min\left(1,\exp\left(\frac{V(x)-V(y)}{T_n}\right)\right).$$
+
+On effectue donc l'algorithme suivant dans le cas symétrique.
+
+\method{Recuit simulé}{
+\ $X_0={\tt \ simulation\ selon\ une\ loi\ initiale\ quelconque\ };$\\
+\ $\tt pour\ i\  entre\ 1\ et\ n,$\\
+\ $\vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ y={\tt simulation\ selon\ la\ loi\ }Q(X_{i-1},y)$\\
+\  $\vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ {\tt si\ }uniform()<\exp\left(\frac{V(X_{i-1})-V(y)}{T_i}\right)$\\
+$\vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ X_i=y$\\
+\  $\vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ {\tt sinon\ faire\ }$\\
+\ $\vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ X_i=X_{i-1}$\\
+\ ${\tt sortir}\ X_n$
+}
+
+Comme précédemment, dès qu'un saut se fait en direction qui diminue la fonction $V$, il va être automatiquement accepté.
+En revanche, le recuit simulé laisse une chance à l'algorithme de passer d'un état $x$ à un état $y$ même si $V(y)>V(x)$. Toutefois, comme $T_N$ tend vers $0$, la probabilité d'effectuer un tel saut décroit avec $n$. On peut ainsi se sortir de minima locaux. Les algorithmes déterministes comme par exemple la descente de gradient risquent au contraire de se coincer dans un minimum local en refusant de ré-augmenter la valeur de la fonction $V$.
+
+Le théorème suivant, qu'on ne va pas démontrer, justifie la convergence de cet algorithme.
+\begin{thmfr}Pour toute fonction $V$, il existe une constante $C$ qui dépend de $V$ telle que l'algorithme de recuit simulé avec la suite de température $T_n=\frac{C}{\log n+1}$ se concentre sur l'ensemble $\mathcal{M}$ des points où $V$ atteint son minimum :
+$$\lim_{n\to \infty} \mathbb{P}[X_n\in \mathcal{M}]=1.$$
+\end{thmfr}
+
+\paragraph{Calibration de l'agorithme }
+Il faut bien se rendre compte que le choix de $T_n$ peut s'avérer délicat. En particulier, $T_n=\frac{C}{\log n+1}$ est souvent trop lent, et un mauvais choix de la constante $C$ peut empêcher le fonctionnement de l'agorithme (cf exo 4 en TD).\\
+On préfère souvent prendre une suite géométrique $T_{n+1}=\lambda T_n$ avec $0.5<\lambda<1$. Mais il faut faire attention tout de même car
+\begin{itemize}
+\item si on fait baisser $T_n$ trop vite, on accepte de moins en moins les sauts qui font augmenter $V$, et on peut se retrouver coincé dans un minimum local.
+\item si on fait baisser $T_n$ trop lentement,l'algorithme met trop longtemps à converger.
+\end{itemize}
+
+%%
+
+\chapter[Robbins-Monro]{Approximation stochastique par Robbins-Monro (1,5 semaines)}
+
+\textit{Pré-requis : Martingales, espérance conditionnelle}
+\section{Cadre général}
+Cet algorithme a été introduit en 1950 par Robbins et Monro dans le but de rechercher les zéros d'une fonction $h$. Il reste encore très utilisé. C'est un algorithme récursif ( donc économe en mémoire), basé sur des simulations aléatoires.
+
+Son but est d'identifier la solution $\theta^*$ de l'équation $h(\theta)=0$. Il s'applique dans tous les cas où la fonction $h$ peut s'écrire comme une espérance
+$$h(\theta)=\E(H(\theta, Y))$$ pour $Y$ une variable aléatoire facile à simuler.
+
+L'algorithme s'écrit alors
+$$\theta_{n+1}=\theta_n -\gamma_{n+1}H(\theta_n, Y_{n+1})$$
+avec \begin{itemize}
+\item $(\gamma_{n+1})_{n\ge0}$ une suite de pas positifs tels que
+$$\sum \gamma_n =+\infty \quad \sum \gamma_n^2 <\infty$$
+En particulier la suite $\gamma_n\to 0$. Un choix classique pour cette suite est de prendre $\gamma_n=\gamma_1 n^{-\alpha}$ avec $\alpha\in (1/2, 1]$.
+\item $(Y_{n+1})_{n\ge 0}$ une suite de variables aléatoires i.i.d. de même loi que $Y$.
+\end{itemize}
+
+\subsection{Exemples d'utilisation}
+Dans la suite, nous allons voir une série d'exemples d'utilisation, avant de démontrer un critère de convergence de l'algorithme.
+
+\paragraph{Exemple 1: Calcul de l'espérance d'une variable aléatoire}
+
+Considérons $Y$ une variable aléatoire, $f$ une fonction test et la fonction
+$$h(\theta)=\theta-\E(f(Y)))$$
+Résoudre l'équation $h(\theta)=0$ revient alors à calculer l'espérance de $f(Y)$.
+Dans ce cas, on peut facilement écrire $h$ comme une espérance :
+$$h(\theta)=\E(\theta-f(Y))$$
+aussi, la fonction $H(\theta, Y)=\theta-f(Y)$.
+
+Dans ce cas, l'algorithme de Robbins Monro s'écrit
+$$\theta_{n+1}=\theta_n-\gamma_{n+1}(\theta_n-f(Y_{n+1})).$$
+
+Nous allons voir qu'il s'agit en fait d'une généralisation de la méthode de Monte Carlo. Prenons $\gamma_{n+1}=1/(n+1)$, on obtient alors
+$$\theta_{n+1}=\theta_{n}(1-\frac{1}{n+1}) +\frac{f(Y_{n+1})}{n+1}
+$$
+soit
+$$(n+1)\theta_{n+1}=n\theta_n +f(Y_{n+1})$$
+Si on pose $v_n=n\theta_n$, alors on a la relation de récurrence $$v_{n+1}=v_n+f(Y_{n+1})$$ soit en fait $$v_n=\sum_{k=1}^n f(Y_{k+1})$$
+ou encore
+$$\theta_n=\frac{1}{n}\sum_{k=1}^n f(Y_{k+1})$$
+Dans ce cas, $\theta_n$ est la moyenne empirique (ou estimateur de Monte-Carlo).
+
+\paragraph{Exemple 2 : Estimation d'un quantile}
+On rappelle que si $Y$ a pour fonction de répartition $F$, on appelle le quantile d'ordre $\alpha$ la valeur $\theta_\alpha$ telle que $F(\theta_\alpha)=\alpha$.
+
+En particulier, le quantile est solution de
+\begin{align*}
+0&=F(\theta)-\alpha\\
+&= \E(\mathbf{1}_{Y\le \theta} -\alpha)
+\end{align*}
+Pour écrire l'agorithme de Robbins Monro, on pose $H(\theta, Y)=\mathbf{1}_{Y\le \theta} -\alpha$ et on obtient
+$$\theta_{n+1}=\theta_n-\gamma_{n+1}(\mathbf{1}_{Y_{n+1}\le \theta_n} -\alpha)$$
+
+
+L'avantage de cet algorithme par rapport aux autres méthodes d'estimation de quantile, notamment basées sur des méthodes de tri est son coup de calcul très faible.
+
+
+\paragraph{Descente de gradient stochastique}
+On peut utiliser l'algorithme de Robbins Monro pour trouver les minimas (ou maximas) d'une certaine fonction.
+
+C'est le cas typiquement lorsque la fonction $h$ correspond à un gradient (ou à l'opposé d'un gradient):
+$$h(\theta)=-\nabla V(\theta)=\mathbb{E}[H(Y,\theta)]$$
+(en dimension $1$, $\nabla V$ est juste la dérivée de
+$V$). \\
+Un minimiseur de $V$ est alors aussi une solution de $h(\theta)=0$, et on peut utiliser l'algorithme de Robbins-Monro pour le trouver. \\
+Cela conduit à des modifications stochastiques de l'algorithme de descente de gradient déterministe.\\
+\textbf{ - Exemple (gradient bruité) :} c'est le cas où on connaît $\nabla V(\theta)$ à un aléa près, par exemple si $H(Y,\theta)=-\nabla V(\theta)-Y$ avec $\mathbb{E}[Y]=0$. On est bien dans le cas où
+$$\mathbb{E}[H(Y,\theta)]=h(\theta)=-\nabla V(\theta),$$
+et la récurrence de Robbins-Monroe s'écrit alors
+$$\theta_{n+1}=\theta_n-\gamma_{n+1} (\nabla V(\theta_n)+Y_{n+1}),$$
+où $(Y_n)_{n\geq 1}$ est une suite de copies de $Y$ indépendantes et $(\gamma_n)_{n\geq 0}$ une suite de pas  qui tend vers $0$.
+
+
+\textit{$\rightarrow$ En TD on appliquera ceci pour la regression linéaire}.
+
+
+
+\paragraph{Exemple d'utilisation dans un cadre non stationnaire :}
+Dans les exemples précédents, les variables aléatoires $(Y_n)_{n\geq 1}$ étaient identiquement distribuées.
+
+Nous allons passer à une situation où nous ne sommes plus seulement observateur de la quantité aléatoire $(Y_n)_{n\geq 1}$, mais aussi acteur (imaginez une température intérieure qui dépend de la température de vos radiateurs, ou un taux d'une certaine quantité physiologique contrôlée par l'injection d'un médicament). Le paramètre qui nous permet d'agir sur les $(Y_n)_{n\geq 1}$ est justement le paramètre $\theta$, qu'on cherche à ajuster.
+
+On se donne donc une famille de loi $(p_\theta)_\theta$ et on va considérer une variable aléatoire $Y$ de loi $p_\theta$ (il faut donc mettre l'indice $\theta$ à chaque fois qu'on calcule une probabilité ou une espérance sur $Y$).
+
+On cherche comme précédemment la solution $\theta^*$ de $h(\theta)=0$, où
+$h(\theta)=\mathbb{E}_\theta[H(Y,\theta)] .$
+On va donc considérer la suite d'estimateur de $\theta^*$ définie par récurrence par
+$$\theta_{n+1}=\theta_n+\gamma_{n+1} H(Y_{n+1},\theta_n),$$
+où $(Y_n)_{n\geq 1}$ est une \textbf{suite de variables aléatoires de lois conditionnelles fixées} : $p_{\theta_n}$ est la loi conditionnelle $Y_{n+1}$ sachant $\theta_n$ ;  et $(\gamma_n)_{n\geq 0}$ est une suite de pas  qui tend vers $0$.
+
+
+On peut l'écrire comme ceci.
+\method{Algorithme de Robbins-Monro (non-stationnaire}{
+\ $\theta_0={\tt \ arbitraire\ };$\\
+\ $\tt pour\ n\  entre\ 0\ et\ N-1,$\\
+\ $\vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ Y_{n+1}={\tt simulation\ selon\ la\ loi\ }p_{\theta_n}$\\
+\ $\vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \vphantom{-}\ \theta_{n+1}=\theta_n+\gamma_{n+1} H(Y_{n+1},\theta_n)$\\
+\ ${\tt sortir}\ \theta_N$
+}
+Sous des hypothèses que l'on ne précisera pas ici,
+$$\lim_{n\to \infty}\theta_n= \theta^* \ \ \ \text{ps}$$
+et
+$$\lim_{n\to \infty}\frac{\theta_n-\theta^*}{\sqrt{\gamma_n}}= \text{gaussienne} \ \ \ \text{en loi.}$$
+\paragraph{Exemple (dosage) :} $Y$ est une grandeur physiologique observable chez un patient auquel on injecte une quantité de produit $\theta$. On cherche la quantité idéale $\theta^*$ de produit à administrer au patient pour obtenir l'effet moyen escompté $\alpha$ sur $Y$. Autrement dit, on cherche la solution $\theta^*$ de
+$$\mathbb{E}_\theta[Y]=\alpha.$$
+En posant $H(Y,\theta)=\alpha-Y$, on obtient
+$$h(\theta)=\mathbb{E}[H(Y,\theta)]=\mathbb{E}[\alpha-Y]=\alpha-\mathbb{E}[Y],$$
+qui s'annule en $\theta^*$.
+La récurrence de Robbins-Monro s'écrit alors
+$$\theta_{n+1}=\theta_n+\gamma_{n+1} (\alpha-Y_{n+1}),$$
+où sachant $\theta_n$, $Y_{n+1}$ est tirée sous la loi $p_{\theta_n}$.
+
+Si $\mathbb{E}_\theta[Y]$ est croissant en $\theta$ (action positive de $\theta$ sur $Y$), la situation est assez intuitive. Si $Y$ est trop bas, on augmente $\theta$ et si $Y$ est trop haut, on diminue $\theta$.
+\medskip
+
+On verra un second exemple en TP pour la régression linéaire sur un modèle de données auto-régressives.
+
+
+\section{Convergence de l'algorithme}
+Pour rappel, cherche à trouver la solution $\theta^*$ de l'équation $h(\theta)=0$, avec $\theta$ un réel (ou à valeurs dans $\mathbb{R}^d$) mais on n'a pas accès à $h$ directement. On sait que
+$$h(\theta)=\mathbb{E}[H(Y,\theta)],$$
+où $Y$ est une variable aléatoire et $\theta\mapsto H(Y,\theta)$ une version aléatoire de $h$. On a accès à des réalisations indépendantes de variables aléatoires distribuées comme $Y$.
+
+L'algorithme de Robbins Monro calcule la suite définie par récurrence par
+$$\theta_{n+1}=\theta_n+\gamma_{n+1} H(Y_{n+1},\theta_n),$$
+où $(Y_n)_{n\geq 1}$ est une suite de copies de $Y$ indépendantes et $(\gamma_n)_{n\geq 0}$ une suite de pas  qui tend vers $0$.
+\\
+
+Si $\sum_n\gamma_n=+\infty$ et $\sum_n\gamma_n^2<+\infty$, et sous de bonnes hypothèses sur $H$, on a les convergences suivantes:
+$$\lim_{n\to \infty}\theta_n= \theta^* \ \ \ \text{ps}$$
+et
+$$\lim_{n\to \infty}\frac{\theta_n-\theta^*}{\sqrt{\gamma_n}}= \text{gaussienne} \ \ \ \text{en loi.}$$
+
+Dans cette partie du cours nous allons donner un cadre pour la première convergence et nous illustrerons en TP la seconde convergence.
+
+
+Pour démonter la convergence presque sure de l'algorithme de Robbins-Monro, l'idée principale est d'utiliser la structure récursive de cet algorithme et de mettre en évidence l'existence d'une sur-martingale positive associée.
+
+Pour cela, on a besoin de définir la filtration associée à l'algorithme. Pour tout $n\ge0$, on définit $\mathcal{F}_{n}$ la tribu engendrée par les variables aléatoires $(\theta_0, \cdots, \theta_n, Y_0, \cdots Y_{n})$.
+
+On remarque alors que
+\begin{align*}
+\E(\theta_{n+1}\lvert \mathcal{F}_n)&=\E( \theta_n-\gamma_{n+1} H(\theta_n, Y_{n+1} )\lvert\mathcal{F}_n)\\
+&= \theta_n -\gamma_{n+1}\E(H(\theta_n, Y_{n+1}) \lvert\mathcal{F}_n)\\
+&= \theta_n-\gamma_{n+1} h(\theta_n)
+\end{align*}
+car $\theta_n$ est $\mathcal{F}_n$ mesurable est $Y_{n+1}$ est indépendante de la tribu $\mathcal{F}_n$.
+On peut donc écrire
+$$\theta_{n+1}=\theta_n-\gamma_{n+1} h(\theta_n) +\gamma_{n+1}\Delta M_{n+1}$$ avec
+$$\Delta M_{n+1}= h(\theta_n)-H(\theta_n, Y_{n+1}) )$$
+On appelle la quantité $\Delta M_{n+1}$ un incrément de martingale car $\E(\Delta M_{n+1}\lvert\mathcal{F}_n)=0$. En particulier $M_{n}=\sum_{k=1}^{n} \Delta M_{k}$ sera une martingale.
+
+L'algorithme fait évoluer la valeur de $\theta_n$ en suivant un \emph{champ aléatoire} $\theta\mapsto H(Y,\theta)$ et on appelle naturellement \emph{champ moyen} la fonction $h$.
+
+Lorsque les pas sont petits, l'algorithme a tendance à suivre les trajectoires moyennes, c'est à dire les solutions $\bar{\theta}:\mathbb{R}_+\to \mathbb{R}$ de l'équation différentielle $\bar{\theta}'=h(\bar{\theta})$ .
+
+La convergence de l'algorithme est en fait une conséquence de la convergence des trajectoires moyennes vers les solutions de $h(\theta)=0$ pour tout point de départ $\bar{\theta}(0)$.
+
+
+\subsection{Théorème de Robbins-Siegmund}
+Nous allons commencer par introduire un résultat général très puissant pour l'étude des algorithmes stochastiques.
+
+\begin{thmfr}[Théorème de Robbins-Siegmund]
+Soient $(U_n), (V_n), (\alpha_n)$ et $(\beta_n)$ quatre suites de variables aléatoires positives et $\mathcal{F}_n$-adaptées telles que
+\begin{itemize}
+\item[(1)] $(\alpha_n)$,  $(\beta_n)$ et $(U_n)$ sont prévisibles (i.e. $\alpha_{n+1}$ est $\mathcal{F}_n-$ mesurable).
+\item[(2)] $\sup_{n\in\N} \prod_{k=1}^n (1+\alpha_k) <\infty $ presque surement
+\item[(3)] $\sum_{n=0}^{\infty} \E(\beta_n)<\infty$
+\item[(4)] Pour tout $n\in \N$,
+\begin{equation}
+\label{eq:ineg_rec}E(V_{n+1}\lvert\mathcal{F}_n) \le V_n(1+\alpha_{n+1})+\beta_{n+1}-U_{n+1}
+\end{equation}
+\end{itemize}
+Alors
+\begin{itemize}
+\item[a)]$V_n\longrightarrow V_\infty$ presque surement et $V_\infty\in L^1$
+\item[b)]$\sup_{n\in\N} \E(V_n)<\infty$
+\item[c)]$\sum_{n}\E(U_n)<\infty$ et $\sum_{n}U_n<\infty $ presque sûrement.
+\end{itemize}
+\end{thmfr}
+
+Le reste de la section est consacrée à la preuve de ce résultat. C'est une preuve technique mais instructive, car elle détaille la construction d'une sur-martingale positive et exploite le fait qu'une sur-martingale positive converge presque surement vers une variable aléatoire intégrable.
+
+\begin{proof}
+\underline{Construction de la sur-martingale :}
+
+On considère tout d'abord la quantité $(V_n+\sum_{k=1}^n U_k)$. En utilisant (4), on obtient
+\begin{align*}
+\E\left(V_{n+1}+\sum_{k=1}^{n+1} U_k\lvert \Fc_n \right)
+&=\E\left(V_{n+1}\lvert \Fc_n \right)+\underbrace{\sum_{k=1}^{n+1} U_k}_{\text{prévisible}}\\
+&\le V_n(1+\alpha_{n+1})+\beta_{n+1}-U_{n+1}+\sum_{k=1}^{n+1} U_k\\
+&\le V_n(1+\alpha_{n+1})+\beta_{n+1}+\sum_{k=1}^{n} U_k\\
+&\le (V_n+\sum_{k=1}^{n} U_k)(1+\alpha_{n+1})+\beta_{n+1}\\
+\end{align*}
+Définissons maintenant
+\begin{equation}
+\label{def:Sn}
+S_n=\frac{V_n+\sum_{k=1}^n U_k}{\prod_{k=1}^n(1+\alpha_k)}
+\end{equation}
+alors
+\begin{equation}
+\label{eq:majS_n}
+\E(S_{n+1}\lvert \Fc_n)\le S_n+\frac{\beta_{n+1}}{\prod_{k=1}^{n+1}(1+\alpha_k)}
+\end{equation}
+Considérons la suite
+$$B_n= \sum_{k=1}^n \frac{\beta_{k}}{\prod_{j=1}^{k}(1+\alpha_j)}$$
+La variable $B_n$ est une somme de terme positifs, aussi la suite $B_n$ est croissante et elle converge presque surement vers $B_\infty$ (une quantité qui peut être infinie).
+On veut montrer que $\E(B_\infty)$ est finie. Pour ce faire, remarquons que $$\E(B_\infty)=\E(\lim_n B_n) = \lim_{n} \E( B_n)$$ par théorème de convergence monotone.
+De plus
+$$\E(B_n)=\sum_{k=1}^n\E\left(\frac{\beta_k}{\prod_{j=1}^{k}(1+\alpha_j)}\right) \le \sum_{k=1}^n\E(\beta_k) \le  \sum_{k=1}^\infty\E(\beta_k )<\infty$$ par l'hypothèse (3).
+Donc $E(B_\infty)<\infty$ et par conséquent la variable $B_\infty$ est finie presque surement.
+
+Finalement on définit
+$$\widetilde{S}_{n}= S_n+\E(B_\infty\lvert\Fc_n) -B_n.$$
+Remarquons d'abord que  $\widetilde{S}_n\ge0$ car $S_n\ge0$ et $\E(B_\infty\lvert\Fc_n) -B_n=\E(B_\infty-B_n\lvert\Fc_n) \ge0$ puisque $B_n$ est croissante vers $B_\infty$.
+De plus, avec les inégalités précédentes :
+\begin{align*}
+\E(\widetilde{S}_{n+1}\lvert \Fc_n) &= \E(S_{n+1}+\E(B_\infty\lvert\Fc_{n+1}) -B_{n+1}\lvert \Fc_n) \\
+&\le S_n + \frac{\beta_{n+1}}{\prod_{k=1}^{n+1}(1+\alpha_k)}+\E(B_\infty\lvert\Fc_{n}) -B_{n+1}\\
+&\le S_n+ E(B_\infty\lvert\Fc_{n})-B_n = \widetilde{S}_n
+\end{align*}
+
+On en déduit donc que $\widetilde{S}_n$ est une sur-martingale positive et donc qu'elle converge vers une variable aléatoire $\widetilde{S}_\infty$ qui est intégrable.
+
+\underline{Conclusions :}
+Ecrivons maintenant
+$$S_n=\widetilde{S}_n  -(\E(B_\infty\lvert\Fc_n) -B_n)$$
+d'une part $\widetilde{S}_n\to \widetilde{S}_\infty$ presque surement et par croissance $(\E(B_\infty\lvert\Fc_n) -B_n)\to 0$ presque surement.
+\\Ainsi $$S_n\to \widetilde{S}_\infty.$$
+On veut maintenant revenir à $V_n$ et à $\sum_{k=1}^n U_k$ pour démontrer le théorème.
+
+En prenant l'espérance dans \eqref{def:Sn} on peut écrire
+$$\E(V_n)+ E(\sum_{k=1}^n U_k)=\E(S_n \prod_{j=1}^n(1+\alpha_j)).$$
+Aussi chacun des termes du membre de gauche est inférieur au membre de droite. Or
+$$\sup_n \E(S_n \prod_{j=1}^n(1+\alpha_j))\le \underbrace{\sup_n \prod_{j=1}^n(1+\alpha_j))}_{<\infty \text{p.s. } (2)} \sup_n \E(S_n)
+$$
+Or $$\E(S_n)\le E(\widetilde{S}_n)\le \E(\widetilde{S}_1)<\infty$$
+Donc simultanément
+$$\sup_n\E(V_n)<\infty \qquad \sup_n  E(\sum_{k=1}^n U_k)<\infty$$
+Comme les $U_n$ sont positives on en déduit que
+$$\E(\sum_{k=1}^\infty U_k)<\infty\qquad \text{et} \qquad \sum_{k=1}^\infty U_k<\infty \,. p.s.$$
+Ce qui démontre les points $b)$ et $c)$ du théorème.
+\\
+Finalement
+$$V_n=S_n\prod_{j=1}^n(1+\alpha_j) -\sum_{k=1}^n U_k$$
+comme tous les termes du membre de droite convergent presque surement vers une variable $L^1$ on en déduit que $V_n\longrightarrow V_\infty$ et $\E(\lvert V_\infty \lvert)<\infty$.
+
+
+
+\end{proof}
+\subsection{Application à Robbins Monro}
+
+Dans cette section, on va voir comment ce résultat nous permet de démontrer la convergence presque sûre de l'algorithme de Robbins-Monro. On rappelle que cet algorithme s'écrit
+$$\theta_{n+1}=\theta_{n}-\gamma_{n+1}h(\theta_n)+\gamma_{n+1} \Delta M_{n+1}$$ avec l'incrément de martingale
+$\Delta M_{n1+}=h(\theta_n)-H(\theta_n,Y_{n+1})$ qui vérifie $E(\Delta M_{n+1}\lvert \Fc_{n}) =0$.
+
+La preuve fait intervenir une fonction de Lyapunov pour l'algorithme
+\begin{defnfr}
+\label{def:lyap}
+Dans ce cours, on dira qu'une fonction $V:E\mapsto R_+$ est une fonction de Lyapunov si
+\begin{itemize}
+\item[i)] pour tout $(x,y)\in E^2$, $\lvert \lvert \nabla V(x)-\nabla V(y)\lvert\lvert \le L \lvert \lvert x-y\lvert\lvert$ pour $L>0$ une constante. (gradient -Lipschitz)
+\item[ii)] $\min_{x\in E} V(x) = m>0$
+\item[iii)] $\lim_{\lvert x\lvert \to \infty} V(x)=+\infty$ (coercive)
+\item[iv)] $ \lvert \lvert \nabla V(x)^2\lvert\lvert \le C(1+V(x)) $ (sous quadratique)
+\end{itemize}
+\end{defnfr}
+Un exemple typique de telle fonction est la fonction $V(x)=x^2+1$.\medskip\\
+
+Nous allons maintenant donner les conditions de convergence presque sure de l'algorithme.
+\begin{thmfr}
+\label{thm:RM}
+Supposons qu'il existe une fonction de Lyapunov $V$ vérifiant les hypothèses de la Définition \ref{def:lyap} et se comportant bien vis à vis de l'algorithme, c'est à dire telle que :
+\begin{itemize}
+\item[1)]$\langle \nabla V(x), h(x) \rangle \ge0$ pour tout $x\in E$ (positive le long des trajectoires)
+\item[2)]$\lvert h(x)\lvert^2 \le C(1+V(x))$ (asymptotique contrôlée par $V$)
+\item[3)]$\E(\lvert\Delta M_{n+1}\lvert^2\lvert \Fc_n)\le C(1+V(\theta_n))$ (contrôle du bruit)
+\end{itemize}
+Alors
+\begin{itemize}
+\item[a)] $\sup_n \E(V(\theta_n))<\infty$
+\item[b)] $\sum \gamma_n \langle \nabla V(\theta_n),h(\theta_n)\rangle <\infty$
+\item[c)]$ V(\theta_n)\to V_\infty $ presque surement et $V_\infty\in L^1$
+\item[d)] $\theta_{n+1}-\theta_n \to 0$ presque surement et dans $L^2$
+\end{itemize}
+\end{thmfr}
+\begin{propfr}
+\label{prop:RM}
+Si de plus $$\{x, \langle \nabla V(x),h(x)\rangle=0\}=\{x^*\}$$ alors
+\begin{itemize}
+\item[e)] $x^*$ est l'unique minimum de $V$
+\item[f)] $\theta_n\mapsto x^*$ presque surement.
+\end{itemize}
+\end{propfr}
+
+\begin{proof}
+[Preuve du Théoreme \ref{thm:RM}]
+L'idée principale de la preuve est d'effectuer un développement de Taylor à l'ordre $2$, de $V(\theta_{n+1})$ au voisinage de $\theta_n$ est d'utiliser les hypothèses pour obtenir une inégalité du type \eqref{eq:ineg_rec}.
+
+En utilisant un développement de Taylor on a
+\begin{align*}
+V(\theta_{n+1})&=V(\theta_n-\gamma_{n+1}(h(\theta_n)-\Delta M_{n+1}))\\
+&=V(\theta_n)-\gamma_{n+1}\langle \nabla V(\theta_n), (h(\theta_n)-\Delta M_{n+1})\rangle + \frac{1}{2} D^2 V(\xi_{n+1}).(\gamma_{n+1}(h(\theta_n)-\Delta M_{n+1})))^2\\
+\end{align*}
+Le contrôle du terme d'ordre $2$ provient du fait que $V$ est gradient Lipchitz, donc sa hessienne est bornée :
+\begin{align*}\frac{1}{2} D^2 V(\xi_{n+1}).(\gamma_{n+1}(h(\theta_n)-\Delta M_{n+1})))^2 &\le C\gamma_{n+1}^2 (h(\theta_n)-\Delta M_{n+1}))^2\\
+&\le  C\gamma_{n+1}^2(h(\theta_n)^2+\Delta M_{n+1})^2)
+\end{align*}
+Donc en utilisant $2)$ et $3)$,
+$$\E\frac{1}{2} D^2 V(\xi_{n+1}).(\gamma_{n+1}(h(\theta_n)-\Delta M_{n+1})))^2\lvert \Fc_n) \le C\gamma_{n+1}^2 (1+V(\theta_n))$$
+Pour les termes d'ordre $1$, remarquons que comme $\Delta M_{n+1}$ est un incrément de martingale
+$$\E(\langle \nabla V(\theta_n), (h(\theta_n)-\Delta M_{n+1})\rangle \lvert \Fc_{n})= \langle \nabla V(\theta_n), (h(\theta_n)-\E(\Delta M_{n+1})\lvert \Fc_{n})\rangle =\langle \nabla V(\theta_n), h(\theta_n)\rangle$$
+D'où finalement
+\begin{align}
+\E(V(\theta_{n+1})\lvert \Fc_n)&\le  V(\theta_n) - \gamma_{n+1} \langle \nabla V(\theta_n), h(\theta_n)\rangle +C\gamma_{n+1}^2 (1+V(\theta_n))\nonumber\\
+&\le  V(\theta_n)(1+C\gamma_{n+1}^2) - \gamma_{n+1} \langle \nabla V(\theta_n), h(\theta_n)\rangle +C\gamma_{n+1}^2
+\label{eq:rec_Vn}
+\end{align}
+On peut donc appliquer le théorème de Robbins Siegmund avec $V_n=V(\theta_n)$, $a_{n+1}=c\gamma_{n+1}^2=\beta_{n+1}$ et  $U_{n+1}=\gamma_{n+1}\langle \nabla V(\theta_n), h(\theta_n)\rangle$.
+Vérifions les hypothèses du théorème : toutes ces suites sont positives, adaptées et prévisibles quand il le faut $1)$. Par hypothèse sur $\sum \gamma_{n+1}^2<\infty$, on en déduit que $2)$ et $3)$.
+On obtient alors les conclusions suivantes :\begin{itemize}
+\item
+$V(X_n)\mapsto V_\infty, \qquad \text{et}\qquad V_\infty \in L^1$ ce qui donne $c)$
+\item $\sum U_n <\infty$ ce qui donne $b)$
+\item $\sup _n \E(V(\theta_n))<\infty$ ce qui donne $a)$.
+\end{itemize}
+Il reste à montrer $d)$. On sait par hypothèse que
+$$\E((\theta_{n+1}-\theta_n)^2\lvert \Fc_n)\le C\gamma_{n+1}^2(1+V(\theta_n))$$
+donc
+$$\sum \E((\theta_{n+1}-\theta_n)^2)<\infty.$$
+On en déduit que $\E((\theta_{n+1}-\theta_n)^2)\to0$ mais aussi que $\sum (\theta_{n+1}-\theta_n)^2<\infty$ presque surement, donc $\theta_{n+1}-\theta_n\to 0$ presque surement et dans $L^2$.
+\end{proof}
+
+
+\begin{proof}
+[Preuve de la proposition \ref{prop:RM}]
+Pour le premier point remarquons déjà que tous les minimas de $V$ sont inclus dans l'ensemble $\{x, \langle \nabla V(x),h(x)\rangle=0\}$. Donc si cet ensemble est un singleton, $V$ a un unique minimum.\\
+On sait maintenant que $V$ atteint son minimum en $x^*$. Montrons que $\lim V(\theta_n)=V_\infty=V(x^*)$ et $\lim \nabla V(\theta_n)=0$ on aura alors $\lim \theta_n\in \{x, \langle \nabla V(x),h(x)\rangle=0\}$ ce qui conclura la preuve.\\
+On se place sur l'événement $\Omega$ de probabilité $1$, sur lequel $V(\theta_n(\omega))\to V_\infty(\omega)$ et $$\sum\gamma_{n+1}\langle \nabla V(\theta_n(\omega)),h(\theta_n(\omega))\rangle<\infty.$$
+
+En particulier, comme $V(\theta_n(\omega))$ converge, la suite $\theta_n(\omega)$ est bornée, donc elle converge à extraction près vers $\theta_\infty(\omega)$. On déduit de la convergence de la série, que nécessairement
+$$\lim \langle \nabla V(\theta_n(\omega)),h(\theta_n(\omega))\rangle=0,$$
+et donc par continuité que
+$$\langle \nabla V(\theta_\infty(\omega)),h(\theta_\infty(\omega))\rangle.$$
+Par hypothèse, $\theta_\infty(\omega)=x^*.$ En particulier, $\theta_n(\omega)$ a une unique valeur d'adhérence et converge donc vers cette valeur. Finalement, $V_\infty=V(x^*)$.
+\end{proof}
+On verra un exemple d'utilisation de ce résultat en TD (Exercice 1 sur les quantiles).\\
+
+Nous avons justifié de la convergence de l'algorithme. Nous verrons en TP deux types de résultats pour préciser cette convergence : \begin{itemize}
+\item un TCL sur la convergence en loi des fluctuations
+$$\lim_{n\to\infty} \frac{\theta_n-\theta^*}{\sqrt{\gamma_n}} = \text{loi gaussienne}$$
+\item des estimées sur le comportement à $n$ fixé, de l'erreur moyenne quadratique $$\E((\theta_n-\theta^*)^2).$$
+\end{itemize}
+
+%%\section{Extension au cadre non stationnaire}
+%
+%%
+
+\end{document}

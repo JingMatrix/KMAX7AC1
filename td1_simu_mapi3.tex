@@ -1,0 +1,225 @@
+\documentclass{exercices}
+
+\usepackage[french]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{multicol,epsfig,csquotes}
+\usepackage{enumerate}
+\usepackage{xcolor}
+\usepackage{amsmath,amssymb,amsthm,enumitem,bbm,latexsym}
+\usepackage[normalem]{ulem}
+\usepackage{hyperref}
+\usepackage{listings}
+
+%%%%%%%%%% environnements
+%\theoremstyle{definition}
+%\newtheorem{exo}{Exercice}
+
+
+%%%%%%%%%% macros
+
+
+
+
+\begin{document}
+{
+\noindent {\sc M1 MAPI3  -  Simulations stochastiques \hfill 2025-2026}\\
+Jianyu Ma \hfill \textit{jianyu.ma@math.univ-toulouse.fr}\\
+Bastien Mallein \hfill \textit{bastien.mallein@math.univ-toulouse.fr}\\
+Pierre Petit \hfill \textit{pierre.petit@math.univ-toulouse.fr}}
+
+
+\vspace{2ex}
+
+ \hrule
+\begin{center}
+\textbf{\large TD 1 \& TP 1 - Simulation d'une variable aléatoire}
+\vspace{2ex}
+\end{center}
+\hrule
+
+\bigskip
+
+\textbf{TP-} Pour l'implémentation pratique des simulations de variables aléatoires, on ne fera pas appel à des fonctions prédéfinies pour la simulation aléatoire, à l'exception de la fonction \texttt{rand} du package \texttt{numpy.random}. Chaque programme débute par \texttt{import numpy.random as npr}, et on utilisera \texttt{npr.rand()} pour simuler des variables aléatoires de loi uniforme sur [0,1].
+
+\subsection*{Lois discrètes}
+
+Soient $x_1,x_2,\cdots,x_n$ des nombres r\'eels tous diff\'erents et $p_1,p_2,\cdots,p_n$ des nombres r\'eels positifs tels que $\sum_{i=1}^n p_i=1$. On pose $s_0=0$ et pour tout $1\leq k \leq n$, $s_k=\sum_{i=1}^k p_i$. Soit $U$ une variable al\'eatoire de loi uniforme ${\mathcal U}([0,1])$ et
+\[X=\sum_{k=1}^n x_k \ind{(s_{k-1}\leq U \leq s_k)}.\]
+Alors, $X$ est une variable al\'eatoire de loi discr\`ete $\mu=p_1\delta_{x_1}+p_2\delta_{x_2}+\cdots+p_n\delta_{x_n}$.
+
+\begin{exercice}[Simulation d'une variable discrète]
+\begin{enumerate}
+\item Écrire un algorithme en pseudocode permettant de simuler une variable aléatoire $X$ à valeurs dans $\{1,2,3\}$, de loi donn\'ee par $$\mathbb{P} (X = 1) = 0,3, \qquad \mathbb{P} (X = 2) = 0,1 \quad \text{ et }\quad \mathbb{P} (X = 3) = 0,6$$ à partir d'un tirage uniforme sur $[0,1]$.
+\item On note $N$ le nombre de comparaisons effectuées par l'algorithme ci-dessus, déterminer $\mathbb{E}(N)$.
+\item En modifiant l'ordre dans lequel sont fait les comparaisons, proposer une version de l'algorithme réalisant en moyenne moins de comparaisons.
+\item Calculer, dans le cas général, le nombre moyen de comparaisons nécessaires pour simuler une variable aléatoire de loi $\mu = p_1 \delta_{x_1} + \cdots + p_n \delta_{x_n}$ avec l'algorithme décrit ci-dessus.
+\item \textbf{TP -} Écrire en Python deux fonctions codant pour les deux algorithmes précédents. Vérifiez leur correction par un histogramme. Comparer leurs vitesses d'exécution pour la réalisation de 1000 copies indépendantes de la variable $X$.  On fera appelle à la fonction \texttt{time} du module \texttt{time}.
+\item\textbf{TP -} Ecrire une fonction générique permettant de simuler une variable aléatoire discrète à partir du vecteur $(x_1, \dots x_d)$ des valeurs possibles et du vecteur $(p_1, \dots, p_d)$ des probabilités associées.
+\item \textbf{TP -} Appliquez au cas d'une variable aléatoire donnée par $x_i = i$ et $p_i = i/55$ pour $i \leq 10$.
+\end{enumerate}
+\end{exercice}
+
+\begin{solution}
+\end{solution}
+
+\begin{exercice}[Loi binomiale]
+Soit $n \in \N$ et $p \in [0,1]$.
+\begin{enumerate}
+  \item Expliquer comment g\'en\'erer, à partir de variables \textit{i.i.d} de Bernoulli de paramètre $p$, une variable al\'eatoire $X$ de loi Binomiale $\mathcal{B}(n,p)$. Proposer un premier algorithme de simulation des variables aléatoires de Bernoulli.
+  \item Soit $X$ une variable de loi $\mathcal{B}(n,p)$, on note $q_{n,k} = \P(X = k)$ pour tout $0 \leq k \leq n$. Calculer $\frac{q_{n,k+1}}{q_{n,k}}$. En déduire un second algorithme permettant de simuler une variable de loi binomiale avec la méthode définie ci-dessus.
+\item \textbf{TP -}  En utilisant les deux méthodes précédentes, coder duex fonctions binom1(n,p,m) et binom2(n,p,m) qui génèrent des vecteur de taille $m$ de variables aléatoires binomiales indépendantes de paramètres $(n,p)$.
+\item \textbf{TP -} Comparez la vitesse d'exécution de ces deux algorithmes.
+\end{enumerate}
+\end{exercice}
+
+
+\begin{exercice}[Loi géométrique paire]
+Soit $p \in (0,1)$, on note $G$ une variable aléatoire de loi géométrique de paramètre $p$.
+\begin{enumerate}
+  \item Proposer un algorithme permettant de simuler cette variable aléatoire grâce à un unique appel à la fonction rand.
+  \item On souhaite simuler une variable aléatoire de loi géométrique, conditionnée à être paire. Proposer un algorithme basé sur la méthode du rejet.
+  \item Calculer $\P(G \in 2 \N)$, en déduire un second algorithme permettant de simuler cette variable aléatoire.
+  \item \textbf{TP -} Comparer les vitesses d'exécution de ces deux algorithmes.
+\end{enumerate}
+\end{exercice}
+
+\begin{exercice}[Loi sur un ensemble fini]
+On dispose d'un sac à dos, dans lequel on souhaite mettre un certain nombre d'objets dont le poids total ne dépassera pas 10kg. Les objets sont énumérés $1, 2, 3 \cdots, n$, et le poids de chaque objet, exprimé en kg, est noté $m_1,m_2,\cdots, m_n$.
+\begin{enumerate}
+  \item Combien y a-t-il de façons différentes de remplir le sac avec certains de ces $n$ objets, indépendamment de la contrainte de poids ?
+  \item Proposer un algorithme permettant de choisir uniformément au hasard l'un de ces $n$ remplissages. L'algorithme renverra une liste de $0$ et de $1$ de longueur $n$, et le $k$ième élément de la liste vaut $0$ si l'objet $k$ est ajouté dans le sac, $1$ sinon.
+  \item \textbf{TP -} Implémenter cet algorithme.
+  \item Soit $A \subset \{1,\ldots,n\}$ l'ensemble des objets mis dans le sac. Comment calculer le poids de ce sac ? Proposer un algorithme permettant de calculer le poids du sac, qui prend en entrée la liste des poids des objets, et le résultat renvoyé par le 1er algorithme.
+  \item \textbf{TP -} Implémenter ce deuxième algorithme.
+  \item Proposer alors un algorithme basé sur la méthode du rejet pour tirer uniformément au hasard un remplissage du sac à dos avec des objets dont le poids total ne dépasse pas 10kg.
+  \item \textbf{TP -} Implémenter ce 3e algorithme appelé \texttt{remplissageAleatoire}.
+  \item On note $N$ le nombre total de remplissages possibles de notre sac à dos, et $B$ un ensemble choisi uniformément au hasard parmi les ensembles de remplissages possible du sac à dos. Calculer $\P(B = \emptyset)$.
+  \item \textbf{TP -} Grâce à l'algorithme \texttt{remplissageAleatoire}, proposer une façon d'estimer la valeur de $N$. Calculer cette valeur pour 10 objets de poids $(1,1,2,2,3,3,4,4,5,5)$.
+\end{enumerate}
+
+\end{exercice}
+
+\subsection*{Lois à densité, inversion de la fonction de répartition}
+
+Soit $X$ une variable al\'eatoire r\'eelle de fonction de
+r\'epartition $F$. On appelle inverse g\'en\'eralis\'ee de $F$, la
+fonction $G$ d\'efinie pour tout $y\in ]0,1]$ par
+$G(y)=\inf\{x\in \R \ / F(x)\geq y \}$.
+Si $U$ est une variable al\'eatoire
+de loi uniforme ${\mathcal U}([0,1])$, alors $G(U)$ a m\^eme loi que $X$.
+
+\begin{exercice}[Inversion de la fonction de répartition]
+\begin{enumerate}
+\item Appliquer la méthode d'inversion de la fonction de répartition pour simuler une variable al\'eatoire $\tt Y$ de loi de Weibull de densité $3x^{2} e^{-x^3}$ sur $\mathbb{R}^+$.
+\item \textbf{TP -} Écrire un code pour g\'en\'erer
+$N$ r\'ealisations  ind\'ependantes de la variable al\'eatoire
+$\tt Y$ de loi de Weibull de densité $3x^{2} e^{-x^3}$ sur $\mathbb{R}^+$.
+\item Appliquer la méthode d'inversion de la fonction de répartition pour simuler une variable al\'eatoire $\tt Z$ de loi de Cauchy ${\mathcal C}(c)$ (avec $c>0$), de densité $\frac{c}{\pi(c^2+x^2)}$. (On rappelle qu'$\arctan(x)$ est une primitive de $\frac{1}{(1+x^2)}).$
+\item \textbf{TP -} Écrire un code pour g\'en\'erer $N$ r\'ealisations  ind\'ependantes de la variable al\'eatoire $\tt Z$ de loi de Cauchy ${\mathcal C}(c)$.
+\item \textbf{TP -} Tracer les moyennes empiriques successives de $\tt Y$ et v\'erifier qu'elles convergent presque sûrement.
+\item \textbf{TP -} Que se passe-t-il pour les moyennes empiriques successives de $\tt Z$ ?
+\item \textbf{TP -} A l'aide d'un histogramme, observer quelle est la loi de la moyenne empirique associ\'ee \`a $\tt Z$ ?
+%\item Appliquer la méthode d'inversion de la fonction de répartition pour simuler une variable aléatoire $\tt A$ de loi de l'arcsinus, de densité $\frac{1}{\sqrt{\pi x(1-x)}}$ sur $[0,1]$.
+\end{enumerate}
+\end{exercice}
+
+\begin{exercice}[Méthode par troncature]
+Soit $X$ une v.a. réélle positive à densité, de fonction de répartition $F$, et $N$ est une variable al\'eatoire
+\`a valeurs dans $\mathbb{N}$ telle que, pour tout $n \in \mathbb{N}$,
+$\mathbb{P}[N=n]=F(n)-F(n-1).$
+\begin{enumerate}
+\item Montrer que pour que $N$ soit une variable à valeurs dans $\N$, necessairement $X$ prend ses valeurs dans $[-1,+\infty[$.
+\item Montrer que la partie entière $\lfloor X\rfloor +1$ a m\^eme loi que $N$.
+\item Vérifier qu'on peut l'utiliser pour simuler une variable aléatoire de loi uniforme ${\mathcal U}(\{1,2,\cdots,n\})$ à partir d'une uniforme sur $[0,n]$; une loi géométrique de paramètre $p$ à partir d'une exponentielle.
+\item \textbf{TP -} Comparer l'efficacité des méthodes par troncature et par inversion de la fonction de répartion pour une loi géométrique de paramètre $p$.
+\end{enumerate}
+\end{exercice}
+
+\begin{exercice}[Identification de loi]
+Calculer la loi de $\sqrt{-\ln(U)}$, si $U\sim \mathcal{U}nif(0,1)$.\\
+En multipliant par une constante (à déterminer), en déduire une façon de simuler une loi de Rayleigh, de densité
+$\frac{x}{\sigma^2}e^{-x^2/2\sigma^2}$
+sur $\mathbb{R}^+$.
+\end{exercice}
+
+\begin{exercice}[Mélange de lois]
+\begin{enumerate}
+  \item Soit $X,Y,Z$ trois variables indépendantes, telles que $X$ suit une loi de Bernoulli de paramètre $\frac{1}{4}$, $Y$ suit une loi $\mathcal{N}(0,1)$ et $Z$ suit une loi exponentielle de paramètre $1$. Déterminer la loi de la variable $T = X Y + (1-X) Z$.
+  \item En faisant un mélange de loi, expliquer comment simuler une variable aléatoire de loi donnée par
+$\frac{1}{3}\mu_1+\frac{2}{3}\mu_2$ avec $\mu_1$ une loi exponentielle de paramètre 2 et $\mu_2$ une uniforme sur $[0,1]$.
+\end{enumerate}
+
+\end{exercice}
+
+\subsection*{Méthode du rejet}
+
+\begin{exercice}[Loi uniforme sur un domaine]
+On souhaite simuler une variable aléatoire uniforme sur l'intérieur $B$ d'une cardioïde. La cardioïde de paramètre $a>0$ est la courbe fermée de $\mathbb{R}^2$ d'équation cartésienne
+$$(x^2+y^2-ax)^2=a^2(x^2+y^2).$$
+On peut également la définir par l'équation polaire
+$r(\theta)=a(1+\cos(\theta)).$
+\begin{enumerate}
+\item
+Vérifier que le point $\Big(r(\theta)\cos(\theta),r(\theta)\sin(\theta)\Big)$ est située sur la cardioïde, et que le pavé $[-2a,2a]^2$ contient la cardioïde.
+\item
+En déduire un moyen de simuler un point uniformément sur l'intérieur de la cardioïde
+$$B=\{(x,y)\in \mathbb{R}^2:(x^2+y^2-ax)^2\leq a^2(x^2+y^2)\}.$$
+\item
+\textbf{TP -} Tracer la cardioïde, le pavé la contenant, et afficher un échantillon de taille $n$ de loi uniforme sur $B$.
+\item En utilisant une methode de Monte-Carlo, estimez l'aire contenue dans la cardioïde ainsi que la probabilité de rejet.
+\item \textbf{TP -}
+Comment diminuer la probabilité de rejet ?
+\end{enumerate}
+\end{exercice}
+
+\begin{exercice}[Densité dominée]
+Proposer un algorithme de rejet pour générer une variable aléatoire de densité $f(x)=\frac{\pi}{2}\sin(\pi x)$ sur $[0,1]$.  Quelle est la probabilité de rejet ?
+\end{exercice}
+
+\begin{exercice}[Simuler une loi à densité]
+On veut simuler une variable aléatoire $X$ de densité $f(x)=\frac{1}{Z}e^{-x^3}$ sur $\{x\in \mathbb{R}:x\geq 1\}$ à partir de la simulation d'une variable aléatoire $Y$ de densité $g(x)=\frac{1}{x^2}$ sur $\{x\in \mathbb{R}:x\geq 1\}$. La constante de normalisation $Z=\int_1^{+\infty}e^{-x^3}dx$ n'est pas calculable, mais on n'en aura pas besoin pour les simulations.
+\begin{enumerate}
+\item Montrer qu'il est facile de simuler $Y$ par l'inversion de la fonction de répartition.
+\item Montrer que $x\mapsto \frac{f(x)}{g(x)}$ est décroissante sur $\{x\in \mathbb{R}:x\geq 1\}$.
+\item En déduire que $f(x)\leq \frac{1}{eZ} g(x)$ pour tout $x\geq 1$.
+\item En déduire un algorithme de type rejet pour simuler $X$ à partir de réalisations indépendantes de $Y$.
+\end{enumerate}
+\end{exercice}
+
+%\subsection*{Lois normales : méthode de Box-Muller}
+%
+
+\begin{exercice}[Méthode de Box-Muller]
+Si $U$ et $V$ sont deux variables
+al\'eatoires ind\'ependantes de loi uniforme ${\mathcal U}([0,1])$,
+alors les variables $X=\sqrt{-2\,\log U}\cos(2\pi V)$ et
+$Y=\sqrt{-2\,\log U}\sin(2\pi V)$
+sont ind\'ependantes et de loi normale ${\mathcal N}(0,1)$.
+\begin{enumerate}
+\item Grâce à l'énoncé ci-dessus, proposez un algorithme permettant de simuler une variable aléatoire de loi $\mathcal{N}(m,\sigma^2)$.
+\item Proposer un algorithme alternatif de rejet pour générer cette variable aléatoire, en utilisant la méthode du rejet à partir de la loi de Cauchy de densité $\frac{1}{\pi(1+x^2)}.$ Calculer la probabilité de rejet.
+\item \textbf{TP -}  Coder les deux méthodes proposées précédemment et vérifier par des histogrammes que les variables simulées suivent bien une loi gaussienne.
+\item \textbf{TP -} Proposez une troisième méthode (plus approximative) utilisant le théorème central limite.
+\item \textbf{TP -} Comparer les performances de ces trois manières de simuler des gaussiennes.
+\end{enumerate}
+\end{exercice}
+
+%
+%
+%\begin{exercice}[Méthode de Box-Muller]
+%\begin{enumerate}
+%\item
+%Utiliser l'algorithme de Box-Muller pour g\'en\'erer $N$ r\'ealisations de variables
+%al\'eatoires ind\'ependantes
+%et de loi normale ${\mathcal N}(m,s^2)$ o\`u
+%la moyenne $m\in \R$ et la variance
+%$s^2>0$ sont affect\'ees par l'utilisateur.
+%\item
+%Proposer un algorithme de rejet pour générer une variable aléatoire standard en utilisant la méthode du rejet à partir de la loi de Cauchy de densité $\frac{1}{\pi(1+x^2)}.$ Quelle est la probabilité de rejet ?
+%\item \textbf{TP -}  Coder les deux méthodes proposées précédemment et vérifier par des histogrammes que les variables simulées suivent bien une loi gaussienne.
+%\item \textbf{TP -} Proposez une troisième méthode (plus approximative) utilisant le théorème central limite.
+%\item \textbf{TP -} Comparer les performances de ces trois manières de simuler des gaussiennes.
+%\end{enumerate}
+%\end{exercice}
+\end{document}
