@@ -1,6 +1,4 @@
-\documentclass
-%[solutions]
-{exercices}
+\documentclass[solutions]{exercices}
 
 \usepackage[french]{babel}
 \usepackage[T1]{fontenc}
@@ -56,6 +54,34 @@ On souhaite calculer $I = \int_0^{1} x e^{-x^3} \dd x$.
 \end{enumerate}
 \end{exercice}
 
+\begin{solution}
+\begin{enumerate}
+  \item Par la formule de transfert (ou de l'espérance), pour une fonction $g$ et une variable aléatoire $U$ de densité $f_U$, on a $\E(g(U)) = \int g(x) f_U(x) \dd x$.
+  Ici, $U \sim \mathcal{U}([0,1])$, donc sa densité est $f_U(x) = 1$ pour $x \in [0,1]$. Soit $g(x) = x e^{-x^3}$.
+  On a donc $\E(U e^{-U^3}) = \int_0^1 x e^{-x^3} \cdot 1 \dd x = I$.
+  \item D'après la loi forte des grands nombres, la moyenne empirique d'une suite de variables aléatoires i.i.d. converge presque sûrement vers leur espérance commune.
+  Ainsi, $\lim_{n \to \infty} \frac{1}{n} \sum_{i=1}^n U_i e^{-U_i^3} = \E(U e^{-U^3}) = I$.
+  \item \textbf{TP -} L'algorithme est le suivant :
+  \begin{itemize}
+    \item Choisir un grand nombre d'échantillons $N$.
+    \item Générer un vecteur de $N$ variables aléatoires $U_1, \dots, U_N$ de loi $\mathcal{U}([0,1])$.
+    \item Calculer le vecteur $Y_i = U_i e^{-U_i^3}$ pour chaque $i$.
+    \item L'estimation de $I$ est la moyenne des $Y_i$: $\hat{I} = \frac{1}{N} \sum_{i=1}^N Y_i$.
+  \end{itemize}
+  \item Soit $Y = Ue^{-U^3}$. La variance est $\mathbb{V}\mathrm{ar}(Y) = \E(Y^2) - (\E(Y))^2$.
+  Pour $u \in [0,1]$, on a $e^{-1} \leq e^{-u^3} \leq 1$, donc $u/e \le Y \le u$.
+  Ceci implique $u^2/e^2 \leq Y^2 \leq u^2$.
+  $\E(Y^2) = \int_0^1 x^2 e^{-2x^3} \dd x$. On peut la majorer : $\E(Y^2) \le \int_0^1 x^2 \dd x = [x^3/3]_0^1 = 1/3$.
+  De même, on a $\E(Y) = I \ge \int_0^1 x e^{-1} \dd x = [x^2/(2e)]_0^1 = 1/(2e)$.
+  Donc, $\mathbb{V}\mathrm{ar}(Y) = \E(Y^2) - I^2 \leq \frac{1}{3} - (\frac{1}{2e})^2 = \frac{1}{3} - \frac{1}{4e^2}$. Une majoration plus simple, puisque $Y \in [0,1]$, est $\mathbb{V}\mathrm{ar}(Y) \le 1/4$.
+  \item L'inégalité de Bienaymé-Tchebychev pour la moyenne empirique $\bar{Y}_n$ est $\P(|\bar{Y}_n - I| \geq \epsilon) \leq \frac{\mathbb{V}\mathrm{ar}(Y)}{n\epsilon^2}$.
+  On veut un niveau de confiance de 95\%, donc $\P(|\bar{Y}_n - I| < \epsilon) \geq 0.95$, ce qui équivaut à $\frac{\mathbb{V}\mathrm{ar}(Y)}{n\epsilon^2} \leq 0.05$.
+  En utilisant notre majorant pour la variance $\sigma^2 = \mathbb{V}\mathrm{ar}(Y) \le 1/4 - 1/(4e^2)$, on a $\epsilon = \sqrt{\frac{\sigma^2}{0.05 n}} \le \sqrt{\frac{1/4-1/(4e^2)}{0.05n}}$.
+  L'intervalle de confiance est $[\bar{Y}_n - \epsilon, \bar{Y}_n + \epsilon]$.
+  \item \textbf{TP -} On utilise plutôt l'intervalle de confiance asymptotique donné par le TCL: $I \in [\hat{I}_n \pm 1.96 \frac{\hat{\sigma}_n}{\sqrt{n}}]$, où $\hat{\sigma}_n$ est l'écart-type empirique de l'échantillon. On veut que la demi-largeur de l'intervalle soit $10^{-3}$, donc $1.96 \frac{\hat{\sigma}_n}{\sqrt{n}} \leq 10^{-3}$. On peut d'abord estimer $\hat{\sigma}_n$ avec un petit nombre de simulations, puis en déduire le $n$ nécessaire.
+\end{enumerate}
+\end{solution}
+
 
 \begin{exercice}[Approximation numérique d'une intégrale]
 On consid\`ere une fonction $f$ sur un intervalle $[a,b]$ de $\R$
@@ -94,13 +120,31 @@ $$\hat{I}(n)=\frac{(b-a)}{n}\sum_{i=1}^n f(U_i). $$Approche
  \textbf{TP -} Fixons $a=0$, $b=2\pi$, $K=2$ et
 $f(x)=\cos(x)\exp(-\frac{x}{5})+1.$
 Vérifier, à l'aide de deux intégrations par parties successives que
-$\int_0^{2\pi}\left[ \cos(x)\exp(-\frac{x}{5})+1 \right]\, dx =\frac{5}{26}\left(1-e^{-2\pi/5}\right) .$
+$\int_0^{2\pi}\left[ \cos(x)\exp(-\frac{x}{5})+1 \right]\, dx =\frac{5}{26}\left(1-e^{-2\pi/5}\right) + 2\pi.$
 \item[7.]\textbf{TP -}
   Repr\'esenter graphiquement les
 approximations $I_3(n)$ et $\hat{I}(n)$ obtenues en fonction de $n$.
 Donner l'intervalle de confiance de $\hat{I}(n)$ et vérifier que cet intervalle de confiance contient la vraie valeur de l'intégrale dans plus de $95\%$ des cas.
 \end{enumerate}
 \end{exercice}
+
+\begin{solution}
+\begin{enumerate}
+    \item Les dessins représentent des sommes de Riemann. $I_1(n)$ est la méthode des rectangles à gauche, où la hauteur de chaque rectangle est donnée par la valeur de la fonction au début de l'intervalle. $I_2(n)$ est la méthode des rectangles à droite.
+    \item Pour une discrétisation régulière, $x_{i+1}-x_i = \frac{b-a}{n}$. L'erreur est $|I - I_1(n)| = |\sum_{i=0}^{n-1} \int_{x_i}^{x_{i+1}} (f(x)-f(x_i)) \dd x|$.
+    Comme $f$ est C-lipschitzienne, $|f(x)-f(x_i)| \leq C|x-x_i| \leq C(x_{i+1}-x_i) = C\frac{b-a}{n}$.
+    L'erreur sur un intervalle est $|\int_{x_i}^{x_{i+1}} (f(x)-f(x_i)) \dd x| \leq \int_{x_i}^{x_{i+1}} |f(x)-f(x_i)| \dd x \leq \int_{x_i}^{x_{i+1}} C\frac{b-a}{n} \dd x = C(\frac{b-a}{n})^2$.
+    L'erreur totale est la somme sur les $n$ intervalles, donc $|I - I_1(n)| \leq n \cdot C(\frac{b-a}{n})^2 = \frac{C(b-a)^2}{n}$. L'erreur est en $O(1/n)$.
+    \item L'approximation par des trapèzes consiste à utiliser la moyenne des hauteurs à gauche et à droite pour chaque intervalle. L'aire d'un trapèze est $(x_{i+1}-x_i) \frac{f(x_i)+f(x_{i+1})}{2}$. La somme totale $I_3(n)$ est donc la moyenne de $I_1(n)$ et $I_2(n)$: $I_3(n) = \frac{I_1(n)+I_2(n)}{2}$.
+    \item Soit $Y_i = (b-a)f(U_i)$. Les $Y_i$ sont des variables i.i.d. et $\E(Y_i) = (b-a)\E(f(U_i)) = I$. Par la loi forte des grands nombres, la moyenne empirique $\hat{I}(n) = \frac{1}{n} \sum Y_i$ converge presque sûrement vers $\E(Y_i) = I$.
+    \item Le TCL dit que $\sqrt{n}(\hat{I}(n) - I)$ converge en loi vers $\mathcal{N}(0, \sigma_Y^2)$ où $\sigma_Y^2 = \mathbb{V}\mathrm{ar}((b-a)f(U))$.
+    On a $\mathbb{V}\mathrm{ar}(f(U)) = \E(f(U)^2) - (\E(f(U)))^2$. Comme $0 \le f(x) \le K$, on a $0 \le f(x)^2 \le K^2$, donc $\E(f(U)^2) \le K^2$.
+    Ainsi, $\sigma_Y^2 = (b-a)^2\mathbb{V}\mathrm{ar}(f(U)) \le (b-a)^2 K^2$.
+    L'intervalle de confiance à 95\% est approximativement $\hat{I}(n) \pm 1.96 \frac{\sigma_Y}{\sqrt{n}}$. En utilisant la majoration, on a un intervalle de confiance de $[\hat{I}(n) - 1.96 \frac{(b-a)K}{\sqrt{n}}, \hat{I}(n) + 1.96 \frac{(b-a)K}{\sqrt{n}}]$.
+    \item \textbf{TP -} Le calcul par IPP est un exercice d'analyse classique. Le résultat est correct une fois qu'on ajoute l'intégrale de 1 qui vaut $2\pi$.
+    \item \textbf{TP -} Voir le script Python. On tracera les deux estimateurs en fonction de $n$ sur un graphique. Pour vérifier l'intervalle de confiance, on peut répéter l'estimation de $\hat{I}(n)$ un grand nombre de fois (ex: 1000 fois) et compter la proportion de fois où l'intervalle de confiance calculé contient la vraie valeur. Cette proportion devrait être proche de 95\%.
+\end{enumerate}
+\end{solution}
 
 \begin{exercice}[Réduction de variance]
 On souhaite déterminer la valeur de $I= \int_0^\infty \sin(x^4) e^{-2x} e^{-x^2/2} \dd x$.
@@ -115,7 +159,28 @@ On souhaite déterminer la valeur de $I= \int_0^\infty \sin(x^4) e^{-2x} e^{-x^2
 \end{enumerate}
 \end{exercice}
 
+\begin{solution}
+\begin{enumerate}
+  \item On utilise la méthode d'échantillonnage préférentiel (importance sampling). L'idée est de réécrire $I = \int f(x) \dd x$ comme $\int \frac{f(x)}{g(x)} g(x) \dd x = \E_g[\frac{f(X)}{g(X)}]$, où $g$ est une densité de probabilité facile à simuler.
+  \begin{itemize}
+      \item \textbf{Méthode 1 (Loi Normale):} L'intégrande contient $e^{-x^2/2}$, ce qui suggère d'utiliser la densité de la loi normale $\mathcal{N}(0,1)$, $\phi(x) = \frac{1}{\sqrt{2\pi}}e^{-x^2/2}$.
+      \[ I = \int_0^\infty \sin(x^4) e^{-2x} (\sqrt{2\pi}\phi(x)) \dd x = \sqrt{2\pi} \, \E_X[\sin(X^4)e^{-2X}\ind{X>0}], \quad \text{où } X \sim \mathcal{N}(0,1). \]
+      \item \textbf{Méthode 2 (Loi Exponentielle):} L'intégrande contient $e^{-2x}$, ce qui suggère la loi exponentielle $\mathcal{E}(2)$ de densité $g(x) = 2e^{-2x}$.
+      \[ I = \int_0^\infty \frac{\sin(x^4) e^{-2x} e^{-x^2/2}}{2e^{-2x}} (2e^{-2x}) \dd x = \E_Y\left[\frac{1}{2}\sin(Y^4)e^{-Y^2/2}\right], \quad \text{où } Y \sim \mathcal{E}(2). \]
+  \end{itemize}
+  \item \textbf{TP -} On implémente les deux estimateurs et on calcule la variance empirique des échantillons $\sqrt{2\pi}\sin(X_i^4)e^{-2X_i}\ind{X_i>0}$ et $\frac{1}{2}\sin(Y_i^4)e^{-Y_i^2/2}$.
+  \item Il y a une coquille dans l'énoncé. La formule correcte est (voir brouillon de pensée pour la dérivation) : $I = \sqrt{2\pi}e^{\lambda^2/2} \E_N[\sin(N^4)e^{-(2+\lambda)N} \ind{N>0}]$, où $N\sim\mathcal{N}(\lambda,1)$.
+    L'idée est de faire un changement de mesure. La densité de $N$ est $\phi_{\lambda,1}(x) = \frac{1}{\sqrt{2\pi}}e^{-(x-\lambda)^2/2} = \phi(x) e^{\lambda x - \lambda^2/2}$.
+    Donc $e^{-x^2/2} = \sqrt{2\pi}\phi(x) = \sqrt{2\pi}\phi_{\lambda,1}(x)e^{-\lambda x + \lambda^2/2}$.
+    En substituant dans l'intégrale:
+    $I = \int_0^\infty \sin(x^4) e^{-2x} (\sqrt{2\pi}\phi_{\lambda,1}(x)e^{-\lambda x + \lambda^2/2}) \dd x = \sqrt{2\pi}e^{\lambda^2/2} \E_N[\sin(N^4)e^{-(2+\lambda)N}\ind{N>0}]$.
+    La variance est minimisée quand la fonction à intégrer est la plus "plate" possible, ce qui arrive quand la densité $g$ "ressemble" à l'intégrande. On veut que $e^{-(x-\lambda)^2/2}$ ressemble à $\sin(x^4) e^{-2x} e^{-x^2/2}$. Le terme dominant est $e^{-2x}e^{-x^2/2} = e^{-x^2/2 - 2x}$. On veut que $-x^2/2+ \lambda x$ ressemble à $-x^2/2 - 2x$. Ceci suggère $\lambda \approx -2$.
+  \item \textbf{TP -} On implémente l'estimateur basé sur $\mathcal{N}(\lambda,1)$ et on fait varier $\lambda$ (par exemple entre -3 et 0). Pour chaque $\lambda$, on estime la variance et on trace la variance en fonction de $\lambda$ pour trouver le minimum.
+\end{enumerate}
+\end{solution}
+
 \begin{exercice}[Réduction de variance (bis)]
+On souhaite estimer $I=\int_0^1 e^{u^2}du$.
 \begin{enumerate}
   \item En écrivant $I=\mathbb{E}[e^{U^2}]$ pour $U$ une variable aléatoire uniforme sur $(0,1)$, en déduire une première méthode de Monte-Carlo pour approcher $I$.
   \item \textbf{TP -}  Donner un code numérique pour cette méthode utilisant $n$ tirages indépendants d'une variable aléatoire.
@@ -126,6 +191,22 @@ On souhaite déterminer la valeur de $I= \int_0^\infty \sin(x^4) e^{-2x} e^{-x^2
   \item \textbf{TP -}  Estimer l'amélioration sur la variance de la troisième méthode.
 \end{enumerate}
 \end{exercice}
+
+\begin{solution}
+\begin{enumerate}
+    \item Si $U\sim\mathcal{U}(0,1)$, alors $\mathbb{E}[e^{U^2}] = \int_0^1 e^{x^2} \cdot 1 dx = I$. La méthode de Monte-Carlo standard est d'estimer $I$ par $\hat{I}_n = \frac{1}{n} \sum_{i=1}^n e^{U_i^2}$.
+    \item \textbf{TP -} Le code est une simple boucle générant des $U_i$ et calculant la moyenne des $e^{U_i^2}$.
+    \item \textbf{TP -} En traçant $\hat{I}_n$ en fonction de $n$, on observe une stabilisation vers la vraie valeur de $I$. Il s'agit de la convergence presque sûre, garantie par la loi forte des grands nombres.
+    \item C'est la méthode des variables de contrôle. On a $\mathbb{E}[1+U^2] = \int_0^1 (1+x^2)dx = [x + \frac{x^3}{3}]_0^1 = 1 + \frac{1}{3} = \frac{4}{3}$.
+    Par linéarité de l'espérance, $I = \mathbb{E}[e^{U^2}] = \mathbb{E}[e^{U^2} - (1+U^2) + (1+U^2)] = \mathbb{E}[e^{U^2}-1-U^2] + \mathbb{E}[1+U^2] = \mathbb{E}[e^{U^2}-1-U^2] + \frac{4}{3}$.
+    La seconde méthode consiste à estimer $I' = \mathbb{E}[e^{U^2}-1-U^2]$ par Monte-Carlo, puis à calculer $\hat{I} = \hat{I}' + 4/3$.
+    \item \textbf{TP -} On calcule la variance empirique de $Y_i = e^{U_i^2}$ et de $Z_i = e^{U_i^2}-1-U_i^2$. La variance de $Z_i$ sera beaucoup plus faible. En effet, $1+x^2$ est une bonne approximation de $e^{x^2}$ sur $[0,1]$. La variable $Z_i$ prend donc des valeurs beaucoup moins dispersées (proches de 0) que $Y_i$. La variance de l'estimateur est réduite car $\mathrm{Var}(Y-X) = \mathrm{Var}(Y)+\mathrm{Var}(X) - 2\mathrm{Cov}(Y,X)$. Comme $e^{U^2}$ et $1+U^2$ sont très positivement corrélées, la covariance est grande et positive, ce qui réduit la variance de la différence.
+    \item On peut utiliser un développement de Taylor d'ordre supérieur. Par exemple, $e^{x^2} \approx 1+x^2 + \frac{x^4}{2}$.
+    Calculons $\mathbb{E}[1+U^2+\frac{U^4}{2}] = \int_0^1 (1+x^2+\frac{x^4}{2}) dx = 1+\frac{1}{3}+\frac{1}{10} = \frac{43}{30}$.
+    La troisième méthode est d'estimer $I = \mathbb{E}[e^{U^2}-1-U^2-\frac{U^4}{2}]+\frac{43}{30}$.
+    \item \textbf{TP -} On estime la variance de $e^{U^2}-1-U^2-\frac{U^4}{2}$. Elle devrait être encore plus faible, car l'approximation est meilleure.
+\end{enumerate}
+\end{solution}
 
 \begin{exercice}[Retour sur la méthode du rejet]
 On se propose de simuler une variable aléatoire $(X,Y,Z)$ de loi uniforme sur $\mathcal{B}(0,1) = \{(x,y,z) : x^2 + y^2 + z^2 \leq 1\}$.
@@ -138,13 +219,29 @@ On se propose de simuler une variable aléatoire $(X,Y,Z)$ de loi uniforme sur $
   \item \textbf{TP-} Estimer la densité de $\frac{X}{\sqrt{X^2 + Y^2 + Z^2}}$. Quelle conjecture peut-on énoncer ?
   \item $\star$ Démontrer le résultat conjecturé ci-dessus.
 \end{enumerate}
-
 \end{exercice}
+
+\begin{solution}
+\begin{enumerate}
+  \item Si $(A,B,C)$ est tiré uniformément sur $[-1,1]^3$, cela signifie que $A,B,C$ sont des variables aléatoires indépendantes, chacune de loi uniforme sur $[-1,1]$. La densité de chacune est $f(u) = \frac{1}{2}\ind{u \in [-1,1]}$. La densité jointe est $f(a,b,c) = f(a)f(b)f(c) = \frac{1}{8}\ind{(a,b,c) \in [-1,1]^3}$.
+  \item C'est le rapport des volumes : $\P((A,B,C) \in \mathcal{B}(0,1)) = \frac{\text{Volume}(\mathcal{B}(0,1))}{\text{Volume}([-1,1]^3)} = \frac{4/3 \pi (1)^3}{2^3} = \frac{4\pi}{24} = \frac{\pi}{6} \approx 0.52$.
+  \item C'est l'algorithme de rejet standard pour simuler une loi uniforme sur un domaine $D$ contenu dans un domaine $C$ plus simple :
+    \begin{itemize}
+        \item \textbf{Tant que} VRAI :
+        \item \hspace{1cm} Simuler un point $(A,B,C)$ uniformément dans le cube $[-1,1]^3$.
+        \item \hspace{1cm} \textbf{Si} $A^2+B^2+C^2 \le 1$, \textbf{alors}
+        \item \hspace{2cm} Renvoyer $(A,B,C)$ et arrêter.
+    \end{itemize}
+  \item \textbf{TP-} Voir le script python.
+  \item \textbf{TP-} On génère un grand échantillon de points $(X,Y,Z)$ et on trace l'histogramme des coordonnées $X$. Par symétrie de la boule, les lois marginales de $X$, $Y$ et $Z$ doivent être identiques. La densité n'est pas uniforme; elle est maximale en 0 et nulle en -1 et 1. La forme est parabolique: $f_X(x) = \frac{3}{4}(1-x^2)$ pour $x\in[-1,1]$.
+  \item \textbf{TP-} Pour chaque point $(X,Y,Z)$ généré, on calcule $X' = X/R$ où $R=\sqrt{X^2+Y^2+Z^2}$. On trace l'histogramme des $X'$. La conjecture est que $X'$ suit une loi uniforme sur $[-1,1]$.
+  \item Le fait de simuler un point $(X,Y,Z)$ uniformément dans la boule et de le normaliser $(X/R, Y/R, Z/R)$ produit un point de loi uniforme sur la sphère unité $\mathcal{S}^2$. La conjecture revient à dire que la première coordonnée d'un point uniforme sur la sphère $\mathcal{S}^2$ suit une loi uniforme sur $[-1,1]$. Ceci est faux. La densité de la première coordonnée d'un point uniforme sur la sphère est $f(x)=1/2$ pour $x \in [-1,1]$. Donc la conjecture est correcte. C'est un résultat classique d'Archimède.
+\end{enumerate}
+\end{solution}
 
 \begin{exercice}[Volume d'une sphère]
 On veut comparer la méthode déterministe des pavés et la méthode de Monte-Carlo pour estimer un volume. On va estimer, dans l'espace de dimension $d$, le volume d'une sphère de rayon $R$. Voilà les valeurs exactes
 \begin{center}
-
 \begin{tabular}{ccccccc}
 Dimension :&$d=2$&$d=3$&$d=4$&$d=5$&$d=6$&$d=7$\\
 Volume :&$\pi R^2$&$\frac{4}{3}\pi R^3$&$\frac{1}{2}\pi^2 R^4 $&$\frac{8}{15}\pi^2 R^5$&$\frac{1}{6}\pi^3 R^6$&$\frac{16}{105}\pi^3 R^7$
@@ -159,4 +256,21 @@ Volume :&$\pi R^2$&$\frac{4}{3}\pi R^3$&$\frac{1}{2}\pi^2 R^4 $&$\frac{8}{15}\pi
 \item \textbf{TP -} Conclure sur les avantages et inconvénients des deux méthodes, et choisir une de ces deux méthodes pour évaluer le volume de la sphère en dimension 7.
 \end{enumerate}
 \end{exercice}
+
+\begin{solution}
+\begin{enumerate}
+    \item \textbf{TP-} Pour $R=1$, le volume augmente d'abord puis diminue, tendant vers 0 quand $d \to \infty$. Pour $R=0.5$, le volume décroît constamment. Pour $R=2$, le volume croît de manière explosive. Le comportement dépend de si le rayon est plus grand ou plus petit que 1.
+    \item \textbf{TP-} L'algorithme parcourt une grille de points dans le cube $[-R, R]^d$. L'espacement des points est $h=1/N$. Pour chaque point de la grille, on vérifie s'il est dans la sphère. Si oui, on ajoute le volume du petit pavé $h^d$ au total.
+    \item \textbf{TP-} L'erreur de cette méthode est de l'ordre de la "surface" de la sphère, donc elle est en $O(1/N)$. L'erreur est bien divisée par 10. Le nombre de calculs est proportionnel au nombre de points dans la grille, soit $(2RN)^d$. En multipliant $N$ par 10, le nombre de calculs est multiplié par $10^d$.
+    \item \textbf{TP-} On tire $N_{tot}$ points uniformément dans le cube $[-R,R]^d$. On compte le nombre de points $N_{in}$ qui satisfont $\sum x_i^2 \le R^2$. L'estimation du volume est $\hat{V} = \frac{N_{in}}{N_{tot}} \times (2R)^d$.
+    \item \textbf{TP-} La taille de l'intervalle de confiance de Monte-Carlo est en $O(1/\sqrt{N_{tot}})$. Pour diviser l'erreur par 10, il faut multiplier $N_{tot}$ par 100. Le nombre de calculs est directement proportionnel à $N_{tot}$.
+    \item \textbf{TP-}
+    \begin{itemize}
+        \item \textbf{Méthode déterministe :} Avantage: convergence plus rapide (erreur en $1/N$). Inconvénient: le coût de calcul explose avec la dimension ($N^d$), c'est le "fléau de la dimension".
+        \item \textbf{Méthode de Monte-Carlo :} Avantage: le coût de calcul pour une précision donnée ne dépend pas de la dimension. Inconvénient: convergence plus lente (erreur en $1/\sqrt{N}$).
+    \end{itemize}
+    Pour la dimension 7, le coût de la méthode déterministe est prohibitif. Par exemple, pour $N=100$, il faudrait $(200)^7 \approx 10^{16}$ opérations, ce qui est impossible. La méthode de Monte-Carlo est la seule envisageable.
+\end{enumerate}
+\end{solution}
+
 \end{document}
