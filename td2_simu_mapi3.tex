@@ -1,0 +1,162 @@
+\documentclass
+%[solutions]
+{exercices}
+
+\usepackage[french]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{multicol,epsfig,csquotes}
+\usepackage{enumerate}
+\usepackage{xcolor}
+\usepackage{amsmath,amssymb,amsthm,enumitem,bbm,latexsym}
+\usepackage[normalem]{ulem}
+\usepackage{hyperref}
+\usepackage{listings}
+
+%%%%%%%%%% environnements
+%\theoremstyle{definition}
+%\newtheorem{exo}{Exercice}
+
+
+%%%%%%%%%% macros
+
+
+
+
+\begin{document}
+{
+\noindent {\sc M1 MAPI3  -  Simulations stochastiques \hfill 2025-2026}\\
+Jianyu Ma \hfill \textit{jianyu.ma@math.univ-toulouse.fr}\\
+Bastien Mallein \hfill \textit{bastien.mallein@math.univ-toulouse.fr}\\
+Pierre Petit \hfill \textit{pierre.petit@math.univ-toulouse.fr}}
+
+
+\vspace{2ex}
+
+ \hrule
+\begin{center}
+\textbf{\large TD 2 \& TP 2 - Méthode de Monte-Carlo}
+\vspace{2ex}
+\end{center}
+\hrule
+
+\bigskip
+
+\textbf{TP-} Pour l'implémentation pratique des simulations de variables aléatoires, on ne fera pas appel à des fonctions prédéfinies pour la simulation aléatoire, à l'exception de la fonction \texttt{rand} du package \texttt{numpy.random}. Chaque programme débute par \texttt{import numpy.random as npr}, et on utilisera \texttt{npr.rand()} pour simuler des variables aléatoires de loi uniforme sur [0,1].
+
+\begin{exercice}[Méthode de Monte-Carlo pour le calcul d'une intégrale]
+On souhaite calculer $I = \int_0^{1} x e^{-x^3} \dd x$.
+\begin{enumerate}
+  \item Soit $U$ une variable aléatoire de loi uniforme sur $[0,1]$, calculer $\E(U e^{-U^3})$.
+  \item En déduire la valeur de $\lim_{n \to \infty} \frac{1}{n} \sum_{i=1}^n U_i e^{-U_i^3}$, où les $(U_i, i \geq 1)$ sont des variables aléatoires i.i.d. de loi uniforme sur $[0,1]$.
+  \item \textbf{TP -} Rédiger un algorithme permettant d'estimer la valeur de $I$ par méthode de Monte-Carlo.
+  \item En utilisant l'inégalité $e^{-1} \leq e^{-u^3} \leq 1$ valable pour tout $u \in [0,1]$, donner une majoration de $\mathbb{V}\mathrm{ar}(Ue^{-U^3})$.
+  \item En déduire un intervalle de confiance non-asymptotique pour $I$ de niveau $95\%$ basé sur l'inégalité de Bienaymé-Tchebychev.
+  \item \textbf{TP -} Reprendre l'algorithme précédent pour qu'il retourne un intervalle de confiance sur la valeur de $I$. En déduire une estimation de la valeur de $I$ à $10^{-3}$ près.
+\end{enumerate}
+\end{exercice}
+
+
+\begin{exercice}[Approximation numérique d'une intégrale]
+On consid\`ere une fonction $f$ sur un intervalle $[a,b]$ de $\R$
+et \`a valeurs dans $[0,K]$. On se propose d'\'evaluer
+num\'eriquement l'int\'egrale $I$ d\'efinie par
+$I=\int_a^b f(x) \, dx.$
+
+\paragraph{M\'ethode d\'eterministe.}
+On peut  approcher $I$ par une int\'egrale de Riemann,
+en discr\'etisant l'intervalle $[a,b]$. On peut alors
+arbitrairement construire les deux approximations suivantes~:
+$$
+ I_1(n) = \sum_{i=0}^{n-1}(x_{i+1}-x_i)f(x_i), \ \ \ \ \ \
+ I_2(n) = \sum_{i=0}^{n-1}(x_{i+1}-x_i)f(x_{i+1}),
+$$
+o\`u $x_0=a$ et $x_n=b$. Par exemple pour une discrétisation réguli\`ere, on prendra $x_i=(b-a)  \frac{i}{n}$.
+
+ \begin{enumerate}
+\item
+Faire un dessin pour montrer comment $I_1(n)$ et $I_2(n)$ sont en fait des manières d'approcher l'aire $I$ sous la courbe de $f$ par des rectangles.
+\item
+On suppose que $f$ est $C$-Lipchitz (c'est-à-dire que $|f(x)-f(y)|\leq C |x-y|$ pour tout $a\leq x,y\leq b$). En choisissant une discr\'etisation r\'eguli\`ere,
+majorer l'erreur faite par $I_1(n)$ et $I_2(n)$ en fonction de $n$.
+\item On peut am\'eliorer
+l'approximation, en approchant l'aire $I$ sous la courbe $f$ par des trapèzes au lieu d'utiliser des rectangles. Faire un dessin. Comment peut-on exprimer cette troisième approximation $I_3(n)$ grâce à  $I_1(n)$ et $I_2(n)$ ?
+\end{enumerate}
+
+\paragraph{Méthode de Monte-Carlo}$ $
+ \\
+Remarquons que $I=(b-a)\mathbb{E}[f(U)]$ lorsque $U$ est uniformément distribué sur $[a,b]$. On considère $n$ variables al\'eatoires ind\'ependantes $(U_i)$ uniformes sur $[a,b]$ et on définit l'estimateur
+$$\hat{I}(n)=\frac{(b-a)}{n}\sum_{i=1}^n f(U_i). $$Approche
+\begin{enumerate}
+\item[4.] Justifier la convergence presque sûre de cet estimateur.
+\item[5.] En utilisant le théorème central limite, et en majorant la variance par $(b-a)^2K^2$, donner un intervalle de confiance de niveau de confiance $0,95$.
+\item[6.]
+ \textbf{TP -} Fixons $a=0$, $b=2\pi$, $K=2$ et
+$f(x)=\cos(x)\exp(-\frac{x}{5})+1.$
+Vérifier, à l'aide de deux intégrations par parties successives que
+$\int_0^{2\pi}\left[ \cos(x)\exp(-\frac{x}{5})+1 \right]\, dx =\frac{5}{26}\left(1-e^{-2\pi/5}\right) .$
+\item[7.]\textbf{TP -}
+  Repr\'esenter graphiquement les
+approximations $I_3(n)$ et $\hat{I}(n)$ obtenues en fonction de $n$.
+Donner l'intervalle de confiance de $\hat{I}(n)$ et vérifier que cet intervalle de confiance contient la vraie valeur de l'intégrale dans plus de $95\%$ des cas.
+\end{enumerate}
+\end{exercice}
+
+\begin{exercice}[Réduction de variance]
+On souhaite déterminer la valeur de $I= \int_0^\infty \sin(x^4) e^{-2x} e^{-x^2/2} \dd x$.
+\begin{enumerate}
+  \item Proposer deux algorithmes basés sur la méthode de Monte-Carlo pour simuler cette intégrale.
+  \item \textbf{TP -} Implémentez ces algorithmes, comparer empiriquement la variance des deux variables aléatoires utilisées.
+  \item On propose maintenant une troisième méthode, basée sur l'utilisation d'une variable aléatoire $N$ de loi $\mathcal{N}(\lambda,1)$. Déterminer $F(\lambda)$ telle que
+  \[
+    I = F(\lambda) \E\left( \sin(N^4) e^{(\lambda - 2)N}\ind{N > 0} \right).
+  \]
+  \item  \textbf{TP -} Estimer empiriquement la variance de $F(\lambda)\sin(N^4) e^{(\lambda - 2)N} \ind{N > 0}$. Pour quelle valeur de $\lambda$ cette quantité est-elle minimale?
+\end{enumerate}
+\end{exercice}
+
+\begin{exercice}[Réduction de variance (bis)]
+\begin{enumerate}
+  \item En écrivant $I=\mathbb{E}[e^{U^2}]$ pour $U$ une variable aléatoire uniforme sur $(0,1)$, en déduire une première méthode de Monte-Carlo pour approcher $I$.
+  \item \textbf{TP -}  Donner un code numérique pour cette méthode utilisant $n$ tirages indépendants d'une variable aléatoire.
+  \item \textbf{TP -}  Illustrer la convergence de l'algorithme quand la valeur de $n$ augmente. De quel type de convergence s'agit-il ?
+  \item Dans l'optique de réduire la variance, on cherche une fonction proche de $e^{U^2}$, mais qu'on sait intégrer. La fonction $x\mapsto 1+x^2$,  développement limité de $e^x$, est un bon candidat. Montrer que $I=\mathbb{E}[e^{U^2}-1-U^2]+\frac{4}{3}$, et en déduire une seconde méthode de Monte-Carlo.
+  \item \textbf{TP -}  Estimer numériquement les variances des variables aléatoires $e^{U^2}$ et $e^{U^2}-1-U^2$. Expliquer pourquoi la variance de l'estimation de $I$ est réduite d'un facteur $10$ grâce à la seconde méthode.
+  \item Imaginer une troisième méthode de Monte-Carlo, en utilisant une fonction encore plus proche de $e^x$.
+  \item \textbf{TP -}  Estimer l'amélioration sur la variance de la troisième méthode.
+\end{enumerate}
+\end{exercice}
+
+\begin{exercice}[Retour sur la méthode du rejet]
+On se propose de simuler une variable aléatoire $(X,Y,Z)$ de loi uniforme sur $\mathcal{B}(0,1) = \{(x,y,z) : x^2 + y^2 + z^2 \leq 1\}$.
+\begin{enumerate}
+  \item On note $(A,B,C)$ un point tiré uniformément au hasard sur $[-1,1]^3$. Déterminer la loi jointe du triplet $(A,B,C)$.
+  \item Calculer $\P((A,B,C) \in \mathcal{B}(0,1))$.
+  \item Proposer un algorithme, basé sur la méthode du rejet, permettant de simuler la variable $(X,Y,Z)$.
+  \item \textbf{TP-} Implémenter cet algorithme.
+  \item \textbf{TP-} Grâce à cet algorithme, estimer la densité de la variable aléatoire $X$. Comparer à celle de $Y$ et de $Z$, que peut-on en dire ?
+  \item \textbf{TP-} Estimer la densité de $\frac{X}{\sqrt{X^2 + Y^2 + Z^2}}$. Quelle conjecture peut-on énoncer ?
+  \item $\star$ Démontrer le résultat conjecturé ci-dessus.
+\end{enumerate}
+
+\end{exercice}
+
+\begin{exercice}[Volume d'une sphère]
+On veut comparer la méthode déterministe des pavés et la méthode de Monte-Carlo pour estimer un volume. On va estimer, dans l'espace de dimension $d$, le volume d'une sphère de rayon $R$. Voilà les valeurs exactes
+\begin{center}
+
+\begin{tabular}{ccccccc}
+Dimension :&$d=2$&$d=3$&$d=4$&$d=5$&$d=6$&$d=7$\\
+Volume :&$\pi R^2$&$\frac{4}{3}\pi R^3$&$\frac{1}{2}\pi^2 R^4 $&$\frac{8}{15}\pi^2 R^5$&$\frac{1}{6}\pi^3 R^6$&$\frac{16}{105}\pi^3 R^7$
+\end{tabular}
+\end{center}
+\begin{enumerate}
+\item \textbf{TP -} Afficher les volumes en fonction de la dimension pour $R = 0.5$, pour $R= 1$, pour $R=2$. Que constatez-vous ?
+\item \textbf{TP -} Proposer une méthode déterministe (qui compte le nombre de pavés de côté $1/N$ contenus dans la sphère) et afficher les volumes pour $d=1,2,3$ (avec $N=100$).
+\item \textbf{TP -} Vérifiez numériquement que lorsque $N$ est multiplié par $10$, l'erreur est divisée par $10$. Par combien est alors multiplié le nombre de calculs effectués par l'algorithme ?
+\item \textbf{TP -} Proposer une méthode de Monte-Carlo d'estimation du volume, en générant $N$ point indépendants dans le cube de dimension $d$. Afficher les volumes pour $d=1,2,3$ (avec $N=1000$).
+\item \textbf{TP -} Comment évolue la taille de l'intervalle de confiance en fonction de $N$ ? Comment évolue le nombre de calculs effectués en fonction de $N$ ?
+\item \textbf{TP -} Conclure sur les avantages et inconvénients des deux méthodes, et choisir une de ces deux méthodes pour évaluer le volume de la sphère en dimension 7.
+\end{enumerate}
+\end{exercice}
+\end{document}
