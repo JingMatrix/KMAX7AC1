@@ -147,8 +147,8 @@ Soit $n \in \N$ et $p \in [0,1]$.
   \item On a $q_{n,k} = \binom{n}{k} p^k (1-p)^{n-k}$.
   \[ \frac{q_{n,k+1}}{q_{n,k}} = \frac{\binom{n}{k+1} p^{k+1} (1-p)^{n-k-1}}{\binom{n}{k} p^k (1-p)^{n-k}} = \frac{n!}{(k+1)!(n-k-1)!} \frac{k!(n-k)!}{n!} \frac{p}{1-p} = \frac{n-k}{k+1} \frac{p}{1-p}. \]
   On peut utiliser cette relation pour calculer récursivement toutes les probabilités $q_{n,k}$ en partant de $q_{n,0}=(1-p)^n$. Une fois le vecteur de probabilités $(q_{n,0}, \dots, q_{n,n})$ obtenu, on peut simuler la loi binomiale en utilisant la méthode d'inversion généralisée pour les lois discrètes (comme dans l'exercice 1).
-  \item \textbf{TP -} Voir le script Python. `binom1` implémente la somme de Bernoulli. `binom2` calcule d'abord le vecteur de probabilités puis applique la méthode d'inversion.
-  \item \textbf{TP -} La première méthode (`binom1`) requiert $n$ tirages aléatoires par variable binomiale générée. La seconde (`binom2`) n'en requiert qu'un seul, mais demande un calcul préalable des probabilités. Pour générer un grand nombre de variables, `binom2` peut être plus rapide si $n$ n'est pas trop grand, car le calcul des probabilités est fait une seule fois. Pour un $n$ très grand, le calcul et le stockage du vecteur de probabilités peuvent devenir coûteux.
+  \item \textbf{TP -} Voir le script Python. `binom1' implémente la somme de Bernoulli. `binom2' calcule d'abord le vecteur de probabilités puis applique la méthode d'inversion.
+  \item \textbf{TP -} La première méthode (`binom1') requiert $n$ tirages aléatoires par variable binomiale générée. La seconde (`binom2') n'en requiert qu'un seul, mais demande un calcul préalable des probabilités. Pour générer un grand nombre de variables, `binom2' peut être plus rapide si $n$ n'est pas trop grand, car le calcul des probabilités est fait une seule fois. Pour un $n$ très grand, le calcul et le stockage du vecteur de probabilités peuvent devenir coûteux.
 \end{enumerate}
 \end{solution}
 
@@ -165,7 +165,7 @@ Soit $p \in (0,1)$, on note $G$ une variable aléatoire de loi géométrique de 
 
 \begin{solution}
 \begin{enumerate}
-  \item La fonction de répartition d'une loi géométrique de paramètre $p$ (sur $\{1, 2, \dots\}$) est $F(k) = \mathbb{P}(G \le k) = 1 - (1-p)^k$. Par la méthode d'inversion, on cherche $k$ tel que $F(k-1) < U \le F(k)$, où $U \sim \mathcal{U}([0,1])$. Cela donne $k = \lceil \frac{\ln(1-U)}{\ln(1-p)} \rceil$. Comme $1-U$ a la même loi que $U$, on peut utiliser $k = \lceil \frac{\ln(U)}{\ln(1-p)} \rceil$. En utilisant la fonction partie entière `floor`, on peut écrire $k = \lfloor \frac{\ln(U)}{\ln(1-p)} \rfloor + 1$. Cet algorithme ne nécessite qu'un seul appel à `rand`.
+  \item La fonction de répartition d'une loi géométrique de paramètre $p$ (sur $\{1, 2, \dots\}$) est $F(k) = \mathbb{P}(G \le k) = 1 - (1-p)^k$. Par la méthode d'inversion, on cherche $k$ tel que $F(k-1) < U \le F(k)$, où $U \sim \mathcal{U}([0,1])$. Cela donne $k = \lceil \frac{\ln(1-U)}{\ln(1-p)} \rceil$. Comme $1-U$ a la même loi que $U$, on peut utiliser $k = \lceil \frac{\ln(U)}{\ln(1-p)} \rceil$. En utilisant la fonction partie entière `floor', on peut écrire $k = \lfloor \frac{\ln(U)}{\ln(1-p)} \rfloor + 1$. Cet algorithme ne nécessite qu'un seul appel à `rand'.
   \item C'est une application directe de la méthode du rejet. On veut simuler $G$ conditionnellement à l'événement $A = \{G \text{ est pair}\}$.
   \begin{itemize}
       \item \textbf{Étape 1 :} Simuler une variable $k$ de loi géométrique $\mathcal{G}(p)$ avec la méthode ci-dessus.
@@ -514,9 +514,9 @@ sont ind\'ependantes et de loi normale ${\mathcal N}(0,1)$.
     \end{itemize}
     \item \textbf{TP -}
     \begin{itemize}
-        \item \textbf{TCL} : Très rapide (12 `rand` et des additions), mais c'est une approximation. La variable générée est bornée (entre -6 et 6).
-        \item \textbf{Box-Muller} : Exact, moyennement rapide. Coût de fonctions `log`, `sqrt`, `cos`.
-        \item \textbf{Rejet Cauchy} : Exact, mais généralement plus lent à cause des rejets et du coût de la fonction `tan`.
+        \item \textbf{TCL} : Très rapide (12 `rand' et des additions), mais c'est une approximation. La variable générée est bornée (entre -6 et 6).
+        \item \textbf{Box-Muller} : Exact, moyennement rapide. Coût de fonctions `log', `sqrt', `cos'.
+        \item \textbf{Rejet Cauchy} : Exact, mais généralement plus lent à cause des rejets et du coût de la fonction `tan'.
     \end{itemize}
 \end{enumerate}
 \end{solution}
