@@ -1,0 +1,448 @@
+\documentclass[solutions]{exercices}
+
+\usepackage[french]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{multicol,epsfig,csquotes}
+\usepackage{enumerate}
+\usepackage{xcolor}
+\usepackage{amsmath,amssymb,amsthm,enumitem,bbm,latexsym}
+\usepackage[normalem]{ulem}
+\usepackage{hyperref}
+\usepackage{listings}
+
+%%%%%%%%%% environnements
+%\theoremstyle{definition}
+%\newtheorem{exo}{Exercice}
+
+
+%%%%%%%%%% macros
+
+
+
+
+\begin{document}
+{
+\noindent {\sc M1 MAPI3  -  Simulations stochastiques \hfill 2025-2026}\\
+Jianyu Ma \hfill \textit{jianyu.ma@math.univ-toulouse.fr}\\
+Bastien Mallein \hfill \textit{bastien.mallein@math.univ-toulouse.fr}\\
+Pierre Petit \hfill \textit{pierre.petit@math.univ-toulouse.fr}}
+
+\vspace{2ex}
+
+\hrule
+\begin{center}
+	\textbf{\large TD 3 \& TP 3 - Chaînes de Markov}
+	\vspace{2ex}
+\end{center}
+\hrule
+
+\bigskip
+
+\textbf{TP-} Pour l'implémentation pratique des simulations de variables aléatoires, on ne fera pas appel à des fonctions prédéfinies pour la simulation aléatoire, à l'exception de la fonction \texttt{rand} du package \texttt{numpy.random}. Chaque programme débute par \texttt{import numpy.random as npr}, et on utilisera \texttt{npr.rand()} pour simuler des variables aléatoires de loi uniforme sur [0,1].
+
+\begin{exercice}[Les parapluies de Cherbourg]
+	Un employé de bureau manchois possède 3 parapluies, qu'il déplace entre sa résidence et son lieu de travail. Chaque matin, s'il pleut et s'il a un parapluie à la maison, l'employé prend son parapluie. S'il n'a pas de parapluie, il se rend au bureau et est mouillé. Chaque soir, la même opération se produit. On suppose que la probabilité de pleuvoir le matin, ou le soir, est de $1/2$.
+	\begin{enumerate}
+		\item Proposer une modélisation de ce problème sous forme d'une chaîne de Markov. On pourra noter $X_n$ le nombre de parapluies disponibles pour l'employé lors de la $n$ième demi-journée.
+		\item \textbf{TP-} Proposer un programme permettant de simuler cette chaîne de Markov.
+		\item Montrer que cette chaîne de Markov possède une mesure de probabilité invariante, que l'on déterminera.
+		\item \textbf{TP-} Tracer l'histogramme de cette mesure invariante.
+		\item En moyenne, combien de jours par an l'employé de bureau sera-t-il mouillé (le matin ou le soir) ?
+		\item \textbf{TP-} Estimez numériquement cette valeur. Tracer un graphe donnant le moyen de jours par an où l'employé est mouillé en fonction du nombre de parapluies à sa disposition. Tracer sur le même graphe cette fonction pour différentes valeurs de $p$ la probabilité de pleuvoir.
+	\end{enumerate}
+\end{exercice}
+
+\begin{solution}
+	\begin{enumerate}
+		\item Soit $X_n$ le nombre de parapluies à l'endroit où se trouve l'employé au début de la demi-journée $n$. L'espace d'états est $E=\{0, 1, 2, 3\}$. Le nombre total de parapluies est 3. Si l'employé a $k$ parapluies avec lui, il y en a $3-k$ à l'autre endroit.
+		      La transition de $X_n$ à $X_{n+1}$ dépend de la météo. Soit $p=1/2$ la probabilité qu'il pleuve.
+		      \begin{itemize}
+			      \item Si $X_n=k > 0$:
+			            \begin{itemize}
+				            \item Il pleut (proba $p$): l'employé prend un parapluie. Il arrive à destination où il y avait $3-k$ parapluies. Il en dépose un, il y en aura donc $3-k+1 = 4-k$. Donc $X_{n+1}=4-k$.
+				            \item Il ne pleut pas (proba $1-p$): l'employé ne prend rien. Il arrive là où il y a $3-k$ parapluies. Donc $X_{n+1}=3-k$.
+			            \end{itemize}
+			      \item Si $X_n=0$:
+			            \begin{itemize}
+				            \item L'employé ne peut pas prendre de parapluie. Il arrive là où il y a 3 parapluies. Donc $X_{n+1}=3$ (et il est mouillé s'il pleut).
+			            \end{itemize}
+		      \end{itemize}
+		      La matrice de transition $P$ est donc (avec $p=1/2$):
+		      \[ P = \begin{pmatrix}
+				      0   & 0   & 0   & 1   \\
+				      0   & 0   & 1/2 & 1/2 \\
+				      0   & 1/2 & 1/2 & 0   \\
+				      1/2 & 1/2 & 0   & 0
+			      \end{pmatrix} \]
+		      Les lignes et colonnes correspondent aux états $0, 1, 2, 3$. Par exemple, $P_{1,2} = P(X_{n+1}=2|X_n=1) = 1-p = 1/2$ (il ne pleut pas) et $P_{1,3} = P(X_{n+1}=3|X_n=1) = p = 1/2$ (il pleut, $X_{n+1}=4-1=3$).
+		\item \textbf{TP-} Voir le script Python.
+		\item La chaîne est finie, irréductible et apériodique, donc elle admet une unique mesure stationnaire $\pi = (\pi_0, \pi_1, \pi_2, \pi_3)$. On résout $\pi P = \pi$.
+		      \[ \begin{cases}
+				      \frac{1}{2}\pi_2 + \frac{1}{2}\pi_3 = \pi_0                      \\
+				      \frac{1}{2}\pi_1 + \frac{1}{2}\pi_2 = \pi_1 \implies \pi_1=\pi_2 \\
+				      \frac{1}{2}\pi_1 = \pi_2 \implies \pi_1=\pi_2=0 \text{ (Erreur de calcul, P(1->2) est 1/2, P(1->3) est 1/2...)}
+			      \end{cases} \]
+		      Revoyons la matrice. De $X_n=k$ à $X_{n+1}=3-k$ (pas de pluie) ou $X_{n+1}=4-k$ (pluie, si $k>0$).
+		      \begin{itemize}
+			      \item $X_n=0 \implies X_{n+1}=3$.
+			      \item $X_n=1 \implies X_{n+1}=2$ (pas de pluie) ou $X_{n+1}=3$ (pluie).
+			      \item $X_n=2 \implies X_{n+1}=1$ (pas de pluie) ou $X_{n+1}=2$ (pluie).
+			      \item $X_n=3 \implies X_{n+1}=0$ (pas de pluie) ou $X_{n+1}=1$ (pluie).
+		      \end{itemize}
+		      \[ P = \begin{pmatrix}
+				      0   & 0   & 0   & 1   \\
+				      0   & 0   & 1/2 & 1/2 \\
+				      0   & 1/2 & 1/2 & 0   \\
+				      1/2 & 1/2 & 0   & 0
+			      \end{pmatrix} \]
+		      Le système $\pi P=\pi$ devient:
+		      $ \pi_0 = \frac{1}{2}\pi_3; \quad \pi_1 = \frac{1}{2}\pi_2 + \frac{1}{2}\pi_3; \quad \pi_2 = \frac{1}{2}\pi_1 + \frac{1}{2}\pi_2; \quad \pi_3 = \pi_0 + \frac{1}{2}\pi_1$.
+		      De la 3e équation, $\frac{1}{2}\pi_2 = \frac{1}{2}\pi_1 \implies \pi_1=\pi_2$.
+		      En remplaçant dans la 2e, $\pi_1 = \frac{1}{2}\pi_1 + \frac{1}{2}\pi_3 \implies \pi_1=\pi_3$.
+		      Donc $\pi_1=\pi_2=\pi_3$. En reportant dans la 1ere, $\pi_0 = \frac{1}{2}\pi_3$.
+		      On a donc $\pi_1=\pi_2=\pi_3=2\pi_0$.
+		      Avec $\sum \pi_i = 1$, on a $\pi_0 + 2\pi_0 + 2\pi_0 + 2\pi_0 = 1 \implies 7\pi_0 = 1$.
+		      La mesure invariante est $\pi = (1/7, 2/7, 2/7, 2/7)$.
+		\item \textbf{TP-} Voir le script. On simule une longue trajectoire et on compte la fréquence de passage dans chaque état.
+		\item L'employé est mouillé si et seulement s'il pleut ET il n'a pas de parapluie ($X_n=0$). En régime stationnaire, la probabilité d'être dans l'état 0 est $\pi_0 = 1/7$. La probabilité de pluie est $p=1/2$. L'événement "être mouillé" a donc une probabilité de $\pi_0 \times p = \frac{1}{7} \times \frac{1}{2} = \frac{1}{14}$.
+		      Il y a 2 trajets par jour, et 365 jours par an, soit 730 trajets par an.
+		      Le nombre moyen de fois où il est mouillé par an est $730 \times \frac{1}{14} \approx 52.14$.
+		\item \textbf{TP-} Voir le script. On simule le processus pour un grand nombre d'étapes, on compte les fois où l'état est 0 et il pleut, et on en déduit la moyenne annuelle.
+	\end{enumerate}
+\end{solution}
+
+\begin{exercice}[Équilibre thermodynamique]
+	On cherche ici à modéliser la dynamique de l'air se mélangeant entre deux pièces. On suppose qu'il y a $N$ molécules réparties entre ces deux pièces. À chaque étape, une molécule, choisie uniformément au hasard, change de pièce.
+	\begin{enumerate}
+		\item Montrer que $X_n$ le nombre de molécules présentes dans la pièce de droite à la $n$ième étape suit un chaîne de Markov.
+		\item \textbf{TP -} Implémenter ce modèle, tracer le graphe de l'évolution de $(X_n)$ au cours du temps. Qu'observe-t-on ?
+		\item Montrer que la loi $\mathrm{Bin}(N,1/2)$ est invariante pour cette chaîne de Markov.
+		\item \textbf{TP -} Vérifier cette invariance grâce au théorème de Birkhoff.
+		\item Cette chaîne de Markov est-elle périodique ?
+		\item \textbf{TP -} On suppose maintenant que l'on a $K$ pièces, organisées en lignes. À chaque étape, une molécule choisit uniformément au hasard passe d'une pièce dans l'une de ses deux voisines. Tracer l'évolution au cours du temps du nombre de molécules dans chacune des 4 pièces.
+		\item \textbf{TP -} On ajoute une soufflerie dans les deux pièces extrêmes. L'effet est le suivant : à chaque étape, chaque molécule de la pièce de l'extrême droite est retirée avec probabilité $p$, et ces molécules retirées sont ajoutées à la pièce de l'extrême gauche. Estimer le nombre moyen de molécules dans chaque pièce. Que se passe-t-il quand $p$ augmente ? On pourra prendre $K = 10$ et $N = 10^6$ pour les applications numériques.
+	\end{enumerate}
+\end{exercice}
+
+\begin{solution}
+	\begin{enumerate}
+		\item L'état du système à l'instant $n$ est entièrement décrit par $X_n$. Pour passer à $X_{n+1}$, on choisit une molécule parmi $N$.
+		      \begin{itemize}
+			      \item Si on choisit une molécule dans la pièce de droite (probabilité $X_n/N$), elle passe à gauche. Donc $X_{n+1} = X_n - 1$.
+			      \item Si on choisit une molécule dans la pièce de gauche (probabilité $(N-X_n)/N$), elle passe à droite. Donc $X_{n+1} = X_n + 1$.
+		      \end{itemize}
+		      La loi de $X_{n+1}$ ne dépend que de $X_n$, c'est donc une chaîne de Markov (modèle d'Ehrenfest).
+		\item \textbf{TP-} Voir le script. On observe que $X_n$ fluctue autour de la valeur $N/2$, qui correspond à l'équilibre.
+		\item Soit $\pi_k = \binom{N}{k} (1/2)^N$. On doit vérifier le bilan détaillé: $\pi_k P_{k, k+1} = \pi_{k+1} P_{k+1, k}$.
+		      $P_{k, k+1} = \frac{N-k}{N}$ et $P_{k+1, k} = \frac{k+1}{N}$.
+		      $\pi_k P_{k, k+1} = \binom{N}{k} \frac{1}{2^N} \frac{N-k}{N} = \frac{N!}{k!(N-k)!} \frac{1}{2^N} \frac{N-k}{N} = \frac{(N-1)!}{k!(N-k-1)!} \frac{1}{2^N}$.
+		      $\pi_{k+1} P_{k+1, k} = \binom{N}{k+1} \frac{1}{2^N} \frac{k+1}{N} = \frac{N!}{(k+1)!(N-k-1)!} \frac{1}{2^N} \frac{k+1}{N} = \frac{(N-1)!}{k!(N-k-1)!} \frac{1}{2^N}$.
+		      L'égalité est vérifiée, donc la chaîne est réversible et $\pi$ est sa mesure stationnaire.
+		\item \textbf{TP-} Le théorème ergodique de Birkhoff dit que pour une fonction $f$, $\frac{1}{T}\sum_{t=0}^{T-1} f(X_t) \to \sum_k f(k)\pi_k$. On peut vérifier cela en prenant $f(k) = \mathbbm{1}_{\{j\}}(k)$ pour un état $j$. La fraction de temps passée en $j$ doit converger vers $\pi_j$.
+		\item Oui, la chaîne est périodique de période 2. Depuis un état $k$, on ne peut aller qu'aux états $k-1$ ou $k+1$. Si $X_0$ est pair, $X_1$ est impair, $X_2$ est pair, etc. On ne peut revenir à un état pair qu'en un nombre pair d'étapes.
+		\item \textbf{TP-} Voir le script. On maintient un vecteur du nombre de molécules dans chaque pièce. L'équilibre est atteint quand il y a $N/K$ molécules par pièce.
+		\item \textbf{TP-} La soufflerie crée un flux net de molécules de droite à gauche. On s'attend à un déséquilibre, avec plus de molécules dans les pièces de gauche. La simulation montrera une nouvelle distribution d'équilibre où le nombre moyen de molécules décroît de la pièce de gauche à la pièce de droite. Quand $p$ augmente, ce gradient de concentration devient plus prononcé.
+	\end{enumerate}
+\end{solution}
+
+\begin{exercice}[Bruit de grenaille]
+	Le bruit de grenaille est un bruit de fond pouvant être modélisé de la façon suivante. Soit $(Y_n)$ une suite de variables aléatoires i.i.d de loi géométrique de paramètre $p$. On définit
+	\[ X_{n+1} = \max(X_n -1 ,Y_{n+1}).\]
+	\begin{enumerate}
+		\item Montrer que $(X_n, n \geq 1)$ est une chaîne de Markov.
+		\item \textbf{TP-} Implémenter cette chaine de Markov, tracer une trajectoire de ce processus.
+		\item Déterminer la mesure stationnaire de cette chaîne de Markov.
+		\item \textbf{TP-} Tracer un histogramme de cette mesure invariante.
+	\end{enumerate}
+\end{exercice}
+
+\begin{solution}
+	\begin{enumerate}
+		\item La loi de $X_{n+1}$ dépend de $X_n$ et de la variable exogène $Y_{n+1}$. Sachant $X_n$, la loi de $X_{n+1}$ ne dépend pas du passé $(X_0, \dots, X_{n-1})$. C'est donc une chaîne de Markov à valeurs dans $\mathbb{N}^*$ (si les $Y_n$ sont sur $\{1, 2, \dots\}$).
+		\item \textbf{TP-} Voir le script.
+		\item La méthode la plus directe et la plus rigoureuse pour déterminer la mesure stationnaire de cette chaîne de Markov consiste à travailler avec la fonction de répartition (CDF), plutôt qu'avec les probabilités de masse directement.
+
+		      Soit $\pi = (\pi_k)_{k \ge 0}$ la mesure de probabilité stationnaire que nous recherchons. Soit $X$ une variable aléatoire suivant cette loi $\pi$. La condition de stationnarité pour le processus $X_{n+1} = \max(X_n - 1, Y_{n+1})$ s'écrit :
+		      \[
+			      X \stackrel{\text{d}}{=} \max(X-1, Y)
+		      \]
+		      où $Y$ est une variable aléatoire indépendante de $X$ et de loi géométrique $\mathcal{G}(p)$ sur $\mathbb{N} = \{0, 1, 2, \dots\}$. L'égalité $\stackrel{\text{d}}{=}$ signifie "égalité en loi".
+
+		      Nous allons résoudre ce problème en quatre étapes.
+
+		      \begin{enumerate}
+			      \item[\textbf{Étape 1 :}] \textbf{Formuler l'équation de stationnarité pour la CDF.}
+
+			            Soit $F(k) = \P(X \le k)$ la fonction de répartition de $X$. Soit $F_Y(k) = \P(Y \le k)$ celle de $Y$.
+			            L'égalité en loi implique l'égalité des fonctions de répartition. Pour tout $k \ge 0$ :
+			            \[
+				            \P(X \le k) = \P(\max(X-1, Y) \le k)
+			            \]
+			            Le maximum de deux variables est inférieur à $k$ si et seulement si les deux variables sont inférieures à $k$.
+			            \[
+				            \P(X \le k) = \P(X-1 \le k \quad \text{et} \quad Y \le k)
+			            \]
+			            Comme $X$ et $Y$ sont indépendantes, on peut séparer les probabilités :
+			            \[
+				            \P(X \le k) = \P(X-1 \le k) \times \P(Y \le k) = \P(X \le k+1) \times \P(Y \le k)
+			            \]
+			            En utilisant notre notation pour les CDF, nous obtenons la relation de récurrence fondamentale :
+			            \[
+				            F(k) = F(k+1) \cdot F_Y(k)
+			            \]
+
+			      \item[\textbf{Étape 2 :}] \textbf{Résoudre la relation de récurrence.}
+
+			            On peut réarranger l'équation pour exprimer $F(k+1)$ en fonction de $F(k)$ :
+			            \[
+				            F(k+1) = \frac{F(k)}{F_Y(k)}
+			            \]
+			            En appliquant cette formule de manière itérative, on obtient :
+			            \begin{itemize}
+				            \item $F(1) = \frac{F(0)}{F_Y(0)}$
+				            \item $F(2) = \frac{F(1)}{F_Y(1)} = \frac{F(0)}{F_Y(0)F_Y(1)}$
+				            \item ...
+			            \end{itemize}
+			            La formule générale pour $F(k)$ est donc :
+			            \[
+				            F(k) = \frac{F(0)}{\prod_{i=0}^{k-1} F_Y(i)} \quad \text{pour } k \ge 1.
+			            \]
+
+			      \item[\textbf{Étape 3 :}] \textbf{Déterminer la constante $F(0) = \pi_0$.}
+
+			            Une fonction de répartition doit satisfaire la condition $\lim_{k \to \infty} F(k) = 1$. En appliquant cette limite à notre formule :
+			            \[
+				            1 = \lim_{k \to \infty} F(k) = \frac{F(0)}{\prod_{i=0}^{\infty} F_Y(i)}
+			            \]
+			            On en déduit la valeur de $F(0)$, qui est aussi la probabilité $\pi_0$ :
+			            \[
+				            \pi_0 = F(0) = \prod_{i=0}^{\infty} F_Y(i)
+			            \]
+			            Pour une loi géométrique sur $\{0, 1, 2, \dots\}$ de paramètre $p$, la fonction de masse est $\P(Y=j) = p(1-p)^j$. Sa fonction de répartition est :
+			            \[
+				            F_Y(i) = \P(Y \le i) = \sum_{j=0}^{i} p(1-p)^j = p \frac{1 - (1-p)^{i+1}}{1 - (1-p)} = 1 - (1-p)^{i+1}.
+			            \]
+			            Par conséquent, la probabilité de l'état 0 est donnée par le produit infini convergent :
+			            \[
+				            \pi_0 = \prod_{i=0}^{\infty} \left(1 - (1-p)^{i+1}\right).
+			            \]
+
+			      \item[\textbf{Étape 4 :}] \textbf{Donner l'expression générale de $\pi_k$.}
+
+			            Maintenant que nous avons la fonction de répartition $F(k)$ (à la constante $\pi_0$ près, qui est entièrement déterminée par $p$), nous pouvons trouver la fonction de masse $\pi_k$.
+			            \begin{itemize}
+				            \item Pour $k=0$, $\pi_0$ est donné par le produit infini ci-dessus.
+				            \item Pour $k \ge 1$, on a $\pi_k = \P(X=k) = F(k) - F(k-1)$.
+			            \end{itemize}
+			            En utilisant la formule de l'étape 2 :
+			            \[
+				            \pi_k = \frac{F(0)}{\prod_{i=0}^{k-1} F_Y(i)} - \frac{F(0)}{\prod_{i=0}^{k-2} F_Y(i)}
+			            \]
+			            En factorisant le terme commun, on obtient une expression plus élégante :
+			            \[
+				            \pi_k = \left(\frac{F(0)}{\prod_{i=0}^{k-2} F_Y(i)}\right) \left( \frac{1}{F_Y(k-1)} - 1 \right) = F(k-1) \left( \frac{1 - F_Y(k-1)}{F_Y(k-1)} \right).
+			            \]
+			            Comme $1 - F_Y(k-1) = \P(Y > k-1) = (1-p)^k$, on a :
+			            \[ \pi_k = F(k-1) \frac{(1-p)^k}{1 - (1-p)^k}. \]
+
+		      \end{enumerate}
+		      En résumé, la mesure stationnaire $\pi$ est entièrement déterminée de manière constructive par les formules ci-dessus.
+		\item \textbf{TP-} Voir le script.
+	\end{enumerate}
+\end{solution}
+
+\begin{exercice}[Perpetuité]
+	Soit $(Y_n, n \geq 1)$ une suite de variables aléatoires i.i.d. de loi exponentielle de paramètre $\lambda > 0$ et $a \in (0,1)$. On définit par récurrence
+	\[
+		X_{n+1} = a X_n + Y_{n+1}.
+	\]
+	\begin{enumerate}
+		\item Montrer que $(X_n, n \geq 1)$ est une chaîne de Markov.
+		\item Donner une expression de la densité de transition $p(x,y)$.
+		\item On note $\mu$ la loi de $\sum_{k = 1}^\infty Y_k a^{k-1}$. Montrer que $\mu$ est une mesure invariante pour cette chaîne de Markov.
+		\item \textbf{TP - } Étudier la convergence en loi de la suite $(X_n, n \geq 1)$.
+	\end{enumerate}
+\end{exercice}
+
+\begin{solution}
+	\begin{enumerate}
+		\item La loi de $X_{n+1}$ ne dépend que de la valeur de $X_n$ et de la variable exogène $Y_{n+1}$. C'est la définition d'une chaîne de Markov (ici à espace d'états continu, $\R_+$).
+		\item La densité de transition $p(x,y)$ est la densité de probabilité que $X_{n+1}=y$ sachant $X_n=x$.
+		      $X_{n+1} = ax + Y_{n+1}$. Donc $Y_{n+1} = y-ax$. Comme $Y_{n+1} \sim \mathcal{E}(\lambda)$, sa densité est $f_Y(z)=\lambda e^{-\lambda z} \ind{z>0}$.
+		      La densité de $X_{n+1}$ sachant $X_n=x$ est donc $p(x,y) = f_Y(y-ax) = \lambda e^{-\lambda(y-ax)} \ind{y>ax}$.
+		\item Soit $X_n \sim \mu$. On a donc $X_n \stackrel{d}{=} \sum_{k=1}^\infty Y_k a^{k-1}$.
+		      Alors $X_{n+1} = a X_n + Y_{n+1} \stackrel{d}{=} a \left(\sum_{k=1}^\infty Y_k a^{k-1}\right) + Y_{n+1}$.
+		      Les $Y_k$ étant i.i.d., on peut les réindexer. Notons $(Y'_k)$ une autre suite i.i.d. de même loi et $Y'_{0}$ une autre variable indépendante.
+		      $X_{n+1} \stackrel{d}{=} a \left(\sum_{j=1}^\infty Y'_j a^{j-1}\right) + Y'_{0} = \sum_{j=1}^\infty Y'_j a^{j} + Y'_{0} = \sum_{k=0}^\infty Y'_k a^k = \sum_{k=1}^\infty Y'_{k-1} a^{k-1}$.
+		      Comme les $(Y'_{k-1})$ sont i.i.d. de même loi que les $(Y_k)$, on a $X_{n+1} \stackrel{d}{=} \sum_{k=1}^\infty Y_k a^{k-1} \sim \mu$.
+		      Donc $\mu$ est une mesure stationnaire.
+		\item \textbf{TP-} On peut simuler la chaîne et tracer des histogrammes de $X_n$ pour des valeurs de $n$ croissantes. On observera que l'histogramme se stabilise vers une forme fixe, qui est la densité de la loi $\mu$. Cela illustre la convergence en loi vers la mesure stationnaire.
+	\end{enumerate}
+\end{solution}
+
+\begin{exercice}[La poule et les poussins]
+	On suppose qu'avant une couvée, une poule pond $N$ oeufs, où $N$ suit une loi de Poisson de paramètre $\lambda$. Chaque oeuf éclot selon une loi de Bernoulli de paramètre $p$, indépendemment des autres oeufs. On note $K$ le nombre de poussins issus d'une couvée.
+	\begin{enumerate}
+		\item  Calculer $\mathbb{P}[K=k|N=n]$, puis $\mathbb{E}[K|N=n]$ et enfin $\mathbb{E}[K]$.
+		\item  A l'aide de la question précédente, calculer $\mathbb{P}[K=k]$, et identifier cette loi.
+		\item  Montrer que la loi de $N-k$ conditionellement à $K=k$ est une loi de Poisson de paramètre $(1-p)\lambda$. En déduire $\mathbb{E}[N|K=k]$.
+	\end{enumerate}
+
+	On propose d'utiliser une autre méthode pour démontrer ces résultats, basée sur la \emph{fonction génératrice des moments}. Si $X$ est une variable aléatoire à valeurs dans $N$, on note $f_X$ la fonction génératrice des moments de $X$, définie par
+	\[
+		f_X : s \in [0,1] \mapsto \E(s^X).
+	\]
+	On utilisera de façon répétée le résultat suivant, qui montre que la fonction génératrice des moments caractérise la loi d'une variable aléatoire.
+
+	\textbf{Théorème.}
+	\emph{Si $X$ et $Y$ sont deux variables aléatoires telles que $f_X(s) = f_Y(s)$ pour tout $s$ de $[0,1]$, alors $X$ et $Y$ ont la même loi.}
+
+	\begin{enumerate}
+		\item[4.] Calculer la fonction génératrice des moments d'une variable aléatoire de loi de Bernoulli de paramètre $p$, de loi de Poisson de paramètre $\lambda$, de loi géométrique de paramètre $p$.
+		\item[5.] Soient $(X_1,X_2,\ldots)$ des variables i.i.d. à valeurs dans $\N$ indépendantes de la variable aléatoire $N$. On note $f$ la fonction génératrice des moments de $X_1$ et $g$ la fonction génératrice des moments de $N$. On pose enfin $h$ la fonction génératrice des moments de
+		      \[
+			      S_N = X_1 + \cdots + X_N.
+		      \]
+		      Montrer que $h = g \circ f$.
+		\item[6.] En écrivant $K = X_1 + \cdots + X_N$, calculer la fonction génératrice des moments de $K$. En déduire la loi de $K$.
+		\item[7.]\textbf{TP - } Écrire une fonction qui simule le processus de ponte d’oeuf ainsi que la naissance ou non des poussins.
+		\item[8.]\textbf{TP - }  Vérifier par un histogramme l'adéquation de la loi empirique à la loi théorique de $K$.
+	\end{enumerate}
+\end{exercice}
+
+\begin{solution}
+	\begin{enumerate}
+		\item Conditionnellement à $N=n$, $K$ est la somme de $n$ Bernoulli i.i.d de paramètre $p$. Donc $K|N=n \sim \mathcal{B}(n,p)$.
+		      $\mathbb{P}(K=k|N=n) = \binom{n}{k}p^k(1-p)^{n-k}$.
+		      $\mathbb{E}(K|N=n) = np$.
+		      Par la formule de l'espérance totale: $\mathbb{E}(K) = \mathbb{E}[\mathbb{E}(K|N)] = \mathbb{E}[Np] = p\mathbb{E}[N] = p\lambda$.
+		\item Formule des probabilités totales : $\mathbb{P}(K=k) = \sum_{n=k}^\infty \mathbb{P}(K=k|N=n)\mathbb{P}(N=n)$.
+		      $\mathbb{P}(K=k) = \sum_{n=k}^\infty \binom{n}{k}p^k(1-p)^{n-k} e^{-\lambda}\frac{\lambda^n}{n!} = e^{-\lambda}\frac{(p\lambda)^k}{k!} \sum_{n=k}^\infty \frac{((1-p)\lambda)^{n-k}}{(n-k)!} = e^{-\lambda}\frac{(p\lambda)^k}{k!} e^{(1-p)\lambda} = e^{-\lambda p}\frac{(\lambda p)^k}{k!}$.
+		      C'est la loi de Poisson de paramètre $\lambda p$.
+		\item Il s'agit d'un calcul de loi conditionnelle. On peut le faire, mais la méthode des fonctions génératrices est plus élégante.
+		\item Bernoulli($p$): $f(s) = s \cdot p + 1 \cdot (1-p) = 1-p+ps$.
+		      Poisson($\lambda$): $f(s) = \sum_{k=0}^\infty s^k e^{-\lambda}\frac{\lambda^k}{k!} = e^{-\lambda}\sum \frac{(s\lambda)^k}{k!} = e^{-\lambda}e^{s\lambda} = e^{\lambda(s-1)}$.
+		      Géométrique($p$) sur $\{0,1,\dots\}$: $f(s) = \sum_{k=0}^\infty s^k p(1-p)^k = p \sum (s(1-p))^k = \frac{p}{1-s(1-p)}$.
+		\item Par l'espérance totale, $h(s) = \E(s^{S_N}) = \E[\E(s^{S_N}|N)]$. Sachant $N=n$, $S_n$ est une somme de $n$ v.a. iid. L'espérance de $s$ à la puissance une somme d'indépendants est le produit des espérances.
+		      $\E(s^{S_n}|N=n) = \E(s^{X_1+\dots+X_n}) = \E(s^{X_1})\cdots\E(s^{X_n}) = (f(s))^n$.
+		      Donc $h(s) = \E[(f(s))^N] = g(f(s))$.
+		\item $K$ est la somme de $N$ Bernoulli de paramètre $p$. Ici $N \sim \mathcal{P}(\lambda)$ et $X_i \sim \mathcal{B}(p)$.
+		      $f(s) = 1-p+ps$ (Bernoulli) et $g(s) = e^{\lambda(s-1)}$ (Poisson).
+		      La fonction génératrice de $K$ est $h(s) = g(f(s)) = e^{\lambda((1-p+ps)-1)} = e^{\lambda(ps-p)} = e^{\lambda p(s-1)}$.
+		      On reconnaît la fonction génératrice d'une loi de Poisson de paramètre $\lambda p$.
+		\item \textbf{TP-} La fonction doit d'abord tirer une valeur $n$ d'une loi de Poisson($\lambda$), puis tirer une valeur $k$ d'une loi Binomiale($n,p$).
+		\item \textbf{TP-} On génère un grand échantillon de valeurs de $K$ et on compare son histogramme à la fonction de masse d'une loi de Poisson($\lambda p$).
+	\end{enumerate}
+\end{solution}
+
+\begin{exercice}[Processus de Galton-Watson]
+	Un processus de Galton-Watson, ou processus de branchement, est un processus construit de la façon suivante : soit $(X_{n,k}, n \geq 1, k \geq 1)$ des variables aléatoires i.i.d. à valeurs entières, on fixe
+	\[
+		Z_{0} = 1 \quad \text{et}\quad Z_{n+1} = \sum_{k=1}^{Z_n} X_{n+1,k} \quad \text{ pour tout $n \geq 0$}.
+	\]
+	On note $m = \E(X_{1,1})$, et on s'intéresse au comportement asymptotique de $Z_n$ en fonction de $m$.
+	\begin{enumerate}
+		\item Montrer que $(Z_n, n \geq 1)$ est une chaîne de Markov et que $0$ est un état absorbant pour cette chaîne.
+		\item \textbf{TP - } Construire un algorithme permettant de simuler la chaîne de Markov $(Z_n)$. On supposera que les variables $(X_{n,k})$ sont i.i.d. de loi géométrique de paramètre $p$.
+		\item Montrer que pour tout $n \in \N$, on a $\E(Z_n) = m^n$.
+		\item Grâce à l'inégalité de Markov, montrer que si $m < 1$, alors $\lim_{n \to \infty} \P(Z_n = 0) = 1$.
+		\item \textbf{TP - } Simuler plusieurs trajectoires du processus de Galton-Watson, que se passe-t-il quand $m<1$ ? quand $m = 1$ ? quand $m > 1$ ?
+		\item \textbf{TP - } Tracer sur le même graphe plusieurs trajectoires de $(Z_n/m^n)$ lorsque $m > 1$. Qu'observe-t-on ?
+		\item Pour tout $n \in \N$ et $s \in [0,1]$, on note $f_n(s) = \E(s^{Z_n})$ et $f(s)=\E(s^{X_{1,1}})$. Montrer que $f_{n+1}(s) = f_n(f(s))$, et en déduire que $f_n$ est la $n$-ième itérée de $f$.
+		\item Montrer que $\P(Z_n = 0) = f_n(0)$.
+		\item En utilisant que $f$ est continue, convexe, croissante, que $f(1) = 1$ et $f'(1) = m$, montrer que
+		      \[
+			      \lim_{n \to \infty} \P(Z_n = 0) = \begin{cases}
+				      1 & \text{ si } m \leq 1 \\
+				      q & \text{sinon},
+			      \end{cases}
+		      \]
+		      où $q$ est la plus petite racine dans $[0,1]$ de l'équation $f(s) = s$.
+	\end{enumerate}
+\end{exercice}
+
+\begin{solution}
+	\begin{enumerate}
+		\item La loi de $Z_{n+1}$ ne dépend que de $Z_n$ et d'un ensemble de v.a. exogènes. C'est une chaîne de Markov. Si $Z_n=0$, la somme est vide et vaut 0, donc $Z_{n+1}=0$. Ainsi, 0 est un état absorbant.
+		\item \textbf{TP-} Voir le script. A chaque étape, si $Z_n=k$, on génère $k$ v.a. géométriques et on les somme pour obtenir $Z_{n+1}$.
+		\item Par espérance totale : $\E(Z_{n+1}) = \E[\E(Z_{n+1}|Z_n)] = \E[\sum_{k=1}^{Z_n} \E(X_{n+1,k})] = \E[Z_n \cdot m] = m \E(Z_n)$. Par récurrence, avec $\E(Z_0)=1$, on obtient $\E(Z_n)=m^n$.
+		\item Si $m<1$, $\E(Z_n) = m^n \to 0$. Pour tout $\epsilon > 0$, par Markov, $\P(Z_n \ge \epsilon) \le \E(Z_n)/\epsilon$. Comme $Z_n$ est à valeurs entières, $\P(Z_n \ge 1) \le \E(Z_n) = m^n$. Quand $n \to \infty$, $\P(Z_n \ge 1) \to 0$. Donc $\P(Z_n=0) = 1-\P(Z_n\ge 1) \to 1$.
+		\item \textbf{TP-} Si $m<1$ (sous-critique), la population s'éteint presque sûrement très vite. Si $m=1$ (critique), elle s'éteint aussi presque sûrement, mais peut survivre plus longtemps. Si $m>1$ (sur-critique), la population a une probabilité non nulle d'exploser exponentiellement.
+		\item \textbf{TP-} La suite $M_n = Z_n/m^n$ est une martingale. On observe que les trajectoires convergent vers une limite aléatoire.
+		\item C'est le même calcul qu'à l'exercice 5.5: $f_{n+1}(s) = \E(s^{Z_{n+1}}) = \E(\E(s^{\sum X}|Z_n)) = \E((f(s))^{Z_n}) = f_n(f(s))$. Par récurrence, $f_n(s) = f(f(...f(s)...)) = f^{\circ n}(s)$.
+		\item $f_n(0) = \E(0^{Z_n}) = \sum_{k=0}^\infty 0^k \P(Z_n=k)$. Avec la convention $0^0=1$, cela donne $1 \cdot \P(Z_n=0) + \sum_{k=1}^\infty 0 \cdot \P(Z_n=k) = \P(Z_n=0)$.
+		\item La probabilité d'extinction est $q_\infty = \lim_{n\to\infty} \P(Z_n=0) = \lim_{n\to\infty} f_n(0)$. La suite $x_n = f_n(0)$ est définie par $x_{n+1}=f(x_n)$ (car $f_n=f \circ f_{n-1}$). Elle converge vers un point fixe de $f$.
+		      Par convexité de $f$, la courbe de $f(s)$ coupe la droite $y=s$ en 1 et potentiellement en un autre point $q \in [0,1)$. Si $m=f'(1) \le 1$, la courbe reste au-dessus de la diagonale, donc le seul point fixe est 1. La suite $x_n$ part de $x_0=f_0(0)=\E(0^1)=0$ et converge vers 1. Si $m > 1$, la courbe passe sous la diagonale et il existe un unique point fixe $q < 1$. La suite $x_n$ converge vers ce point $q$.
+	\end{enumerate}
+\end{solution}
+
+\begin{exercice}[Pendule inversé]
+	On cherche à modéliser l'évolution au cours du temps d'un pendule soumis à des courants d'air. La position du pendule à l'étape $n$ est décrit par la quantité $X_n$, et on supposera que
+	\[
+		(X_{n+1} - X_n)  = - \lambda X_n h + Z_n \sqrt{h},
+	\]
+	où $(Z_n, n \geq 1)$ est une suite de variables aléatoires i.i.d. de loi normale centrée réduite, et $h > 0$ est un paramètre que l'on supposera petit.
+	\begin{enumerate}
+		\item Montrer que $(X_n, n \geq 1)$ est une chaîne de Markov.
+		\item On fixe $X_0=0$, montrer que $X_n$ suit une loi normale, dont on donnera la moyenne et la variance.
+		\item Quelle est la loi de $X_n$ lorsque $n \to \infty$ ?
+		\item \textbf{TP -} Proposer un algorithme permettant de simuler cette chaîne de Markov. Tracer une trajectoire de ce processus.
+		\item \textbf{TP -} Estimer l'espérance et la variance de $\frac{1}{n} \sum_{j=1}^n X_j^2$. En déduire un intervalle de confiance pour la variance de $X$ sous la loi d'équilibre.
+	\end{enumerate}
+\end{exercice}
+
+\begin{solution}
+	\begin{enumerate}
+		\item La relation de récurrence est $X_{n+1} = (1-\lambda h)X_n + \sqrt{h}Z_n$. C'est un processus autorégressif d'ordre 1 (AR(1)). La loi de $X_{n+1}$ ne dépend que de $X_n$ et de $Z_n$, c'est donc une chaîne de Markov.
+		\item $X_n$ est une combinaison linéaire de variables normales ($Z_0, \dots, Z_{n-1}$), donc $X_n$ est normale.
+		      $\E(X_{n+1}) = (1-\lambda h)\E(X_n) + \sqrt{h}\E(Z_n) = (1-\lambda h)\E(X_n)$. Comme $X_0=0$, $\E(X_n)=0$ pour tout $n$.
+		      $\mathbb{V}\mathrm{ar}(X_{n+1}) = (1-\lambda h)^2 \mathbb{V}\mathrm{ar}(X_n) + h \mathbb{V}\mathrm{ar}(Z_n) = (1-\lambda h)^2 \mathbb{V}\mathrm{ar}(X_n) + h$.
+		      Soit $v_n = \mathbb{V}\mathrm{ar}(X_n)$. On a $v_{n+1} = (1-\lambda h)^2 v_n + h$ avec $v_0=0$. C'est une suite arithmético-géométrique.
+		\item Si $|1-\lambda h|<1$ (ce qui est vrai pour $h$ petit), la variance $v_n$ converge vers le point fixe $v_\infty$ de la récurrence, vérifiant $v_\infty = (1-\lambda h)^2 v_\infty + h$.
+		      $v_\infty(1-(1-\lambda h)^2) = h \implies v_\infty(1 - (1-2\lambda h + \lambda^2h^2)) = h \implies v_\infty(2\lambda h - \lambda^2h^2) = h$.
+		      $v_\infty = \frac{1}{2\lambda - \lambda^2h}$. Pour $h$ petit, $v_\infty \approx \frac{1}{2\lambda}$.
+		      La loi de $X_n$ converge en loi vers la loi stationnaire $\mathcal{N}(0, v_\infty)$.
+		\item \textbf{TP-} Voir le script.
+		\item \textbf{TP-} D'après le théorème ergodique, $\frac{1}{n} \sum_{j=1}^n X_j^2$ converge vers $\E(X_\infty^2)$ où $X_\infty$ suit la loi stationnaire. Comme $\E(X_\infty)=0$, $\E(X_\infty^2) = \mathbb{V}\mathrm{ar}(X_\infty) = v_\infty$. L'espérance de la somme est donc $v_\infty$. On peut en estimer la valeur et utiliser le TCL sur la suite $(X_j^2)$ pour obtenir un intervalle de confiance pour $v_\infty$.
+	\end{enumerate}
+\end{solution}
+
+\begin{exercice}[\textbf{TP - }Optimisation du tiroir à chaussettes]
+	Je désire avoir à tout temps au moins $7$ paires de chaussettes, pour me limiter à une lessive par semaine. Cependant, mes paires de chaussettes s'usent au cours du temps, et je dois les remplacer. On supposera que chaque chaussette portée s'use avec probabilité $p = 1/50$, et qu'une chaussette dans mon tiroir s'use avec probabilité $q = 1/200$.
+	\begin{enumerate}
+		\item On suppose dans cette question qu'à chaque fois qu'une chaussette s'use, je jette la paire et en achète une nouvelle. Déterminer le nombre moyen de paires de chaussettes achetées chaque année. On pourra faire une estimation numérique, ou donner une valeur théorique.
+		\item On me propose une super-promo : 50 paires de chaussettes achetées au prix de 45. Dans cette question, tant que j'ai au moins $7$ paires de chaussettes, je ne fais rien, mais dès que ce nombre passe en-dessous de 7, je rachète un paquet avec la super-promo. Déterminer le nombre moyen de paires de chaussettes achetées chaque année. Comparer le coût avec la question précédente. On pourra faire une estimation numérique.
+		\item On suppose maintenant que ne jette que la chaussette qui s'use, et non la paire. Retraiter les deux questions précédentes. Quel pourcentage d'économie puis-je espérer en sacrifiant mon style parfaitement symmétrique ?
+		\item La paire de RobuSoket est trois fois plus chère qu'une paire de chaussette classique, mais s'use avec probabilité $1/200$, portée ou non. Est-ce que changer ma marque de chaussettes de prédilection est économiquement intéressant ?
+	\end{enumerate}
+\end{exercice}
+
+\begin{solution}
+	Cet exercice est purement un TP. Il s'agit de modéliser une situation par une simulation de Monte-Carlo pour estimer des quantités d'intérêt (coûts, nombre d'achats). Il n'y a pas de solution théorique simple, la simulation est l'outil de choix.
+	\begin{enumerate}
+		\item \textbf{TP -} On simule le processus jour par jour. L'état est le nombre de paires de chaussettes. Chaque jour :
+		      \begin{itemize}
+			      \item Je porte une paire. Les 2 chaussettes de cette paire ont une probabilité $p$ de s'user.
+			            % \item Les $2 \times (\text{N_paires}-1)$ chaussettes restantes dans le tiroir ont une probabilité $q$ de s'user.
+			      \item On calcule le nombre total de chaussettes qui se sont usées. C'est le nombre de paires à jeter et racheter.
+			      \item On somme ce nombre sur une longue période (plusieurs années) et on en déduit une moyenne annuelle.
+		      \end{itemize}
+		\item \textbf{TP -} La simulation est similaire, mais la politique d'achat change. L'état doit maintenant inclure le nombre de paires et un booléen pour savoir si on vient d'acheter ou non.
+		      \begin{itemize}
+			      \item On commence avec, disons, 10 paires.
+			      \item Chaque jour, des chaussettes s'usent, le nombre de paires diminue.
+			      \item Si le nombre de paires tombe à 6, on en rachète 50. On compte cet achat.
+			      \item On simule sur de nombreuses années et on calcule le nombre moyen de paquets de 50 achetés par an. On en déduit le coût.
+		      \end{itemize}
+		\item \textbf{TP -} Le modèle change. L'état du système n'est plus le nombre de paires, mais le nombre total de chaussettes.
+		      \begin{itemize}
+			      \item Chaque jour, je prends 2 chaussettes. Elles ont chacune une proba $p$ de s'user.
+			      \item Les chaussettes restantes ont une proba $q$ de s'user.
+			      \item On compte le nombre de chaussettes usées, et on en rachète autant. Le nombre de paires achetées est la moitié du nombre de chaussettes. On compare les coûts.
+		      \end{itemize}
+		\item \textbf{TP -} On refait les simulations des questions précédentes avec les nouvelles probabilités et le nouveau coût unitaire, et on compare les coûts annuels totaux pour déterminer la stratégie la plus économique.
+	\end{enumerate}
+\end{solution}
+
+\end{document}
