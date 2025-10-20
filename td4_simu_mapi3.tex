@@ -1,6 +1,4 @@
-\documentclass
-%[solutions]
-{exercices}
+\documentclass[]{exercices}
 
 \usepackage[french]{babel}
 \usepackage[T1]{fontenc}
@@ -62,8 +60,56 @@ Chaque mécanisme agit indépendamment de l'autre, et on modélise le temps avan
 \end{enumerate}
 \end{exercice}
 
+\begin{solution}
+\begin{enumerate}
+    \item Il s'agit d'une propriété classique de la loi exponentielle. Soient $T_1 \sim \mathcal{E}(\lambda_1)$ et $T_2 \sim \mathcal{E}(\lambda_2)$ indépendantes. Pour $t > 0$, la probabilité que la réaction ne se soit pas encore produite à l'instant $t$ est :
+    \[ \P(T > t) = \P(\min(T_1, T_2) > t) = \P(T_1 > t \text{ et } T_2 > t) \]
+    Par indépendance :
+    \[ \P(T > t) = \P(T_1 > t) \times \P(T_2 > t) = e^{-\lambda_1 t} \times e^{-\lambda_2 t} = e^{-(\lambda_1 + \lambda_2)t}. \]
+    On reconnaît la fonction de survie d'une loi exponentielle. Donc, $T$ suit une loi exponentielle de paramètre $\lambda = \lambda_1 + \lambda_2$.
+    \item On nous donne $\P(T > 15) = 1/2$. En utilisant le résultat précédent :
+    \[ e^{-15(\lambda_1 + \lambda_2)} = \frac{1}{2} \]
+    En prenant le logarithme naturel des deux côtés :
+    \[ -15(\lambda_1 + \lambda_2) = \ln(1/2) = -\ln(2) \]
+    \[ \lambda_1 + \lambda_2 = \frac{\ln(2)}{15} \approx 0.0462 \text{ min}^{-1}. \]
+    \item \begin{enumerate}
+    \item La proportion de molécules $B$ à la fin correspond à la probabilité que la réaction $R_1$ (de temps d'attente $T_1$) se produise avant la réaction $R_2$ (de temps d'attente $T_2$). C'est un résultat classique des "courses" entre variables exponentielles. Démontrons-le.
+
+    On calcule $\P(T_1 < T_2)$ en conditionnant sur la valeur de $T_2$. En utilisant la formule des probabilités totales pour des variables continues, on intègre sur toutes les valeurs possibles de $T_2$:
+    \[ \P(T_1 < T_2) = \int_0^\infty \P(T_1 < T_2 \mid T_2=t) f_{T_2}(t) \dd t. \]
+    où $f_{T_2}(t) = \lambda_2 e^{-\lambda_2 t}$ est la densité de la loi $\mathcal{E}(\lambda_2)$.
+
+    Comme $T_1$ et $T_2$ sont indépendantes, la connaissance de $T_2$ ne change pas la loi de $T_1$. Donc, $\P(T_1 < T_2 \mid T_2=t) = \P(T_1 < t)$. Cette probabilité est simplement la fonction de répartition de $T_1$ évaluée en $t$, soit $1 - e^{-\lambda_1 t}$.
+
+    En remplaçant dans l'intégrale :
+    \begin{align*}
+      \P(T_1 < T_2) &= \int_0^\infty (1 - e^{-\lambda_1 t}) (\lambda_2 e^{-\lambda_2 t}) \dd t \\
+      &= \int_0^\infty \lambda_2 e^{-\lambda_2 t} \dd t - \int_0^\infty \lambda_2 e^{-(\lambda_1 + \lambda_2)t} \dd t \\
+      &= 1 - \lambda_2 \left[ \frac{e^{-(\lambda_1 + \lambda_2)t}}{-(\lambda_1 + \lambda_2)} \right]_0^\infty \\
+      &= 1 - \lambda_2 \left( 0 - \frac{1}{-(\lambda_1 + \lambda_2)} \right) \\
+      &= 1 - \frac{\lambda_2}{\lambda_1 + \lambda_2} \\
+      &= \frac{(\lambda_1 + \lambda_2) - \lambda_2}{\lambda_1 + \lambda_2} = \frac{\lambda_1}{\lambda_1 + \lambda_2}.
+    \end{align*}
+    L'observation expérimentale nous donne donc une estimation de cette probabilité : $\P(T_1 < T_2) = 0.35$.
+
+    \item En utilisant le résultat ci-dessus, on a l'équation :
+    \[ \frac{\lambda_1}{\lambda_1 + \lambda_2} = 0.35. \]
+    Cela implique $\lambda_1 = 0.35(\lambda_1 + \lambda_2)$, ce qui donne $0.65 \lambda_1 = 0.35 \lambda_2$.
+    Le rapport est donc :
+    \[ \frac{\lambda_1}{\lambda_2} = \frac{0.35}{0.65} = \frac{35}{65} = \frac{7}{13}. \]
+  \end{enumerate}
+
+    \item Nous avons maintenant un système de deux équations à deux inconnues :
+    \[ \begin{cases} \lambda_1 + \lambda_2 = \frac{\ln(2)}{15} \\ \lambda_1 = \frac{7}{13} \lambda_2 \end{cases} \]
+    En substituant la deuxième équation dans la première :
+    \[ \frac{7}{13} \lambda_2 + \lambda_2 = \frac{\ln(2)}{15} \implies \frac{20}{13} \lambda_2 = \frac{\ln(2)}{15} \implies \lambda_2 = \frac{13 \ln(2)}{300} \approx 0.0300 \text{ min}^{-1}. \]
+    Puis on en déduit $\lambda_1$ :
+    \[ \lambda_1 = \frac{7}{13} \lambda_2 = \frac{7}{13} \frac{13 \ln(2)}{300} = \frac{7 \ln(2)}{300} \approx 0.0162 \text{ min}^{-1}. \]
+\end{enumerate}
+\end{solution}
+
 \begin{exercice}[Exemple de processus de Markov à temps continu.]
-On considère le processus de Markov défini sur $E = \{1,2,3\}$ de la façon suivante : pour chaque paire $i,j \in E$, lorsque le processus est dans l'état $i$, il saute vers l'état $j$ au taux $q_{i,j}$. On pose $q_i = q_{i,i} = - \sum_{j \neq i} q_{i,j}$, et note $Q = (q_{i,j})$ la matrice de taux (i.e, le générateur) de $X$, donné par
+On considère le processus de Markov défini sur $E = \{1,2,3\}$ de la façon suivante : pour chaque paire $i,j \in E$, lorsque le processus est dans l'état $i$, il saute vers l'état $j$ au taux $q_{i,j}$. On pose $q_i = -q_{i,i} = \sum_{j \neq i} q_{i,j}$, et note $Q = (q_{i,j})$ la matrice de taux (i.e, le générateur) de $X$, donné par
 \[
   Q = \left( \begin{array}{ccc}
     -2 & 1 & 1\\
@@ -83,9 +129,48 @@ On note $Y_n = X_{T_n}$ pour tout $n \geq 0$.
   \item Déterminer la mesure invariante de $(Y_n)$ qu'on notera $\pi$.
 \end{enumerate}
 \item On note $\rho$ le vecteur ligne satisfaisant $\rho Q = 0$ avec $\sum \rho_i = 1$, qui est la mesure invariante de $X$. Calculer $\rho$.
-\item Comparer $\rho$ et $(\E(S_1)\pi_1,\E(S_2)\pi_2, \E(S_3)\pi_3)$. Donner une justification (on pourra comparer les théorèmes ergodiques en temps discret et en temps continu).
+\item Comparer $\rho$ et le vecteur normalisé proportionnel à $(\E(S_1)\pi_1,\E(S_2)\pi_2, \E(S_3)\pi_3)$. Donner une justification.
 \end{enumerate}
 \end{exercice}
+
+\begin{solution}
+\begin{enumerate}
+    \item Par définition d'un processus de Markov à temps continu, le temps de séjour dans un état $i$ suit une loi exponentielle de paramètre $q_i = -q_{i,i}$.
+    \begin{itemize}
+        \item Pour $i=1$, $q_1 = -q_{1,1} = 2$. Donc $S_1 \sim \mathcal{E}(2)$.
+        \item Pour $i=2$, $q_2 = -q_{2,2} = 3$. Donc $S_2 \sim \mathcal{E}(3)$.
+        \item Pour $i=3$, $q_3 = -q_{3,3} = 5$. Donc $S_3 \sim \mathcal{E}(5)$.
+    \end{itemize}
+    \item
+    \begin{enumerate}
+        \item $(Y_n)$ est la \textbf{chaîne de sauts} (ou chaîne incluse) du processus $X$. C'est une chaîne de Markov à temps discret. La probabilité de transition $P_{ij}$ de $i$ vers $j$ est la probabilité que le processus saute en $j$ sachant qu'il quitte $i$. Cette probabilité est donnée par le rapport des taux : $P_{ij} = \frac{q_{ij}}{q_i}$ pour $i \neq j$, et $P_{ii}=0$.
+        \[ P = \begin{pmatrix}
+        0 & 1/2 & 1/2 \\
+        2/3 & 0 & 1/3 \\
+        1/5 & 4/5 & 0
+        \end{pmatrix}. \]
+        \item On cherche $\pi = (\pi_1, \pi_2, \pi_3)$ tel que $\pi P = \pi$ et $\sum \pi_i = 1$.
+        \[ \begin{cases} \frac{2}{3}\pi_2 + \frac{1}{5}\pi_3 = \pi_1 \\ \frac{1}{2}\pi_1 + \frac{4}{5}\pi_3 = \pi_2 \\ \frac{1}{2}\pi_1 + \frac{1}{3}\pi_2 = \pi_3 \\ \pi_1+\pi_2+\pi_3 = 1 \end{cases} \]
+        En substituant la 3e équation dans la 2e : $\frac{1}{2}\pi_1 + \frac{4}{5}(\frac{1}{2}\pi_1 + \frac{1}{3}\pi_2) = \pi_2 \implies \frac{1}{2}\pi_1 + \frac{2}{5}\pi_1 + \frac{4}{15}\pi_2 = \pi_2 \implies \frac{9}{10}\pi_1 = \frac{11}{15}\pi_2 \implies \pi_2 = \frac{27}{22}\pi_1$.
+        On reporte dans la 3e : $\pi_3 = \frac{1}{2}\pi_1 + \frac{1}{3}\frac{27}{22}\pi_1 = (\frac{1}{2}+\frac{9}{22})\pi_1 = \frac{20}{22}\pi_1 = \frac{10}{11}\pi_1$.
+        Enfin, on normalise : $\pi_1(1 + \frac{27}{22} + \frac{20}{22}) = 1 \implies \pi_1(\frac{22+27+20}{22})=1 \implies \pi_1 = \frac{22}{69}$.
+        On trouve $\pi_2 = \frac{27}{69}$ et $\pi_3 = \frac{20}{69}$. Donc $\pi = \frac{1}{69}(22, 27, 20)$.
+    \end{enumerate}
+    \item On cherche $\rho = (\rho_1, \rho_2, \rho_3)$ tel que $\rho Q = 0$ et $\sum \rho_i=1$.
+    \[ \begin{cases} -2\rho_1 + 2\rho_2 + \rho_3 = 0 \\ \rho_1 - 3\rho_2 + 4\rho_3 = 0 \\ \rho_1 + \rho_2 - 5\rho_3 = 0 \\ \rho_1+\rho_2+\rho_3=1 \end{cases} \]
+    De la 3e équation, $\rho_3 = \frac{1}{5}(\rho_1+\rho_2)$. Substituons dans la 1ere : $-2\rho_1+2\rho_2+\frac{1}{5}(\rho_1+\rho_2)=0 \implies -10\rho_1+10\rho_2+\rho_1+\rho_2=0 \implies -9\rho_1+11\rho_2=0 \implies \rho_2 = \frac{9}{11}\rho_1$.
+    On a donc $\rho_3 = \frac{1}{5}(\rho_1 + \frac{9}{11}\rho_1) = \frac{1}{5}\frac{20}{11}\rho_1 = \frac{4}{11}\rho_1$.
+    On normalise : $\rho_1(1 + \frac{9}{11} + \frac{4}{11}) = 1 \implies \rho_1(\frac{11+9+4}{11}) = 1 \implies \rho_1 = \frac{11}{24}$.
+    On trouve $\rho_2 = \frac{9}{24}$ et $\rho_3 = \frac{4}{24}$. Donc $\rho = \frac{1}{24}(11, 9, 4)$.
+    \item On a $\E(S_1)=1/2$, $\E(S_2)=1/3$, $\E(S_3)=1/5$. Le vecteur non normalisé est $v_i = \pi_i \E(S_i)$.
+    $v = \frac{1}{69}(22 \cdot \frac{1}{2}, 27 \cdot \frac{1}{3}, 20 \cdot \frac{1}{5}) = \frac{1}{69}(11, 9, 4)$.
+    Pour le normaliser, on le divise par la somme de ses composantes : $\sum v_i = \frac{1}{69}(11+9+4) = \frac{24}{69}$.
+    Le vecteur normalisé est $\frac{v}{\sum v_i} = \frac{1/69(11,9,4)}{24/69} = \frac{1}{24}(11,9,4) = \rho$.
+    \textbf{Justification :} Le théorème ergodique nous dit que $\rho_i$ est la fraction de temps à long terme passée dans l'état $i$. Cette fraction peut s'écrire comme :
+    \[ \rho_i = \frac{\text{temps moyen passé en } i}{\text{temps total}} = \frac{(\text{nombre de visites en } i) \times (\text{temps moyen par visite en } i)}{\sum_j (\text{nombre de visites en } j) \times (\text{temps moyen par visite en } j)} \]
+    En divisant par le nombre total de sauts, le "nombre de visites en i" devient la probabilité stationnaire de la chaîne de sauts $\pi_i$, et le "temps moyen par visite" est $\E(S_i)$. Donc $\rho_i \propto \pi_i \E(S_i)$.
+\end{enumerate}
+\end{solution}
 
 \begin{exercice}[Coalescent de Kingman.]
 Le coalescent de Kingman est un processus markovien à temps continu qui la forme d'un arbre généalogique. Pour $n$ individus initiaux, on remonte les lignées ancestrales de cette individu, et à tout instant deux lignées quelconques coalesent à taux $c$ pour n'en former qu'une seule.
@@ -94,7 +179,7 @@ Le coalescent de Kingman est un processus markovien à temps continu qui la form
   \item On note $T_k$ le premier temps où le nombre de lignées vaut $k$, en déduire que $T_{k} - T_{k+1} \sim \mathcal{E}(c\binom{k+1}{2})$.
   \item On note $(E_i, i \geq 1)$ une suite de variables aléatoires i.i.d. de loi $\mathcal{E}(1)$. Montrer que
   \[
-    T_k \overset{(d)}{=} \sum_{j=k+1}^{n} \frac{E_k}{c \binom{j}{2}}.
+    T_k \overset{\text{(d)}}{=} \sum_{j=k+1}^{n} \frac{E_j}{c \binom{j}{2}}.
   \]
   \item En particulier, on pose $T_\mathrm{MRCA} = T_1$ l'âge du dernier ancêtre commun des $n$ lignées initiales. Montrer que
   \[
@@ -109,6 +194,30 @@ Le coalescent de Kingman est un processus markovien à temps continu qui la form
 \end{enumerate}
 \end{exercice}
 
+\begin{solution}
+\begin{enumerate}
+    \item Le nombre de lignées est $n$. Chaque paire de lignées peut coalescer. Il y a $\binom{n}{2}$ paires de lignées distinctes. Chaque paire coalesce à un taux $c$. Les événements de coalescence pour chaque paire sont modélisés comme des processus de Poisson indépendants. Le premier événement de coalescence est donc le minimum d'un ensemble de $\binom{n}{2}$ variables exponentielles indépendantes de paramètre $c$. Le temps de ce premier événement, $T_n$, suit donc une loi exponentielle dont le paramètre est la somme des paramètres, soit $c\binom{n}{2}$.
+    \item $T_k$ est le temps total écoulé jusqu'à ce qu'il ne reste que $k$ lignées. Le temps passé avec $j$ lignées est $T_{j-1}-T_j$. Par la propriété de l'absence de mémoire de la loi exponentielle, une fois qu'il y a $k+1$ lignées, le processus redémarre. Le temps d'attente jusqu'à la prochaine coalescence (pour passer à $k$ lignées) suit une loi exponentielle de paramètre $c\binom{k+1}{2}$. Donc, $T_k - T_{k+1} \sim \mathcal{E}(c\binom{k+1}{2})$.
+    \item Le temps total $T_k$ pour atteindre $k$ lignées en partant de $n$ est la somme des temps d'attente successifs :
+    \[ T_k = (T_{n-1} - T_n) + (T_{n-2} - T_{n-1}) + \dots + (T_k - T_{k+1}) = \sum_{j=k+1}^n (T_{j-1} - T_j). \]
+    Chaque terme $(T_{j-1} - T_j)$ est une variable exponentielle de paramètre $c\binom{j}{2}$. Une variable $\mathcal{E}(\lambda)$ peut s'écrire $\frac{E}{\lambda}$ où $E \sim \mathcal{E}(1)$. Donc :
+    \[ T_k \overset{\text{(d)}}{=} \sum_{j=k+1}^{n} \frac{E_j}{c \binom{j}{2}}, \]
+    où les $E_j$ sont i.i.d. de loi $\mathcal{E}(1)$.
+    \item $T_\mathrm{MRCA} = T_1$. On utilise la formule précédente pour $k=1$ et on prend l'espérance. Par linéarité de l'espérance et comme $\E(E_j)=1$ :
+    \[ \E(T_\mathrm{MRCA}) = \E(T_1) = \sum_{j=2}^{n} \E\left(\frac{E_j}{c \binom{j}{2}}\right) = \sum_{j=2}^{n} \frac{1}{c \binom{j}{2}}. \]
+    On a $\binom{j}{2} = \frac{j(j-1)}{2}$, donc $\frac{1}{\binom{j}{2}} = \frac{2}{j(j-1)}$. En utilisant la décomposition en éléments simples $\frac{1}{j(j-1)} = \frac{1}{j-1} - \frac{1}{j}$, on obtient :
+    \[ \E(T_\mathrm{MRCA}) = \frac{2}{c} \sum_{j=2}^{n} \left(\frac{1}{j-1} - \frac{1}{j}\right). \]
+    C'est une somme télescopique :
+    \[ \sum_{j=2}^{n} \left(\frac{1}{j-1} - \frac{1}{j}\right) = \left(1 - \frac{1}{2}\right) + \left(\frac{1}{2} - \frac{1}{3}\right) + \dots + \left(\frac{1}{n-1} - \frac{1}{n}\right) = 1 - \frac{1}{n}. \]
+    Finalement : $\E(T_\mathrm{MRCA}) = \frac{2}{c}\left(1 - \frac{1}{n}\right)$.
+    \item
+    \begin{enumerate}
+        \item \textbf{TP-} Le graphe montre que le nombre de lignées diminue très rapidement au début (quand $n$ est grand, le taux de coalescence $c\binom{n}{2}$ est très élevé), puis le processus ralentit considérablement. La plus grande partie du temps est passée lorsqu'il ne reste que quelques lignées.
+        \item \textbf{TP-} En simulant un grand nombre de fois le processus et en moyennant les $T_\mathrm{MRCA}$ obtenus, on devrait retrouver la valeur théorique $\frac{2}{c}(1 - \frac{1}{n})$.
+        \item \textbf{TP-} L'histogramme de $T_\mathrm{MRCA}$ montre une distribution très asymétrique avec une longue queue à droite. Pour $n$ grand, la distribution de $T_\mathrm{MRCA}$ converge vers une loi non triviale (liée à la loi de Gumbel), mais sa moyenne converge vers $2/c$.
+    \end{enumerate}
+\end{enumerate}
+\end{solution}
 
 \begin{exercice}[File d’attente M/M/1 et ses propriétés stationnaires]
 On considère une file d’attente M/M/1, défini de la façon suivante :
@@ -144,7 +253,34 @@ On note $(F_t)_{t \ge 0}$ le nombre de clients présents dans le système (en at
 \end{enumerate}
 \end{exercice}
 
-
+\begin{solution}
+\begin{enumerate}
+    \item C'est un processus de naissance et de mort.
+    \begin{enumerate}
+        \item La propriété de Markov découle de l'absence de mémoire des lois exponentielles des arrivées et des services. L'évolution future du nombre de clients ne dépend que du nombre actuel, et non du passé.
+        \item Le générateur $Q$ est une matrice infinie. Pour $i \ge 1$: $q_{i, i+1} = \lambda$ (naissance), $q_{i, i-1} = \mu$ (mort), $q_{i,i} = -(\lambda+\mu)$. Pour $i=0$: $q_{0,1}=\lambda$, $q_{0,0}=-\lambda$.
+        \item Les équations de Kolmogorov (forward) sont $\frac{d}{dt} P(t) = P(t)Q$, où $P(t)$ est la matrice des $p_{ij}(t)$.
+    \end{enumerate}
+    \item On vérifie les équations du bilan détaillé $\pi_k q_{k, k+1} = \pi_{k+1} q_{k+1, k}$ pour $k \ge 0$.
+    $(\frac{\lambda}{\mu})^k \lambda = (\frac{\lambda}{\mu})^{k+1} \mu$. Les deux côtés sont égaux à $\frac{\lambda^{k+1}}{\mu^k}$. La mesure est donc invariante.
+    \item Pour que ce soit une mesure de \emph{probabilité}, elle doit être normalisable : $\sum_{k=0}^\infty \pi_k < \infty$.
+    $\sum_{k=0}^\infty (\frac{\lambda}{\mu})^k$ est une série géométrique qui converge si et seulement si $|\frac{\lambda}{\mu}| < 1$. Comme $\lambda, \mu > 0$, la condition est $\lambda < \mu$. C'est la condition de stabilité de la file d'attente.
+    \item Soit $\rho = \lambda/\mu$. La mesure de probabilité invariante est $\pi_n = (1-\rho)\rho^n$ pour $n \ge 0$. C'est une loi géométrique sur $\N$. Le nombre moyen de clients est l'espérance de cette loi : $\E(F) = \sum n\pi_n = \frac{\rho}{1-\rho} = \frac{\lambda}{\mu-\lambda}$.
+    \item La loi de Little $\E(F) = \lambda \E(\tau)$ relie le nombre moyen de clients $\E(F)$ au temps moyen d'attente $\E(\tau)$. Un client arrivant dans le système (qui est en régime stationnaire) voit, d'après la propriété PASTA, la distribution stationnaire $\pi$. S'il voit $n$ clients, il devra attendre la fin de son propre service et de celui des $n$ clients devant lui. Le temps total est la somme de $n+1$ services exponentiels indépendants. L'espérance de ce temps est $(n+1)/\mu$. Le temps d'attente moyen est donc $\E(\tau) = \E[\frac{F+1}{\mu}] = \frac{\E(F)+1}{\mu} = \frac{\lambda/(\mu-\lambda)+1}{\mu} = \frac{\mu/(\mu-\lambda)}{\mu} = \frac{1}{\mu-\lambda}$.
+    On vérifie bien : $\lambda \E(\tau) = \frac{\lambda}{\mu-\lambda} = \E(F)$.
+    \item
+    \begin{enumerate}
+        \item \textbf{TP-} C'est une simulation événementielle (algorithme de Gillespie). À l'état $k \in \{0, \dots, K\}$:
+        \begin{itemize}
+            \item Le taux total de sortie est $\gamma_k$. Si $0<k<K, \gamma_k=\lambda+\mu$. Si $k=0, \gamma_0=\lambda$. Si $k=K, \gamma_K=\mu$.
+            \item On simule le temps du prochain événement $T \sim \mathcal{E}(\gamma_k)$.
+            \item On choisit l'événement : si on est en $k \in (0,K)$, on saute en $k+1$ avec proba $\lambda/(\lambda+\mu)$, en $k-1$ avec proba $\mu/(\lambda+\mu)$.
+        \end{itemize}
+        \item \textbf{TP-} La distribution stationnaire est une série géométrique tronquée : $\pi_k^{(K)} = C \rho^k$ pour $k \le K$. La constante $C$ est trouvée par normalisation : $C \sum_{k=0}^K \rho^k = 1 \implies C = \frac{1-\rho}{1-\rho^{K+1}}$.
+        \item \textbf{TP-} Un client est refusé s'il arrive alors que le système est plein (état $K$). Par la propriété PASTA, la probabilité que cela arrive est simplement la probabilité stationnaire d'être dans l'état $K$, soit $\pi_K^{(K)}$.
+    \end{enumerate}
+\end{enumerate}
+\end{solution}
 
 \begin{exercice}
 \textbf{TP-}
@@ -158,5 +294,23 @@ Le Monopoly est un jeu de société extrêmement classique, dont on pourra trouv
 \end{enumerate}
 \end{exercice}
 
+\begin{solution}
+Cet exercice est un projet de modélisation et simulation purement pratique. Il n'y a pas de solution théorique simple.
+\begin{enumerate}
+    \item \textbf{TP-} La fonction doit simuler un tour complet.
+    \begin{itemize}
+        \item Gérer l'état "en prison" : si le joueur est en prison, il tente de sortir (double ou 3 tours passés).
+        \item Lancer les dés.
+        \item Gérer les doubles : compter le nombre de doubles consécutifs. Au 3ème, aller en prison.
+        \item Mettre à jour la position : avancer du montant des dés.
+        \item Gérer les cases spéciales : si on atterrit sur "Allez en Prison" (case 30), on va en prison (case 10).
+        \item Renvoyer la liste de toutes les cases sur lesquelles le pion a atterri pendant le tour.
+    \end{itemize}
+\item \textbf{TP-} On simule un très grand nombre de tours (ex: $10^6$). On crée un tableau \texttt{start\_position\_counts} de taille 40. Au début de chaque tour, on incrémente le compteur pour la case de départ. La distribution stationnaire est obtenue en normalisant ce tableau par le nombre total de tours. Les cases les plus fréquentes seront la Prison (beaucoup de tours y commencent), et les cases juste après.
+\item \textbf{TP-} On utilise un autre tableau \texttt{visit\_counts}. Pour chaque tour simulé, on parcourt la liste des cases visitées renvoyée par la fonction de la Q1 et on incrémente les compteurs correspondants. Le nombre moyen de visites par tour pour une case est son compteur divisé par le nombre total de tours. Les cases les plus visitées sont souvent celles situées 6, 7, 8 cases après la prison (forte probabilité de sortie) et les gares (à cause des cartes Chance/Caisse de Communauté).
+    \item \textbf{TP-} On a besoin d'encoder les coûts d'achat et les loyers pour chaque propriété. Le gain moyen par tour d'une propriété est : (loyer) $\times$ (nombre moyen de visites par tour) - (coût d'entretien éventuel). Le rapport "rentabilité" est ce gain moyen divisé par le coût d'achat (+ coût des maisons). On calcule ce ratio pour chaque propriété afin de trouver la plus rentable. Ce sont souvent les propriétés orange et rouges.
+    \item \textbf{TP-} On modifie la règle du jeu dans le simulateur (par exemple, la case 20 "Parc Gratuit" devient "Allez en Prison"). On relance la simulation de la Q3 et on observe le nouvel histogramme des visites. La fréquence de visite de la prison augmentera, ainsi que celle des cases juste après. Les fréquences des cases situées entre la nouvelle case "Allez en prison" et la prison elle-même diminueront car les joueurs "sauteront" par-dessus.
+\end{enumerate}
+\end{solution}
 
 \end{document}
