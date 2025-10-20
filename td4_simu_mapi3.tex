@@ -1,0 +1,162 @@
+\documentclass
+%[solutions]
+{exercices}
+
+\usepackage[french]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{multicol,epsfig,csquotes}
+\usepackage{enumerate}
+\usepackage{xcolor}
+\usepackage{amsmath,amssymb,amsthm,enumitem,bbm,latexsym}
+\usepackage[normalem]{ulem}
+\usepackage{hyperref}
+\usepackage{listings}
+
+%%%%%%%%%% environnements
+%\theoremstyle{definition}
+%\newtheorem{exo}{Exercice}
+
+
+%%%%%%%%%% macros
+
+
+
+
+\begin{document}
+{
+\noindent {\sc M1 MAPI3  -  Simulations stochastiques \hfill 2025-2026}\\
+Jianyu Ma \hfill \textit{jianyu.ma@math.univ-toulouse.fr}\\
+Bastien Mallein \hfill \textit{bastien.mallein@math.univ-toulouse.fr}\\
+Pierre Petit \hfill \textit{pierre.petit@math.univ-toulouse.fr}}
+
+
+\vspace{2ex}
+
+ \hrule
+\begin{center}
+\textbf{\large TD 4 - Processus de Markov à temps continu}
+\vspace{2ex}
+\end{center}
+\hrule
+
+\bigskip
+
+\textbf{TP-} Les exercices notés TP sont purement optionnels, et ne seront pas traités en classe.
+
+\begin{exercice}[Compétition entre deux réactions chimiques.]
+Une molécule instable $A$ réagit spontanément selon l'un de deux mécanismes distincts
+\[
+  R_1 : A \longrightarrow B \text{ et } R_2 : A \longrightarrow C.
+\]
+Chaque mécanisme agit indépendamment de l'autre, et on modélise le temps avant l'arrivée de la réaction $R_i$ par une variable aléatoire de loi exponentielle de paramètre $\lambda_i$.
+\begin{enumerate}
+  \item On note $T_i$ le temps avant l'occurrence de la réaction $R_i$, calculer la loi de $T = \min(T_1,T_2)$.
+  \item On remarque qu'au bout du temps $s = 15\text{min}$, une solution initialement pure de molécule $A$ ne contient plus que la moitié des molécules initialement présentes. On en déduit $\P(T > s) = \frac{1}{2}$. En déduire la valeur de $\lambda_1 + \lambda_2$.
+  \item Après avoir laissé le temps à toutes les molécules de se désintégrer, on remarque que la proportion de molécule $B$ est estimée à $35\%$.
+  \begin{enumerate}
+    \item Quelle est la probabilité que la réaction $R_1$ ait lieu avant la réaction $R_2$ ?
+    \item En déduire une estimation de $\frac{\lambda_1}{\lambda_2}$.
+  \end{enumerate}
+  \item Conclure à une estimation de $\lambda_1$ et $\lambda_2$.
+\end{enumerate}
+\end{exercice}
+
+\begin{exercice}[Exemple de processus de Markov à temps continu.]
+On considère le processus de Markov défini sur $E = \{1,2,3\}$ de la façon suivante : pour chaque paire $i,j \in E$, lorsque le processus est dans l'état $i$, il saute vers l'état $j$ au taux $q_{i,j}$. On pose $q_i = q_{i,i} = - \sum_{j \neq i} q_{i,j}$, et note $Q = (q_{i,j})$ la matrice de taux (i.e, le générateur) de $X$, donné par
+\[
+  Q = \left( \begin{array}{ccc}
+    -2 & 1 & 1\\
+    2 & -3 & 1 \\
+    1 & 4 & -5
+  \end{array} \right).
+\]
+\begin{enumerate}
+\item Pour tout $i \in E$, on note $S_i$ le temps de sortie de $i$ par $X$, défini par $S_i = \inf\{t > 0 : X_t \neq i\}$ sous $\P_i$. Quelle est la loi de $S_1$, de $S_2$, de $S_3$?
+\item On fixe $X_0 = 1$, et on défini par récurrence $T_0 = 0$ et
+\[
+  T_{i+1} = \inf\{t > T_i : X_{t} \neq X_{T_i}\}.
+\]
+On note $Y_n = X_{T_n}$ pour tout $n \geq 0$.
+\begin{enumerate}
+  \item Montrer que $(Y_n)$ est une chaîne de Markov dont on précisera la loi.
+  \item Déterminer la mesure invariante de $(Y_n)$ qu'on notera $\pi$.
+\end{enumerate}
+\item On note $\rho$ le vecteur ligne satisfaisant $\rho Q = 0$ avec $\sum \rho_i = 1$, qui est la mesure invariante de $X$. Calculer $\rho$.
+\item Comparer $\rho$ et $(\E(S_1)\pi_1,\E(S_2)\pi_2, \E(S_3)\pi_3)$. Donner une justification (on pourra comparer les théorèmes ergodiques en temps discret et en temps continu).
+\end{enumerate}
+\end{exercice}
+
+\begin{exercice}[Coalescent de Kingman.]
+Le coalescent de Kingman est un processus markovien à temps continu qui la forme d'un arbre généalogique. Pour $n$ individus initiaux, on remonte les lignées ancestrales de cette individu, et à tout instant deux lignées quelconques coalesent à taux $c$ pour n'en former qu'une seule.
+\begin{enumerate}
+  \item On note $T_n$ le temps de première coalescence, montrer que $T_n \sim \mathcal{E}(c\binom{n}{2})$.
+  \item On note $T_k$ le premier temps où le nombre de lignées vaut $k$, en déduire que $T_{k} - T_{k+1} \sim \mathcal{E}(c\binom{k+1}{2})$.
+  \item On note $(E_i, i \geq 1)$ une suite de variables aléatoires i.i.d. de loi $\mathcal{E}(1)$. Montrer que
+  \[
+    T_k \overset{(d)}{=} \sum_{j=k+1}^{n} \frac{E_k}{c \binom{j}{2}}.
+  \]
+  \item En particulier, on pose $T_\mathrm{MRCA} = T_1$ l'âge du dernier ancêtre commun des $n$ lignées initiales. Montrer que
+  \[
+    \E(T_\mathrm{MRCA}) = \frac{2}{c}\left(1 - \frac{1}{n}\right)
+  \]
+  \item (\textbf{TP-}) Rédigez un programme permettant de simuler ce processus
+  \begin{enumerate}
+  \item Tracer le graphe du nombre de lignées au cours du temps dans l'arbre généalogique d'une famille de $n=10000$ individus. Qu'observez-vous ?
+  \item Estimez numériquement la valeur de $\E(T_\mathrm{MRCA})$. Retrouvez-vous la valeur théorique ?
+  \item Tracer la distribution empirique de la variable aléatoire $T_\mathrm{MRCA}$ pour différentes valeurs de $n$. Qu'observe-t-on ?
+  \end{enumerate}
+\end{enumerate}
+\end{exercice}
+
+
+\begin{exercice}[File d’attente M/M/1 et ses propriétés stationnaires]
+On considère une file d’attente M/M/1, défini de la façon suivante :
+\begin{itemize}
+    \item les clients arrivent à taux exponentiel de paramètre $\lambda > 0$, c'est-à-dire que le temps entre 2 arrivées de clients suit une loi exponentielle de paramètre $\lambda$
+    \item le temps de service d’un client est une {variable exponentielle} de paramètre $\mu > 0$,
+    \item un seul serveur, fonctionnant selon la règle \textbf{FIFO} (first-in, first-out),
+    \item la capacité de la file est {illimitée}.
+\end{itemize}
+On note $(F_t)_{t \ge 0}$ le nombre de clients présents dans le système (en attente + en service) à l’instant $t$.
+\begin{enumerate}
+\item On modélise la file d'attente comme une chaîne de Markov.
+\begin{enumerate}
+    \item Montrer que $(F_t)_{t \ge 0}$ est un processus de Markov à temps continu à espace d’état $\N$.
+    \item Donner le générateur infinitésimal $Q = (q_{i,j})_{i,j \in \mathbb{N}}$.
+    \item Écrire l'équation de Kolmogorov satisfaite par pour $p_{i,j}(t) = \mathbb{P}(N_t = j \mid N_0 = i)$.
+\end{enumerate}
+ \item Montrer que la mesure $\pi(k) = (\frac{\lambda}{\mu})^k$ est une mesure invariante de ce processus.
+ \item Sous quelles conditions sur $\lambda$ et $\mu$ $(F_t)$ admet-elle une mesure de probabilité invariante ?
+ \item Donner la probabilité, sous la loi stationnaire, d’avoir exactement $n$ clients dans le système. En déduire la valeur du nombre moyen de clients.
+ \item On se propose d'estimer le temps passé par un client dans le système sous la loi invariante.
+ \begin{enumerate}
+   \item On suppose que $F_0 = k$, et on note $T$ le temps d'arrivée du prochain client. Déterminer la loi de $F_T$.
+   \item En déduire le temps d'atteinte moyen du client nouvellement arrivé.
+   \item Conclure que sous la mesure invariante, le temps d'attente moyen $\tau$ d'un client vérifie $\E(\tau) \lambda  = \E(N)$. Il s'agit de la loi de Little : le nombre moyen de personnes dans le système est égal à leur taux d'arrivée multiplié par leur temps moyen passé dans le service.
+ \end{enumerate}
+ \item (\textbf{TP-}) On suppose maintenant que la file d'attente dispose d'une capacité maximale de $K$ clients, et refuse les nouveaux clients lorsque $F_t = K$.
+ \begin{enumerate}
+   \item Proposer un algorithme pour simuler ce processus de Markov.
+   \item Déterminer la distribution stationnaire $\pi^{(K)}$ (on pourra prendre $K=10$ et tester différentes valeurs de $\lambda$ et de $\mu$).
+   \item Estimer la probabilité qu'un client soit refusé à l'arrivée.
+ \end{enumerate}
+\end{enumerate}
+\end{exercice}
+
+
+
+\begin{exercice}
+\textbf{TP-}
+Le Monopoly est un jeu de société extrêmement classique, dont on pourra trouver les règles du jeu à cette adresse : \href{https://instructions.hasbro.com/api/download/C1009_fr-fr_monopoly-game.pdf}{instructions.hasbro.com/fr-fr/instruction/monopoly-game}. On se propose d'étudier l'évolution d'une pièce sur un plateau de Monopoly, qui est un exemple classique de chaîne de Markov.
+\begin{enumerate}
+  \item Rédiger une fonction permettant de renvoyer les cases parcourues par un joueur lors d'un tour. On négligera tous les déplacements dûs aux cartes, et on se contentera des règles suivantes : le joueur avance d'un nombre de cases donné par le résultat de deux dés, s'il obtient un double, il relance les deux dés et avance à nouveau, s'il obtient un deuxième double, il réavance une 3e fois, s'il obtient trois doubles il est envoyé en prison (case 10). Si à n'importe quel moment le joueur arrive sur la case "aller en prison (case 30), il est envoyé en prison et son tour s'arrête. Si le joueur est en prison (mais pas en \emph{simple visite}), il tire deux dés et se déplace s'il obtient un double, ou s'il a passé 3 tours en prison.
+  \item Déterminer la distribution stationnaire du joueur, donnant la loi de la case de début du tour d'un joueur au bout d'un temps long. Quels sont les 5 cases de départ les plus fréquentes ?
+  \item Déterminer le nombre moyen de visite par tour de chaque case. Que vaut le nombre moyen de cases visitées par tour ? Quelles sont les 5 cases les plus visitées ?
+  \item Déterminer le gain moyen associé à chaque propriété en fonction du nombre de maisons sur cette propriété. Quel est l'investissement le plus rentable au Monopoly (rapport gain moyen par tour / coût initial d'investissement) ?
+  \item Ajoutez une 2e case "aller en prison" à l'endroit de votre choix. Comment cela modifie-t-il la distribution des sites visités ?
+\end{enumerate}
+\end{exercice}
+
+
+\end{document}
