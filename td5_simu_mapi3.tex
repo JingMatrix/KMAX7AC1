@@ -1,0 +1,336 @@
+\documentclass[solutions]{exercices}
+
+\usepackage[french]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{multicol,epsfig,csquotes}
+\usepackage{enumerate}
+\usepackage{xcolor}
+\usepackage{amsmath,amssymb,amsthm,enumitem,bbm,latexsym}
+\usepackage[normalem]{ulem}
+\usepackage{hyperref}
+\usepackage{listings}
+
+%%%%%%%%%% environnements
+%\theoremstyle{definition}
+%\newtheorem{exo}{Exercice}
+
+
+%%%%%%%%%% macros
+
+
+
+
+\begin{document}
+{
+\noindent {\sc M1 MAPI3  -  Simulations stochastiques \hfill 2025-2026}\\
+Jianyu Ma \hfill \textit{jianyu.ma@math.univ-toulouse.fr}\\
+Bastien Mallein \hfill \textit{bastien.mallein@math.univ-toulouse.fr}\\
+Pierre Petit \hfill \textit{pierre.petit@math.univ-toulouse.fr}}
+
+
+\vspace{2ex}
+
+ \hrule
+\begin{center}
+\textbf{\large TD 5 - Processus de Poisson et files d'attente}
+\vspace{2ex}
+\end{center}
+\hrule
+
+\bigskip
+\textbf{TP-} Les exercices notés TP sont purement optionnels, et ne seront pas traités en classe.
+
+
+\textbf{Définition :} \textit{Soit $X_n$ une suite de variables aléatoires indépendantes de loi exponentielle de paramètre $\lambda$. On définit  $S_0=0$ et $S_n=\sum_{i=1}^n X_i$ pour tout $n\ge1$.
+Alors
+$$N_t=\sum_{n\geq 1}1_{\{S_n\leq t\}}=\max \{n\text{ tels que } S_{n}\leq t\}$$
+définit un processus de Poisson d'intensité $\lambda$.}
+
+Ainsi, $(N_t)_{t\ge0}$ est une fonction aléatoire croissante, constante par morceaux qui compte le nombre d'événements survenus avant l'instant $t$ lorsque ces événements surviennent à des dates séparées par des durées indépendantes exponentielles de paramètre $\lambda$.
+
+\begin{exercice}[ \textbf{TP -} Simulation d'un processus de Poisson]
+\begin{enumerate}
+\item \textbf{Simulation des $n$ premiers sauts.} Soit $n>1$, proposer un algorithme qui renvoie les $n$ premiers instants de saut d'un processus de Poisson.
+\item En utilisant le programme précédent, tracer un histogramme de la loi du $n^{eme}$ saut.
+\item \textbf{Simulation jusqu'à un instant $t$ fixé.}
+Soit $t>0$ fixé. Pour simuler $N_t$, il faut donc tirer des exponentielles jusqu'à ce que $S_{n+1}> t$. \'Ecrire l'algorithme qui stocke les instants de sauts $S_1,S_2,\ldots$ du processus entre $0$ et $t$ et qui renvoie la valeur terminale $N_t$.
+\item Vérifier à l'aide d'un histogramme que pour $t\ge0$ fixé, la variable $N_t$ suit une loi de Poisson de paramètre $\lambda t$.
+\item Tracer une trajectoire du processus sur $[0,10]$. On pourra par exemple utiliser la fonction \texttt{matplotlib.pyplot.step}.
+\item Illustrer par un algorithme la convergence presque sure de $(N_t/t)$vers $\lambda$ lorsque $t$ tend vers l'infini.
+\end{enumerate}
+\end{exercice}
+
+\begin{solution}
+Cet exercice est purement pratique. Les solutions correspondent à des algorithmes à implémenter en Python.
+\begin{enumerate}
+    \item L'algorithme est une application directe de la définition :
+    \begin{itemize}
+        \item Simuler $n$ variables i.i.d. $X_1, \dots, X_n$ de loi $\mathcal{E}(\lambda)$.
+        \item Calculer les sommes cumulées $S_k = \sum_{i=1}^k X_i$ pour $k=1, \dots, n$.
+        \item Renvoyer le vecteur $(S_1, \dots, S_n)$.
+    \end{itemize}
+    \item Théoriquement, $S_n = \sum_{i=1}^n X_i$ est la somme de $n$ variables exponentielles i.i.d. de paramètre $\lambda$. Cette somme suit une loi Gamma (ou d'Erlang) de paramètres $(n, \lambda)$. L'histogramme des $S_n$ simulés devrait correspondre à la densité de cette loi.
+    \item L'algorithme est le suivant :
+	\begin{itemize}
+		\item Initialiser une liste de sauts \texttt{sauts = []} et un temps courant \texttt{temps\_total = 0}.
+		\item \textbf{Tant que} \texttt{temps\_total <= t} :
+        \begin{itemize}
+            \item Simuler une variable $X \sim \mathcal{E}(\lambda)$.
+			\item Mettre à jour \texttt{temps\_total = temps\_total + X}.
+			\item \textbf{Si} \texttt{temps\_total <= t}, ajouter \texttt{temps\_total} à la liste \texttt{sauts}.
+        \end{itemize}
+        \item Renvoyer la liste `sauts` et sa longueur `len(sauts)`, qui est la valeur de $N_t$.
+    \end{itemize}
+    \item Pour vérifier cela, on répète l'algorithme précédent un grand nombre de fois pour obtenir un échantillon de valeurs de $N_t$. L'histogramme de cet échantillon doit être comparé à la fonction de masse d'une loi de Poisson de paramètre $\lambda t$.
+    \item Pour tracer une trajectoire, on utilise la liste des temps de sauts $[S_1, \dots, S_k]$ obtenue. Les points à tracer sont $(0,0), (S_1,0), (S_1,1), (S_2,1), (S_2,2), \dots$. La fonction `step` de Matplotlib est idéale pour cela.
+    \item On simule une trajectoire sur un très long intervalle de temps $[0, T]$. On calcule le processus $Y_t = N_t / t$ pour des valeurs de $t$ croissantes le long de la trajectoire. En traçant $Y_t$ en fonction de $t$, on devrait observer une courbe qui se stabilise vers la valeur $\lambda$.
+\end{enumerate}
+\end{solution}
+
+\begin{exercice}[Superposition de processus de Poisson]
+On s'intéresse dans cet exercice à une propriété intéressante des processus de Poisson :\\
+\textit{Si $(M^1_t)_{t\ge0}$ et $(M^2_t)_{t\ge0}$ sont deux processus de Poisson indépendants d'intensité $\lambda_1$ et $\lambda_2$, alors  le processus $(N_t)_{t\ge0}=(M^1_t+M^2_t)_{t\ge0}$ est aussi un processus de Poisson de paramètre $\lambda_1+\lambda_2$.}
+\begin{enumerate}
+\item Soit $t>0$ fixé, déterminer la loi de $M^1_t$ et $M^2_t$. En déduire la loi de $N_t$ ?
+\item On définit le premier saut d'un processus de Poisson comme le premier instant où le processus vaut $1$. Par construction, ce premier saut est une variable aléatoire exponentielle de paramètre $\lambda$. On notera $U^1$ le premier saut de $(M^1_t)_{t\ge0}$ et $U^2$ celui de $(M^2_t)_{t\ge0}$. \\
+Donner la loi du premier instant de saut de $(N_t)_{t\ge0}$.
+\item Calculer la probabilité que ce premier instant de saut corresponde au premier instant de saut de $(M^1_t)_{t\ge0}$.
+\item \textbf{TP -} Inversement, si $(N_t)_{t\ge0}$ est un processus de Poisson d'intensité $\lambda$, on construit les processus $(M^1_t)_{t\ge0}$ et $(M^2_t)_{t\ge0}$ comme suit : ils partent de $0$, sont constants par morceau, et à chaque saut de $(N_t)_{t\ge0}$, on fait sauter $(M^1_t)_{t\ge0}$ avec probabilité $p$, sinon c'est $(M^2_t)_{t\ge0}$ qui saute, les tirages étant indépendants à chaque saut de $(N_t)_{t\ge0}$. \textit{Alors $(M^1_t)_{t\ge0}$ et $(M^2_t)_{t\ge0}$ sont deux processus de Poisson indépendants.}\\
+\'Ecrire un algorithme qui simule $(N_t)_{t\ge0}$, $(M^1_t)_{t\ge0}$ et $(M^2_t)_{t\ge0}$ en même temps. A l'aide de ces simulations retrouver les paramètres de $(M^1_t)_{t\ge0}$ et $(M^2_t)_{t\ge0}$ en fonction de $\lambda$ et $p$.
+\end{enumerate}
+\end{exercice}
+
+\begin{solution}
+\begin{enumerate}
+    \item Pour un $t$ fixé, $M^1_t$ suit une loi de Poisson de paramètre $\lambda_1 t$, et $M^2_t$ suit une loi de Poisson de paramètre $\lambda_2 t$. Comme les processus sont indépendants, les variables aléatoires $M^1_t$ et $M^2_t$ le sont aussi. La somme de deux variables de Poisson indépendantes est une variable de Poisson dont le paramètre est la somme des paramètres.
+    Ainsi, $N_t = M^1_t + M^2_t$ suit une loi de Poisson de paramètre $(\lambda_1 t + \lambda_2 t) = (\lambda_1 + \lambda_2)t$.
+    Cette propriété est nécessaire pour que $N_t$ soit un processus de Poisson de paramètre $\lambda_1+\lambda_2$, mais pas suffisante (il faut aussi vérifier les accroissements indépendants).
+    \item Le premier instant de saut de $N_t$ est le premier instant où un événement se produit, soit dans le processus 1, soit dans le processus 2. Cet instant est donc $U = \min(U^1, U^2)$.
+    On a $U^1 \sim \mathcal{E}(\lambda_1)$ et $U^2 \sim \mathcal{E}(\lambda_2)$ indépendantes. D'après une propriété classique, le minimum de deux variables exponentielles indépendantes suit une loi exponentielle dont le paramètre est la somme des paramètres. Donc, $U \sim \mathcal{E}(\lambda_1+\lambda_2)$.
+    \item Il s'agit de calculer $\P(U=U^1)$, ce qui équivaut à $\P(U^1 < U^2)$. C'est la probabilité que le processus 1 "gagne la course". Cette probabilité vaut $\frac{\lambda_1}{\lambda_1+\lambda_2}$.
+    \item \textbf{TP-} L'algorithme de "thinning" (ou éclaircissage) est le suivant :
+    \begin{itemize}
+        \item Simuler les instants de saut $S_1, S_2, \dots$ d'un processus de Poisson $N_t$ de paramètre $\lambda$.
+        \item Pour chaque saut $S_i$ :
+        \begin{itemize}
+            \item Tirer une variable $U \sim \mathcal{U}([0,1])$.
+            \item Si $U < p$, assigner ce saut au processus $M^1_t$.
+            \item Sinon, l'assigner au processus $M^2_t$.
+        \end{itemize}
+        \item Reconstruire les trajectoires de $M^1_t$ et $M^2_t$ à partir des listes de sauts respectives.
+    \end{itemize}
+    Pour retrouver les paramètres, on simule sur un temps long $T$. On calcule $M^1_T$ et $M^2_T$. Les estimations des paramètres sont $\hat{\lambda}_1 = M^1_T / T$ et $\hat{\lambda}_2 = M^2_T / T$. On devrait observer que $\hat{\lambda}_1 \approx \lambda p$ et $\hat{\lambda}_2 \approx \lambda (1-p)$.
+\end{enumerate}
+\end{solution}
+
+\begin{exercice}[Paradoxe des autobus]
+Des autobus arrivent à une station suivant un processus $(N_t)_{t\ge0}$ de Poisson de paramètre $4$ (l'unité de temps étant l'heure). On note $T_1\le T_2\le ...$ la suite des instants de passage des bus.
+\begin{enumerate}
+\item Combien d'autobus passe-t-il en moyenne en une heure ?
+\item On suppose que l'on arrive à l'instant $a>0$ à l'arrêt de bus. Le prochain bus passera à un instant $T_K$ où $K$ est un entier aléatoire tel que $T_{K-1}<a \le T_K$.
+On note $D=T_K-a$ la durée d'attente avant le prochain autobus.
+\item Calculer la loi jointe de $D$ et $a-T_{K-1}$.
+\item En déduire le temps d'attente moyen $\mathbb{E}(D)$.
+\end{enumerate}
+\end{exercice}
+
+\begin{solution}
+\begin{enumerate}
+    \item L'intensité $\lambda$ d'un processus de Poisson est le nombre moyen d'événements par unité de temps. Ici $\lambda=4$ bus/heure. En moyenne, il passe donc 4 autobus en une heure.
+    \item (Cette question est une introduction aux suivantes.)
+    \item La propriété la plus importante du processus de Poisson est son absence de mémoire. Cela implique que le temps d'attente jusqu'au prochain événement à partir de n'importe quel instant $a$, noté $D=T_K-a$, suit une loi exponentielle de paramètre $\lambda$, indépendamment de ce qui s'est passé avant $a$. 
+    Le temps écoulé depuis le dernier bus, $a-T_{K-1}$, est appelé le temps de vie résiduel (ou `backward recurrence time`). Une propriété remarquable du processus de Poisson est que la loi de $D$ est $\mathcal{E}(\lambda)$. De plus, $D$ et $a-T_{K-1}$ sont indépendants (ceci est spécifique au processus de Poisson). La loi de $a-T_{K-1}$ est une loi exponentielle $\mathcal{E}(\lambda)$ tronquée en $a$. Pour $a$ grand, elle s'approche d'une $\mathcal{E}(\lambda)$. La loi jointe est donc le produit de leurs densités.
+
+    Cependant, pour répondre à la question suivante, seule la loi marginale de $D$ est nécessaire. La propriété fondamentale à retenir est que, en raison de l'absence de mémoire, le processus "repart à zéro" à l'instant $a$. Le temps d'attente pour le prochain événement est donc comme le temps d'attente pour le tout premier événement, soit $D \sim \mathcal{E}(\lambda)$.
+    \item L'espérance d'une variable aléatoire de loi $\mathcal{E}(\lambda)$ est $1/\lambda$.
+    Le temps d'attente moyen est donc :
+    \[ \mathbb{E}(D) = \frac{1}{\lambda} = \frac{1}{4} \text{ heure} = 15 \text{ minutes}. \]
+    C'est le paradoxe des temps d'attente : le temps moyen *entre* les bus est aussi $1/4$ d'heure, mais le temps que l'on doit attendre en moyenne en arrivant à un instant aléatoire est le même. Cela est dû au fait qu'on a plus de chances d'arriver pendant un intervalle inter-arrivées plus long que la moyenne.
+\end{enumerate}
+\end{solution}
+
+\begin{exercice}[Comportement en temps long]
+Soit $(N_t)_{t\ge0}$ un processus de Poisson de paramètre $\lambda>0$. L'objectif de l'exercice est de montrer que $$\frac{N_t}{t} \underset{t\to\infty}{\longrightarrow} \lambda\qquad p.s. .$$
+
+\begin{enumerate}
+\item On regarde tout d'abord le processus à des temps entiers.
+Justifier que pour tout $n\in \N$,
+$$N_n=\sum_{k=1}^n N_k-N_{k-1}.$$
+\item Appliquer la loi forte des grands nombres à la somme précédente.
+\item Justifier que pour tout $t\in[n,n+1]$,
+$$\frac{N_n}{n+1}\frac{n+1}{n}\le \frac{N_t}{t} \le N_{n+1}{n}\frac{n}{n+1}$$
+\item Conclure
+\end{enumerate}
+\end{exercice}
+
+\begin{solution}
+\begin{enumerate}
+    \item La somme $\sum_{k=1}^n (N_k-N_{k-1})$ est une somme télescopique :
+    \[ \sum_{k=1}^n (N_k-N_{k-1}) = (N_1-N_0) + (N_2-N_1) + \dots + (N_n-N_{n-1}). \]
+    Les termes s'annulent deux à deux, et il reste $N_n - N_0$. Comme $N_0=0$ par définition, on a bien $N_n=\sum_{k=1}^n (N_k-N_{k-1})$.
+    \item Les accroissements d'un processus de Poisson sont indépendants. Les variables $Y_k = N_k - N_{k-1}$ sont donc indépendantes. De plus, les accroissements sont stationnaires : la loi de $N_t - N_s$ ne dépend que de $t-s$. Ici, $k-(k-1)=1$, donc toutes les variables $Y_k$ suivent la même loi. Cette loi est le nombre d'événements dans un intervalle de temps de longueur 1, c'est-à-dire une loi de Poisson de paramètre $\lambda \times 1 = \lambda$.
+    Les $Y_k$ sont i.i.d. d'espérance $\E(Y_k) = \lambda$. D'après la loi forte des grands nombres :
+    \[ \frac{N_n}{n} = \frac{1}{n}\sum_{k=1}^n Y_k \xrightarrow[n\to\infty]{p.s.} \E(Y_1) = \lambda. \]
+    \item L'énoncé contient une petite erreur de frappe. Une inégalité plus simple et directe vient de la croissance de $N_t$.
+    Pour tout $t \ge 0$, soit $n = \lfloor t \rfloor$. On a alors $n \le t \le n+1$.
+    Comme $N_t$ est une fonction croissante, on a $N_n \le N_t \le N_{n+1}$.
+    En divisant par $t$, on obtient :
+    \[ \frac{N_n}{t} \le \frac{N_t}{t} \le \frac{N_{n+1}}{t}. \]
+    On peut ensuite encadrer $1/t$ par $1/(n+1) \le 1/t \le 1/n$. Cela donne :
+    \[ \frac{N_n}{n+1} \le \frac{N_t}{t} \le \frac{N_{n+1}}{n}. \]
+    On peut réécrire cet encadrement comme :
+    \[ \frac{N_n}{n} \frac{n}{n+1} \le \frac{N_t}{t} \le \frac{N_{n+1}}{n+1} \frac{n+1}{n}. \]
+    \item On fait tendre $t \to \infty$, ce qui implique $n = \lfloor t \rfloor \to \infty$.
+    Dans l'encadrement, on a :
+    \begin{itemize}
+        \item $\lim_{n\to\infty} \frac{N_n}{n} = \lambda$ p.s. (d'après la question 2).
+        \item $\lim_{n\to\infty} \frac{n}{n+1} = 1$.
+        \item $\lim_{n\to\infty} \frac{N_{n+1}}{n+1} = \lambda$ p.s. (c'est la même limite que ci-dessus).
+        \item $\lim_{n\to\infty} \frac{n+1}{n} = 1$.
+    \end{itemize}
+    Le terme de gauche et le terme de droite de l'inégalité convergent donc tous les deux presque sûrement vers $\lambda \times 1 = \lambda$.
+    Par le théorème des gendarmes, on conclut que :
+    \[ \lim_{t\to\infty} \frac{N_t}{t} = \lambda \quad p.s. \]
+\end{enumerate}
+\end{solution}
+
+\begin{exercice}[Files d'attente : théorie et pratique]
+On veut modéliser une file d'attente devant un unique guichet pour lequel les clients arrivent suivant un processus de Poisson de paramètre $\lambda>0$ : c'est à dire que les arrivées des clients successifs sont espacées de variables aléatoires exponentielles indépendantes de paramètre $\lambda>0$.\\
+Les temps de services des clients sont indépendants entre eux et indépendants des temps d'arrivées des clients et suivent une loi exponentielle de paramètres $\mu$. On note $(W_t)_{t\ge0}$ le processus qui compte le nombre de personnes présentes dans la file (avec la convention qu'une personne au guichet en train d'être servie compte comme étant dans la file).
+$(W_t)_{t\ge0}$  est un processus de saut à valeurs dans $\N$ qui augment de $1$ lorsqu'un nouveau client arrive et diminue de $1$ lorsqu'un client à été servi.
+
+On note $T_n$ la suite des temps de sauts (arrivée ou départs des clients) avec $T_0=0$ et $Z_n=W_{T_n}$ le nombre de clients à cet instant de saut. Remarquons que la donnée de $(T_n, Z_n)_{n\ge0}$ permet de reconstruire la file d'attente en temps continu.
+
+Dans la suite on admettra le résultat suivant :\\
+\textbf{Proposition} {\it Si $X\sim\mathcal{E}(\lambda)$ et $Y\sim  \mathcal{E}(\mu)$ sont indépendantes. Alors $V=\min(X,Y)\sim\mathcal{E}(\lambda+\mu)$ et $W=\mathbf{1}_{V=X}\sim\mathcal{B}er(\frac{\lambda}{\lambda+\mu})$ et $V$ et $W$ sont indépendantes}.
+
+\begin{enumerate}
+\item Déduire de la proposition les affirmations suivantes :\begin{itemize}
+\item Si $Z_n=0$ alors $T_{n+1}-T_n\sim \mathcal{E}(\lambda)$ et $Z_{n+1}=1$
+\item Si $Z_n>0$ alors $T_{n+1}-T_n\sim \mathcal{E}(\lambda+\mu)$ et $Z_{n+1}=Z_n+Y_n$ où $Y_n$ est une variable aléatoire à valeurs dans $\{-1,1\}$ telle que $\mathbb{P}(Y_n=1)=\frac{\lambda}{\lambda+\mu}$.
+\end{itemize}
+\item On s'intéresse maintenant uniquement à la chaine de Markov $(Z_n)_{n\ge0}$. Décrire ses probabilités de transitions.
+\item On note $p_n$ la probabilité que $Z$ atteigne $0$ partant de $n$. En conditionnant par rapport au premier évènement, montrer que $p_n$ est solution du système d'équations suivant :
+\begin{align*}
+&p_n=\frac{\lambda}{\lambda+\mu}p_{n+1} + \frac{\mu}{\lambda+\mu}p_{n-1}
+&p_0=1
+\end{align*}
+\item Résoudre cette équation de récurrence en écrivant une relation entre $p_{n+1}-p_n$ et $p_n-p_{n-1}$. En déduire que si $\lambda<\mu$, alors $p_1=1$.
+\item \textbf{TP -} \'Ecrire une fonction qui prend en paramètre $\lambda, \mu$ et $t$, et simule la file d'attente sur l'intervalle $[0,t]$. Ce programme renvoie une matrice avec les temps de sauts et le nombre de client dans la file d'attente.
+\item \textbf{TP -} Observez que la file d'attente semble avoir des comportements différents selon que $\lambda>\mu$, $\lambda<\mu$ et $\lambda=\mu$.
+\item \textbf{TP -} \underline{Cas $\lambda>\mu$ :} Représenter graphiquement $(Z_n/T_n)_{n\ge0}$ en fonction de $T_n$. En faisant varier successivement les valeurs de $\lambda$ et $\mu$ proposer une expression de la limite presque sure $a(\lambda, \mu)$ de $\frac{W_t}{t}$ quand $t\to\infty$.
+\item \textbf{TP -}\underline{Cas $\lambda<\mu$ : } Illustrer le fait que lorsque $t\to\infty$ la loi du processus $W_t$ converge vers une loi stationnaire $\pi$ définie par $$\pi(\{k\})=\left(\frac\lambda\mu\right)^k\left(1-\frac\lambda\mu\right).$$
+\textit{Attention : il faut vraiment considérer le processus en temps continu pour prendre en compte le fait qu'on peut rester plus longtemps dans certains états.}
+\item  \textbf{TP -} Calcul du temps d'inactivité du serveur : On considère ici $\lambda<\mu$. On appelle temps d'inactivité du serveur, les durées pendant lesquelles la file est vide. En simulant la file d'attente sur un temps long, obtenir un échantillon de $1000$ temps d'inactivité du serveur. Donner un estimation du temps moyen d'inactivité. Ceci vous parait-il cohérent ?
+\end{enumerate}
+\end{exercice}
+
+\begin{solution}
+L'essentiel de cet exercice est traité dans l'exercice 4 du TD4, mais il est abordé ici sous l'angle du processus de Poisson.
+\begin{enumerate}
+    \item La proposition est la clé de la simulation (algorithme de Gillespie). Si la file est vide ($Z_n=0$), le seul événement possible est une arrivée. Le temps d'attente pour cet événement, qui est l'intervalle entre la fin du service précédent et l'arrivée du client suivant, suit une loi $\mathcal{E}(\lambda)$. Si la file n'est pas vide ($Z_n>0$), deux événements peuvent se produire : une arrivée (au taux $\lambda$) ou un départ (au taux $\mu$). Le prochain événement est le minimum des deux temps d'attente, qui suit $\mathcal{E}(\lambda+\mu)$, et la nature de cet événement (arrivée ou départ) est une Bernoulli de paramètre $\frac{\lambda}{\lambda+\mu}$.
+    \item La chaîne $(Z_n)$ est la chaîne de sauts du processus en temps continu. C'est une marche aléatoire sur $\mathbb{N}$.
+    \begin{itemize}
+        \item Depuis l'état 0, on saute toujours vers 1 : $P_{0,1}=1$.
+        \item Depuis l'état $n > 0$, on saute vers $n+1$ avec probabilité $\frac{\lambda}{\lambda+\mu}$ et vers $n-1$ avec probabilité $\frac{\mu}{\lambda+\mu}$.
+    \end{itemize}
+    \item C'est un problème de ruine du joueur classique. On cherche la probabilité d'atteindre l'état 0. Soit $p_n$ cette probabilité partant de $n$. On a $p_0=1$. Pour $n>0$, en conditionnant sur le premier saut :
+    \[ p_n = \P(\text{atteindre } 0) = \P(\text{saut en } n+1)p_{n+1} + \P(\text{saut en } n-1)p_{n-1} = \frac{\lambda}{\lambda+\mu}p_{n+1} + \frac{\mu}{\lambda+\mu}p_{n-1}. \]
+    \item La récurrence est $\lambda p_{n+1} - (\lambda+\mu)p_n + \mu p_{n-1} = 0$. On peut la réécrire $(\lambda p_{n+1} - \lambda p_n) = (\mu p_n - \mu p_{n-1})$. Soit $d_n = p_n - p_{n-1}$. Alors $\lambda d_{n+1} = \mu d_n$, donc $d_{n+1} = (\mu/\lambda)d_n$. C'est une suite géométrique. Si $\lambda < \mu$, alors $\mu/\lambda > 1$. Pour que la suite $(p_n)$ (qui est une probabilité) reste bornée par 1, il faut que la raison de la suite géométrique soit telle que la somme converge, ce qui impose $d_1=0$, et donc $d_n=0$ pour tout $n$. Donc $p_n = p_0 = 1$. La chaîne est récurrente. Si $\lambda \ge \mu$, il existe une solution non-constante, et la probabilité d'atteindre 0 est inférieure à 1.
+    \item \textbf{TP-} L'algorithme de Gillespie est implémenté dans le script.
+    \item \textbf{TP-} Les simulations montreront :
+    \begin{itemize}
+        \item $\lambda > \mu$ : La file d'attente est instable, le nombre de clients croît en moyenne linéairement.
+        \item $\lambda = \mu$ : Cas critique, la file est instable (récurrente nulle), elle peut atteindre des valeurs très élevées.
+        \item $\lambda < \mu$ : La file est stable, le nombre de clients fluctue autour d'une moyenne.
+    \end{itemize}
+    \item \textbf{TP-} Quand $\lambda > \mu$, le taux d'arrivée est supérieur au taux de service. Le nombre de clients $W_t$ devrait croître en moyenne à une vitesse de $\lambda - \mu$. Le graphe de $W_t/t$ (ou $Z_n/T_n$) devrait converger vers cette valeur.
+    \item \textbf{TP-} Pour le cas stable $\lambda < \mu$, on doit vérifier la distribution stationnaire $\pi_k = (1-\rho)\rho^k$ où $\rho=\lambda/\mu$. Pour cela, on ne peut pas utiliser l'histogramme de la chaîne de sauts $(Z_n)$. On doit calculer la proportion de \textit{temps} passé dans chaque état. On simule sur un temps long $T_{max}$ et pour chaque état $k$, on somme les durées de séjour $T_{n+1}-T_n$ où $Z_n=k$. La proportion est cette somme divisée par $T_{max}$.
+    \item  \textbf{TP-} Un temps d'inactivité est une période où la file est vide. Cela commence quand $Z_n$ passe de 1 à 0 et se termine au saut suivant (qui est forcément une arrivée). Le temps d'attente pour cette arrivée est une variable $\mathcal{E}(\lambda)$. La moyenne de ces temps d'inactivité doit donc converger vers $1/\lambda$. C'est cohérent, car lorsque le serveur est libre, seules les arrivées comptent.
+\end{enumerate}
+\end{solution}
+
+\begin{exercice}[Processus de Poisson dans la vie réelle]
+On rappelle qu'une loi de Poisson de paramètre $\lambda$ prend ses valeurs dans $\mathbb{N}$ et que si $X$ suit une loi de Poisson,
+$$\mathbb{P}[X=k]=e^{-\lambda}\frac{\lambda^k}{k!} .$$
+Dans les situations ci-dessous, on pourra supposer poissonnienne la loi de survenance des évènements.
+\begin{enumerate}
+\item Un magasin reçoit 3 réclamations en moyenne par jour. A partir de cette observation, quelle valeur donneriez vous à $\lambda$ ?\\
+Calculer alors la probabilité pour que le premier lundi du mois prochain soient enregistrées 0 réclamation; 2 réclamations; puis enfin plus de 4 réclamations.
+\item La probabilité pour une ampoule électrique de claquer à son premier allumage est de 0,01. Sur un groupe de 100 ampoules, quelle est la probabilité d'observer 0 claquage; 1 claquage; plus de 2 claquages.
+\item Sur une autoroute, il y a en moyenne un accident par semaine. Une semaine, il y en a 4.
+Quelle est la probabilité de cet événement ?
+\item Le statisticien anglais Clarke a divisé Londres en 576 rectangles et compté les chutes de bombes dans ces rectangles durant la 2ème guerre mondiale 1939-1945.
+Il a trouvé :
+\begin{figure}[h]
+\centering
+\begin{tabular}{|c|c|c|c|c|c|c|}
+\hline
+Nombre de bombes & 0 & 1 & 2 & 3 & 4 & 5 \\
+\hline
+Nombres de rectangles & 229 & 211 & 93 & 35 & 7 & 1 \\
+\hline
+\end{tabular}
+\end{figure}
+Calculer la moyenne L du nombre de bombes par rectangle. \\
+Comparer la distribution réelle à la distribution résultant de l'application de la loi de Poisson de même moyenne.
+
+\item Von Bortkiewicz a étudié le nombre de morts par ruade de cheval dans l'armée prussienne de 1875 à 1894 dans 200 corps de cavalerie : pendant 20 ans, il a étudié 10 corps de cavalerie par an.
+\begin{figure}[h]
+\centering
+\begin{tabular}{|c|c|c|c|c|c|}
+\hline
+Nombre de morts par an & 0 & 1 & 2 & 3 & 4 \\
+\hline
+Nombres de corps de cavalerie & 109 & 65 & 22 & 3 & 1  \\
+\hline
+\end{tabular}
+\end{figure}
+Calculer la moyenne du nombre de morts par corps de cavalerie. Comparer la distribution réelle à la distribution résultant de l'application de la loi de Poisson de paramètre L.
+\end{enumerate}
+\end{exercice}
+
+\begin{solution}
+\begin{enumerate}
+    \item On observe une moyenne de 3 réclamations par jour, on pose donc $\lambda=3$. Soit $X \sim \text{Poisson}(3)$.
+    \begin{itemize}
+        \item $\P(X=0) = e^{-3} \frac{3^0}{0!} = e^{-3} \approx 0.0498$.
+        \item $\P(X=2) = e^{-3} \frac{3^2}{2!} = 4.5 e^{-3} \approx 0.2240$.
+        \item $\P(X>4) = 1 - \P(X \le 4) = 1 - e^{-3}(\frac{3^0}{0!} + \frac{3^1}{1!} + \frac{3^2}{2!} + \frac{3^3}{3!} + \frac{3^4}{4!}) = 1 - e^{-3}(1+3+4.5+4.5+3.375) = 1 - 16.375 e^{-3} \approx 0.1847$.
+    \end{itemize}
+    \item C'est un cas de figure pour l'approximation de la loi binomiale par une loi de Poisson. On a $n=100$ (grand) et $p=0.01$ (petit). On peut approcher $X \sim \mathcal{B}(100, 0.01)$ par $Y \sim \text{Poisson}(\lambda=np=1)$.
+    \begin{itemize}
+        \item $\P(Y=0) = e^{-1} \approx 0.3679$.
+        \item $\P(Y=1) = e^{-1} \frac{1^1}{1!} = e^{-1} \approx 0.3679$.
+        \item $\P(Y>2) = 1 - \P(Y \le 2) = 1 - e^{-1}(1+1+\frac{1}{2}) = 1-2.5e^{-1} \approx 0.0803$.
+    \end{itemize}
+    \item On a $\lambda=1$ accident par semaine. On veut calculer $\P(X=4)$ pour $X \sim \text{Poisson}(1)$.
+    \[ \P(X=4) = e^{-1} \frac{1^4}{4!} = \frac{e^{-1}}{24} \approx 0.0153. \]
+    C'est un événement rare, mais pas impossible.
+    \item On calcule la moyenne observée :
+    Nombre total de bombes = $(0 \times 229) + (1 \times 211) + (2 \times 93) + (3 \times 35) + (4 \times 7) + (5 \times 1) = 0 + 211 + 186 + 105 + 28 + 5 = 535$.
+    Nombre total de rectangles = $229+211+93+35+7+1 = 576$.
+    Moyenne $L = \frac{535}{576} \approx 0.9288$.
+    On compare les fréquences observées aux fréquences théoriques pour une loi de Poisson de paramètre $L=0.9288$. Effectif théorique pour $k$ bombes = $576 \times \P(X=k)$.
+    \begin{itemize}
+        \item $k=0: 576 \times e^{-L} \approx 226.7$ (Observé: 229)
+        \item $k=1: 576 \times L e^{-L} \approx 210.5$ (Observé: 211)
+        \item $k=2: 576 \times \frac{L^2}{2} e^{-L} \approx 97.7$ (Observé: 93)
+    \end{itemize}
+    L'adéquation est remarquablement bonne.
+    \item On calcule la moyenne observée :
+    Nombre total de morts = $(0 \times 109) + (1 \times 65) + (2 \times 22) + (3 \times 3) + (4 \times 1) = 0+65+44+9+4 = 122$.
+    Nombre total d'observations (corps $\times$ années) = $109+65+22+3+1 = 200$.
+    Moyenne $L = \frac{122}{200} = 0.61$.
+    On compare aux fréquences théoriques pour une loi de Poisson de paramètre $L=0.61$. Effectif théorique pour $k$ morts = $200 \times \P(X=k)$.
+    \begin{itemize}
+        \item $k=0: 200 \times e^{-0.61} \approx 108.7$ (Observé: 109)
+        \item $k=1: 200 \times 0.61 e^{-0.61} \approx 66.3$ (Observé: 65)
+        \item $k=2: 200 \times \frac{0.61^2}{2} e^{-0.61} \approx 20.2$ (Observé: 22)
+    \end{itemize}
+    L'adéquation est, là aussi, excellente.
+\end{enumerate}
+\end{solution}
+
+\end{document}
