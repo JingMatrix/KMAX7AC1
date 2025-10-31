@@ -127,9 +127,13 @@ def ex2():
         voisine = mol_piece + direction
 
         # Gérer les bords
-        if 0 <= voisine < K:
-            pieces[t+1, mol_piece] -= 1
-            pieces[t+1, voisine] += 1
+        if voisine == -1:
+            voisine = 1
+        elif voisine == K:
+            voisine = K - 2
+
+        pieces[t+1, mol_piece] -= 1
+        pieces[t+1, voisine] += 1
 
     plt.subplot(1, 2, 2)
     plt.plot(pieces)
@@ -138,6 +142,68 @@ def ex2():
     plt.ylabel("Nombre de molécules")
     plt.legend([f'Pièce {i+1}' for i in range(K)])
     plt.show()
+
+    def run_question_7():
+        # TP - Simulates the K-piece model with a fan/blower from right to left.
+        print("\n[Exercice 2, Question 7] Simulation avec soufflerie:")
+
+        K = 10
+        N = 10000  # We use a smaller N than 10^6 for a reasonable simulation time
+        n_steps = 500000
+        burn_in = 100000  # Steps to discard to reach equilibrium
+
+        plt.figure(figsize=(10, 6))
+
+        # To store the state of the system over time for averaging
+        history = np.zeros((n_steps - burn_in, K))
+
+        for p_fan in [0, 0.01, 0.05, 0.2]:  # Different fan strengths
+            # Start at equilibrium to speed up convergence
+            pieces = np.full(K, N / K, dtype=int)
+
+            for t in range(n_steps):
+                # --- Diffusion Step ---
+                # Choose a molecule based on which room it's in
+                if np.sum(pieces) > 0:
+                    mol_piece = npr.choice(
+                        np.arange(K), p=pieces / np.sum(pieces))
+                    direction = npr.choice([-1, 1])
+                    voisine = mol_piece + direction
+                    if voisine == -1:
+                        voisine = 1
+                    elif voisine == K:
+                        voisine = K - 2
+
+                    pieces[mol_piece] -= 1
+                    pieces[voisine] += 1
+
+                # --- Fan/Blower Step ---
+                n_right = pieces[K-1]
+                if n_right > 0:
+                    n_moved = npr.binomial(n_right, p_fan)
+                    pieces[K-1] -= n_moved
+                    pieces[0] += n_moved
+
+                # Store history after burn-in period
+                if t >= burn_in:
+                    history[t - burn_in, :] = pieces
+
+            # Calculate the average number of molecules in each room
+            avg_distribution = np.mean(history, axis=0)
+            plt.plot(np.arange(K), avg_distribution,
+                     'o-', label=f'p = {p_fan}')
+
+        plt.title(f"Distribution d'équilibre moyenne ({K} pièces, N={N})")
+        plt.xlabel("Numéro de la pièce (0=gauche, 9=droite)")
+        plt.ylabel("Nombre moyen de molécules")
+        plt.legend()
+        plt.grid(True)
+        plt.show()
+
+        print("Observation: À mesure que p augmente, la soufflerie crée un flux net de droite à gauche,")
+        print("ce qui engendre un gradient de concentration : les pièces de gauche deviennent plus peuplées.")
+
+    run_question_7()
 
 # =============================================================================
 # Exercice 4: Perpetuité
@@ -212,7 +278,7 @@ def ex6():
     print("\n--- Exercice 6 ---")
 
     def simule_gw(p_geom, n_gen):
-        # Pour une loi geom sur {0, 1, ...}, E = (1-p)/p
+        # Pour une loi geom sur {1, 2, ...}, E = 1/p
         Z = np.zeros(n_gen, dtype=int)
         Z[0] = 1
         for n in range(n_gen - 1):
@@ -224,42 +290,49 @@ def ex6():
 
     plt.figure(figsize=(14, 6))
 
-    # m < 1 (sur-critique) => (1-p)/p < 1 => p > 1/2
+    # m < 1 (sous-critique) => 1/p < 1 => p > 1
     plt.subplot(1, 3, 1)
     p_sub = 0.6
     m_sub = (1-p_sub)/p_sub
     for _ in range(10):
-        plt.plot(simule_gw(p_sub, 50))
+        plt.plot(simule_gw(p_sub, 60))
     plt.title(f"Sous-critique (m={m_sub:.2f} < 1)")
 
-    # m = 1 (critique) => p = 1/2
+    # m = 1 (critique) => p = 1
     plt.subplot(1, 3, 2)
     p_crit = 0.5
     m_crit = 1
     for _ in range(10):
-        plt.plot(simule_gw(p_crit, 50))
+        plt.plot(simule_gw(p_crit, 60))
     plt.title(f"Critique (m={m_crit:.2f} = 1)")
 
-    # m > 1 (sur-critique) => p < 1/2
+    # m > 1 (sur-critique) => p < 1
     plt.subplot(1, 3, 3)
     p_super = 0.4
     m_super = (1-p_super)/p_super
     for _ in range(10):
-        plt.plot(simule_gw(p_super, 50))
+        plt.plot(simule_gw(p_super, 10))
     plt.title(f"Sur-critique (m={m_super:.2f} > 1)")
     plt.yscale('log')
     plt.show()
+
+    print("\nObservations pour Galton-Watson (Q5):")
+    print(" - Cas m < 1: Toutes les trajectoires s'éteignent très rapidement (extinction quasi certaine).")
+    print(" - Cas m = 1: Toutes les trajectoires s'éteignent aussi, mais peuvent survivre plus longtemps avant de disparaître.")
+    print(" - Cas m > 1: Comportement de 'tout ou rien'. La plupart des trajectoires s'éteignent,")
+    print("   mais celles qui survivent explosent de manière exponentielle.")
 
     # Martingale Z_n / m^n
     plt.figure()
     n_gen_mart = 20
     m_values = m_super**np.arange(n_gen_mart)
-    for _ in range(20):
+    for _ in range(40):
         traj = simule_gw(p_super, n_gen_mart)
         plt.plot(traj / m_values, alpha=0.7)
     plt.title("Convergence de la martingale $Z_n/m^n$")
     plt.ylim(0, 5)
     plt.show()
+
 
 # =============================================================================
 # Exercice 8: Chaussettes
@@ -325,11 +398,11 @@ def ex8():
 # Main
 # =============================================================================
 if __name__ == '__main__':
-    ex1()
-    ex2()
+    # ex1()
+    # ex2()
     # ex3() is theoretical
-    ex4()
-    ex5()
+    # ex4()
+    # ex5()
     ex6()
     # ex7() is mostly theoretical
-    ex8()
+    # ex8()
