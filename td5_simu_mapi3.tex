@@ -129,24 +129,70 @@ Des autobus arrivent à une station suivant un processus $(N_t)_{t\ge0}$ de Pois
 \begin{enumerate}
 \item Combien d'autobus passe-t-il en moyenne en une heure ?
 \item On suppose que l'on arrive à l'instant $a>0$ à l'arrêt de bus. Le prochain bus passera à un instant $T_K$ où $K$ est un entier aléatoire tel que $T_{K-1}<a \le T_K$.
-On note $D=T_K-a$ la durée d'attente avant le prochain autobus.
-\item Calculer la loi jointe de $D$ et $a-T_{K-1}$.
+On note $D=T_K-a$ la durée d'attente avant le prochain autobus. Calculer la loi jointe de $D$ et $a-T_{K-1}$.
 \item En déduire le temps d'attente moyen $\mathbb{E}(D)$.
 \end{enumerate}
 \end{exercice}
 
 \begin{solution}
-\begin{enumerate}
-    \item L'intensité $\lambda$ d'un processus de Poisson est le nombre moyen d'événements par unité de temps. Ici $\lambda=4$ bus/heure. En moyenne, il passe donc 4 autobus en une heure.
-    \item (Cette question est une introduction aux suivantes.)
-    \item La propriété la plus importante du processus de Poisson est son absence de mémoire. Cela implique que le temps d'attente jusqu'au prochain événement à partir de n'importe quel instant $a$, noté $D=T_K-a$, suit une loi exponentielle de paramètre $\lambda$, indépendamment de ce qui s'est passé avant $a$. 
-    Le temps écoulé depuis le dernier bus, $a-T_{K-1}$, est appelé le temps de vie résiduel (ou `backward recurrence time`). Une propriété remarquable du processus de Poisson est que la loi de $D$ est $\mathcal{E}(\lambda)$. De plus, $D$ et $a-T_{K-1}$ sont indépendants (ceci est spécifique au processus de Poisson). La loi de $a-T_{K-1}$ est une loi exponentielle $\mathcal{E}(\lambda)$ tronquée en $a$. Pour $a$ grand, elle s'approche d'une $\mathcal{E}(\lambda)$. La loi jointe est donc le produit de leurs densités.
+Cet exercice peut être résolu de manière entièrement autonome en utilisant uniquement la définition du processus de comptage $(N_t)$ par les temps inter-arrivées exponentiels.
 
-    Cependant, pour répondre à la question suivante, seule la loi marginale de $D$ est nécessaire. La propriété fondamentale à retenir est que, en raison de l'absence de mémoire, le processus "repart à zéro" à l'instant $a$. Le temps d'attente pour le prochain événement est donc comme le temps d'attente pour le tout premier événement, soit $D \sim \mathcal{E}(\lambda)$.
-    \item L'espérance d'une variable aléatoire de loi $\mathcal{E}(\lambda)$ est $1/\lambda$.
-    Le temps d'attente moyen est donc :
+\begin{enumerate}
+    \item
+    Soit $(X_i)_{i \ge 1}$ la suite des temps i.i.d. entre les arrivées des bus, avec $X_i \sim \mathcal{E}(\lambda=4)$. Le temps moyen entre deux bus consécutifs est $\E[X_i] = 1/\lambda = 1/4$ d'heure. Le nombre moyen de bus passant en une heure est l'inverse de cette durée, soit $\lambda = 4$.
+
+    \item (Cette question est une introduction aux suivantes.)
+
+    \item
+    On cherche la loi jointe de $D = T_K - a$ et $B = a - T_{K-1}$. La méthode la plus directe consiste à calculer leur fonction de survie jointe $\P(D > x, B > y)$.
+
+    \textbf{Étape 1 : Formuler l'événement d'une manière nouvelle.}
+    L'événement $\{D > x, B > y\}$ signifie qu'il n'y a aucun instant de saut $T_j$ dans l'intervalle $[a-y, a+x]$.
+
+    Considérons le processus à partir de l'instant $s = a-y$. L'événement ci-dessus est équivalent à dire que le \textit{premier bus à arriver après l'instant $s$} arrivera après un temps de $x+y$.
+
+    Soit $D_s$ le temps d'attente pour le premier événement après un instant quelconque $s$. L'événement est donc $\{D_{a-y} > x+y\}$. Si nous pouvons montrer que $D_s \sim \mathcal{E}(\lambda)$ pour tout $s$, le problème est résolu.
+
+    \textbf{Étape 2 : Démontrer la loi du temps d'attente résiduel (un lemme clé).}
+
+    Prouvons que pour tout $s > 0$, la variable aléatoire $D_s$ (le temps d'attente jusqu'au prochain événement à partir de $s$) suit une loi $\mathcal{E}(\lambda)$.
+
+    Soit $N_s = k$ le nombre d'événements jusqu'à l'instant $s$. Par définition, cela signifie que $T_k \le s < T_{k+1}$.
+    Le temps d'attente $D_s$ est $T_{k+1} - s$. On sait que $T_{k+1} = T_k + X_{k+1}$, où $X_{k+1} \sim \mathcal{E}(\lambda)$ est indépendant de $T_k$.
+
+    Nous voulons calculer $\P(D_s > t)$ pour un $t>0$. Pour ce faire, nous conditionnons sur l'histoire du processus jusqu'à l'instant $s$, qui se résume à connaître $k$ et la valeur de $T_k$. Sachant que $T_k \le s$, nous savons que l'intervalle $X_{k+1}$ a déjà "survécu" pendant au moins un temps $s-T_k$.
+    \begin{align*}
+      \P(D_s > t \mid \text{histoire jusqu'à } s) &= \P(T_{k+1} - s > t \mid T_k, N_s=k) \\
+      &= \P(T_k + X_{k+1} - s > t \mid T_k) \\
+      &= \P(X_{k+1} > s - T_k + t \mid T_k).
+    \end{align*}
+    L'information que nous avons sur $X_{k+1}$ est $X_{k+1} > s - T_k$. Par la \textbf{propriété d'absence de mémoire} de la loi exponentielle, qui stipule que $\P(X > u+v \mid X>u) = \P(X>v)$, on a :
+    \[ \P(X_{k+1} > (s - T_k) + t \mid X_{k+1} > s-T_k) = \P(X_{k+1} > t) = e^{-\lambda t}. \]
+    Cette probabilité conditionnelle est $e^{-\lambda t}$ et, de manière cruciale, elle ne dépend pas de l'histoire (c'est-à-dire de $k$ ou de $T_k$). Puisque la probabilité conditionnelle est constante, la probabilité inconditionnelle est la même.
+
+    Nous avons donc prouvé que, pour tout $s>0$, le temps d'attente résiduel $D_s$ suit une loi $\mathcal{E}(\lambda)$.
+
+    \textbf{Étape 3 : Appliquer le lemme et conclure.}
+
+    Revenons à notre problème initial. Nous avons montré que l'événement $\{D > x, B > y\}$ est équivalent à $\{D_{a-y} > x+y\}$.
+    En utilisant le lemme que nous venons de démontrer avec $s = a-y$ et un temps d'attente $t = x+y$ :
+    \[ \P(D > x, B > y) = \P(D_{a-y} > x+y) = e^{-\lambda(x+y)}. \]
+
+    La fonction de survie jointe se factorise :
+    \[ \P(D > x, B > y) = e^{-\lambda x} \cdot e^{-\lambda y}. \]
+    Cette factorisation prouve que $D$ et $B$ sont indépendantes, et que chacune suit une loi exponentielle de paramètre $\lambda$.
+
+    \textbf{Conclusion :} La loi jointe de $(D, a-T_{K-1})$ est celle de deux variables aléatoires \textbf{indépendantes}, suivant chacune une \textbf{loi exponentielle de paramètre $\lambda=4$}.
+
+    \item
+    Le temps d'attente moyen est $\mathbb{E}(D)$. Puisque nous avons établi rigoureusement que $D$ suit une loi exponentielle de paramètre $\lambda=4$, son espérance est :
     \[ \mathbb{E}(D) = \frac{1}{\lambda} = \frac{1}{4} \text{ heure} = 15 \text{ minutes}. \]
-    C'est le paradoxe des temps d'attente : le temps moyen *entre* les bus est aussi $1/4$ d'heure, mais le temps que l'on doit attendre en moyenne en arrivant à un instant aléatoire est le même. Cela est dû au fait qu'on a plus de chances d'arriver pendant un intervalle inter-arrivées plus long que la moyenne.
+
+    \textbf{Explication du paradoxe :} Le résultat est contre-intuitif. Le temps moyen \textit{entre} deux bus consécutifs est $\mathbb{E}(X_n) = 1/\lambda = 15$ minutes. Pourtant, si on arrive à un instant aléatoire, le temps moyen qu'il nous \textit{reste} à attendre est aussi de 15 minutes.
+
+    Le "paradoxe" se résout en comprenant qu'un observateur arrivant à un instant aléatoire a plus de chances de tomber dans un intervalle inter-arrivées qui est \textit{plus long que la moyenne}. C'est le \textit{biais de l'échantillonnage par intervalle}. Les longs intervalles occupent plus de place sur l'axe du temps, et sont donc plus susceptibles d'être "choisis" par une arrivée aléatoire. La durée de l'intervalle spécifique dans lequel on arrive, $X_K = B+D$, ne suit pas une loi $\mathcal{E}(\lambda)$. Sa durée moyenne est en fait $2/\lambda$. Comme notre attente moyenne est de $1/\lambda$, et que par symétrie le temps déjà écoulé $B$ a aussi une moyenne de $1/\lambda$, la durée moyenne de l'intervalle "choisi" est bien $\E[B+D] = \E[B]+\E[D] = 1/\lambda + 1/\lambda = 2/\lambda$.
+    Notre résultat est donc parfaitement cohérent avec ce phénomène.
+
 \end{enumerate}
 \end{solution}
 
@@ -159,7 +205,7 @@ Justifier que pour tout $n\in \N$,
 $$N_n=\sum_{k=1}^n N_k-N_{k-1}.$$
 \item Appliquer la loi forte des grands nombres à la somme précédente.
 \item Justifier que pour tout $t\in[n,n+1]$,
-$$\frac{N_n}{n+1}\frac{n+1}{n}\le \frac{N_t}{t} \le N_{n+1}{n}\frac{n}{n+1}$$
+	$$\frac{N_n}{n}\frac{n}{n+1}\le \frac{N_t}{t} \le \frac{N_{n+1}}{n+1}\frac{n+1}{n}$$
 \item Conclure
 \end{enumerate}
 \end{exercice}
@@ -172,7 +218,7 @@ $$\frac{N_n}{n+1}\frac{n+1}{n}\le \frac{N_t}{t} \le N_{n+1}{n}\frac{n}{n+1}$$
     \item Les accroissements d'un processus de Poisson sont indépendants. Les variables $Y_k = N_k - N_{k-1}$ sont donc indépendantes. De plus, les accroissements sont stationnaires : la loi de $N_t - N_s$ ne dépend que de $t-s$. Ici, $k-(k-1)=1$, donc toutes les variables $Y_k$ suivent la même loi. Cette loi est le nombre d'événements dans un intervalle de temps de longueur 1, c'est-à-dire une loi de Poisson de paramètre $\lambda \times 1 = \lambda$.
     Les $Y_k$ sont i.i.d. d'espérance $\E(Y_k) = \lambda$. D'après la loi forte des grands nombres :
     \[ \frac{N_n}{n} = \frac{1}{n}\sum_{k=1}^n Y_k \xrightarrow[n\to\infty]{p.s.} \E(Y_1) = \lambda. \]
-    \item L'énoncé contient une petite erreur de frappe. Une inégalité plus simple et directe vient de la croissance de $N_t$.
+    \item Une inégalité plus simple et directe vient de la croissance de $N_t$.
     Pour tout $t \ge 0$, soit $n = \lfloor t \rfloor$. On a alors $n \le t \le n+1$.
     Comme $N_t$ est une fonction croissante, on a $N_n \le N_t \le N_{n+1}$.
     En divisant par $t$, on obtient :
