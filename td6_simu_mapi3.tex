@@ -1,4 +1,4 @@
-\documentclass{exercices}
+\documentclass[solutions]{exercices}
 
 \usepackage[french]{babel}
 \usepackage[T1]{fontenc}
@@ -23,6 +23,7 @@
 %%%%%%%%%% macros
 
 
+\newcommand{\Var}{\mathbb{V}\mathrm{ar}}
 
 
 \begin{document}
@@ -75,11 +76,59 @@ $
 $
 avec $\alpha:\R_+\to ]0,1]$. Donner une condition suffisante sur la fonction $\alpha$ pour que la mesure $\mu$ soit la mesure invariante de la chaîne de Markov définie par l'algorithme de Metropolis-Hastings.
 \item Montrer qu'une telle fonction doit nécessairement vérifier $\alpha(x) \leq \min(1,x)$.
-\item En déduire que $\min(1,x)$ est la plus grande fonction d'acceptation garantissant le fonctionnement de l'algorithme de Metropolis Hasgings.
+\item En déduire que $\min(1,x)$ est la plus grande fonction d'acceptation garantissant le fonctionnement de l'algorithme de Metropolis Hastings.
 \end{enumerate}
 \end{exercice}
 
-\begin{exercice}[Méthode de Métropolis-Hastings sur l'espace $\{1,2,3\}$]
+\begin{solution}
+La méthode standard pour prouver qu'une mesure $\mu$ est invariante pour une chaîne de Markov de matrice de transition $P$ est de montrer que $\mu$ satisfait la condition de \textbf{bilan détaillé} (ou réversibilité) :
+\[ \mu(x) P(x,y) = \mu(y) P(y,x) \quad \text{pour tout } x, y \in E. \]
+Si cette condition est vérifiée, alors en sommant sur $x$, on obtient
+\[
+    \sum_x \mu(x) P(x,y) = \mu(y) \sum_x P(y,x) = \mu(y),
+\]
+ce qui est la définition de la mesure invariante.
+
+La matrice de transition $P$ de l'algorithme de Metropolis-Hastings pour $x \neq y$ est :
+\[ P(x,y) = Q(x,y) \alpha_{xy}, \quad \text{où } \alpha_{xy} \text{ est la probabilité d'acceptation.} \]
+\begin{enumerate}
+  \item Soit $\alpha_{xy} = \frac{\mu(y)Q(y,x)}{\mu(y)Q(y,x)+\mu(x)Q(x,y)}$. Vérifions le bilan détaillé :
+  \begin{align*}
+    \mu(x) P(x,y) &= \mu(x) Q(x,y) \frac{\mu(y)Q(y,x)}{\mu(y)Q(y,x)+\mu(x)Q(x,y)} \\
+    &= \frac{\mu(x)Q(x,y)\mu(y)Q(y,x)}{\mu(y)Q(y,x)+\mu(x)Q(x,y)}.
+  \end{align*}
+  De même, pour la transition inverse :
+  \begin{align*}
+    \mu(y) P(y,x) &= \mu(y) Q(y,x) \alpha_{yx} = \mu(y) Q(y,x) \frac{\mu(x)Q(x,y)}{\mu(x)Q(x,y)+\mu(y)Q(y,x)} \\
+    &= \frac{\mu(y)Q(y,x)\mu(x)Q(x,y)}{\mu(x)Q(x,y)+\mu(y)Q(y,x)}.
+  \end{align*}
+  Les deux expressions sont identiques, donc le bilan détaillé est satisfait et $\mu$ est une mesure invariante.
+
+  \item Soit $r_{xy} = \frac{\mu(y)Q(y,x)}{\mu(x)Q(x,y)}$. La probabilité d'acceptation est $\alpha(r_{xy})$. Le bilan détaillé s'écrit :
+  \[ \mu(x) Q(x,y) \alpha(r_{xy}) = \mu(y) Q(y,x) \alpha(r_{yx}). \]
+  Notons que $r_{yx} = \frac{\mu(x)Q(x,y)}{\mu(y)Q(y,x)} = \frac{1}{r_{xy}}$. L'équation devient :
+  \[ \mu(x) Q(x,y) \alpha(r_{xy}) = \mu(y) Q(y,x) \alpha(1/r_{xy}). \]
+  En divisant par $\mu(x)Q(x,y)$, on obtient :
+  \[ \alpha(r_{xy}) = \frac{\mu(y)Q(y,x)}{\mu(x)Q(x,y)} \alpha(1/r_{xy}) = r_{xy} \alpha(1/r_{xy}). \]
+  En posant $z=r_{xy}$, une condition suffisante pour que $\mu$ soit invariante est que la fonction $\alpha$ vérifie pour tout $z > 0$:
+  \[ \alpha(z) = z \cdot \alpha(1/z). \]
+
+  \item La fonction $\alpha$ représente une probabilité, donc elle doit être dans $[0,1]$.
+  On a $\alpha(z) \le 1$.
+  On a aussi $\alpha(1/z) \le 1$, ce qui implique $z \cdot \alpha(1/z) \le z$.
+  Comme $\alpha(z) = z \cdot \alpha(1/z)$, on en déduit que $\alpha(z) \le z$.
+  En combinant les deux inégalités, on a $\alpha(z) \le \min(1,z)$.
+
+  \item Pour garantir le bilan détaillé, toute fonction d'acceptation $\alpha$ doit satisfaire $\alpha(z) \le \min(1,z)$. Pour avoir le taux d'acceptation le plus élevé possible (et donc une convergence plus rapide de la chaîne), il faut choisir la plus grande fonction possible. La fonction $\alpha(z) = \min(1,z)$ est la borne supérieure de toutes les fonctions d'acceptation possibles. Il suffit de vérifier qu'elle satisfait la condition suffisante $\alpha(z) = z \alpha(1/z)$ :
+  \begin{itemize}
+      \item Si $z \ge 1$, alors $1/z \le 1$. $\alpha(z)=\min(1,z)=1$ et $\alpha(1/z)=\min(1, 1/z)=1/z$. L'égalité devient $1 = z \cdot (1/z)$, ce qui est vrai.
+      \item Si $z < 1$, alors $1/z > 1$. $\alpha(z)=z$ et $\alpha(1/z)=1$. L'égalité devient $z = z \cdot 1$, ce qui est vrai.
+  \end{itemize}
+  La condition est satisfaite. Ainsi, $\min(1,z)$ est bien la plus grande fonction d'acceptation valide.
+\end{enumerate}
+\end{solution}
+
+\begin{exercice}[Méthode de Métropolis-Hastings sur l'espace \{1,2,3\}]
 On considère dans cet exercice l'espace d'états $\{1,2,3\}$ de dimension $3$ et $Q=\begin{pmatrix}
 0&a_1&a_2\\
 c_1&b_1&a_3\\
@@ -121,6 +170,20 @@ On tracera l'évolution de cette quantité pour différentes valeurs de $n$ (ent
 \end{enumerate}
 \end{exercice}
 
+\begin{solution}
+Cet exercice est principalement un TP, dont les solutions se trouvent dans le script Python.
+\begin{enumerate}
+    \item Pour que $Q$ soit une matrice de transition (stochastique), il faut que tous ses éléments soient positifs ou nuls (ce qui est implicite dans la notation) et que la somme des éléments de chaque ligne vaille 1.
+    \item \textbf{TP-} Voir le script Python.
+    \item On utilise l'algorithme de MH avec une proposition symétrique, donc $Q(x,y)=Q(y,x)$. Le taux d'acceptation se simplifie en $\alpha_{xy} = \min(1, \mu(y)/\mu(x))$.
+    \begin{enumerate}
+        \item La matrice $P$ est calculée cas par cas. Par exemple, $P(1,2) = Q(1,2) \min(1, \mu(2)/\mu(1))$.
+        \item Une fois $P$ calculée, on peut vérifier que $\mu P = \mu$. Cependant, la construction même de l'algorithme garantit que c'est le cas si la chaîne est irréductible.
+    \end{enumerate}
+    \item \textbf{TP-} Les solutions pour la simulation, la vérification de la convergence et la comparaison des vitesses de convergence se trouvent dans le script Python.
+\end{enumerate}
+\end{solution}
+
 \begin{exercice}[Metropolis-Hastings pour des variables à densité]
 Le but est de générer des échantillons selon la loi sur $\R$ de densité
 $\mu_\alpha(x)=\frac{1}{\sqrt{2\pi}}e^{-x^2/2}(1+\sin(\alpha x) ),$
@@ -139,6 +202,52 @@ Mesurer le temps de calcul nécessaire.
 \end{enumerate}
 \end{exercice}
 
+\begin{solution}
+\begin{enumerate}
+    \item Pour que $\mu_\alpha(x)$ soit une densité, il faut qu'elle soit positive et que son intégrale vaille 1.
+    $|\sin(\alpha x)| \le 1$, donc $1+\sin(\alpha x) \ge 0$. Comme $\frac{1}{\sqrt{2\pi}}e^{-x^2/2} > 0$, $\mu_\alpha(x) \ge 0$.
+    Pour l'intégrale :
+    \[ \int_{-\infty}^\infty \mu_\alpha(x) \dd x = \int_{-\infty}^\infty \frac{e^{-x^2/2}}{\sqrt{2\pi}} \dd x + \int_{-\infty}^\infty \frac{e^{-x^2/2}}{\sqrt{2\pi}} \sin(\alpha x) \dd x. \]
+    La première intégrale est l'intégrale de la densité gaussienne, elle vaut 1. La seconde intégrale est nulle car l'intégrande est une fonction impaire ($e^{-x^2/2}$ est paire, $\sin(\alpha x)$ est impaire). Donc, $\int \mu_\alpha(x) \dd x = 1$.
+    \item \textbf{TP-} Voir le script.
+    \item Méthode de rejet :
+    \begin{itemize}
+        \item Loi cible : $f(x) = \mu_\alpha(x) = \frac{e^{-x^2/2}}{\sqrt{2\pi}}(1+\sin(\alpha x))$.
+        \item Loi de proposition simple : la loi normale centrée réduite $\mathcal{N}(0,1)$, de densité $g(x) = \frac{e^{-x^2/2}}{\sqrt{2\pi}}$.
+        \item Constante $c$: On cherche $c$ tel que $f(x) \le c \cdot g(x)$. On a $\frac{f(x)}{g(x)} = 1+\sin(\alpha x)$. Le maximum de cette fonction est 2. On choisit donc $c=2$.
+    \end{itemize}
+    Algorithme : 1. Simuler $Y \sim \mathcal{N}(0,1)$. 2. Simuler $U \sim \mathcal{U}([0,1])$. 3. Accepter $Y$ si $U \le \frac{f(Y)}{cg(Y)} = \frac{1+\sin(\alpha Y)}{2}$. Sinon, recommencer.
+    \item Algorithme de Metropolis-Hastings :
+    \begin{itemize}
+        \item Loi cible $\pi(x) = \mu_\alpha(x)$.
+        \item Proposition : $Y_{n+1} = Y_n + Z_{n+1}$ est une marche aléatoire. Le noyau de proposition est $Q(x,y) = g(y-x)$ où $g$ est la densité de $\mathcal{N}(0,1)$. Ce noyau est symétrique : $Q(x,y)=Q(y,x)$.
+        \item Taux d'acceptation (Metropolis) : $\alpha(x,y) = \min\left(1, \frac{\pi(y)}{\pi(x)}\right) = \min\left(1, \frac{1+\sin(\alpha y)}{1+\sin(\alpha x)} e^{-(y^2-x^2)/2}\right)$.
+    \end{itemize}
+    \item \textbf{TP-} Voir le script.
+    \item \textbf{TP-} Voir le script. La méthode de rejet est souvent plus rapide si elle est efficace (taux de rejet pas trop élevé, ici 50\%), car elle produit des échantillons indépendants. M-H produit des échantillons corrélés et nécessite un "burn-in".
+    \item ($\star$) Soit $I_\alpha = \int_{-\infty}^\infty x \mu_\alpha(x) \dd x$. Par linéarité de l'intégrale :
+    \[ I_\alpha = \int_{-\infty}^\infty x \frac{e^{-x^2/2}}{\sqrt{2\pi}} \dd x + \int_{-\infty}^\infty x \sin(\alpha x) \frac{e^{-x^2/2}}{\sqrt{2\pi}} \dd x. \]
+    Le premier terme est l'espérance d'une variable $X \sim \mathcal{N}(0,1)$, qui est nulle. Il reste :
+    \[ I_\alpha = \E[X \sin(\alpha X)], \quad \text{où } X \sim \mathcal{N}(0,1). \]
+    Pour calculer cette espérance, on peut utiliser une intégration par parties. Posons $u(x) = \sin(\alpha x)$ et $v'(x) = x e^{-x^2/2}$. On a $u'(x)=\alpha \cos(\alpha x)$ et $v(x) = -e^{-x^2/2}$.
+    \begin{align*}
+      \E[X \sin(\alpha X)] &= \frac{1}{\sqrt{2\pi}} \int_{-\infty}^\infty \sin(\alpha x) (x e^{-x^2/2}) \dd x \\
+      &= \frac{1}{\sqrt{2\pi}} \left( \left[-\sin(\alpha x)e^{-x^2/2}\right]_{-\infty}^\infty - \int_{-\infty}^\infty -\alpha \cos(\alpha x) e^{-x^2/2} \dd x \right) \\
+      &= \frac{\alpha}{\sqrt{2\pi}} \int_{-\infty}^\infty \cos(\alpha x) e^{-x^2/2} \dd x = \alpha \E[\cos(\alpha X)].
+    \end{align*}
+    On a $\cos(\alpha X) = \text{Re}(e^{i\alpha X})$. L'espérance $\E[e^{i\alpha X}]$ est la fonction caractéristique de la loi normale, évaluée en $\alpha$, qui est $e^{-\alpha^2/2}$.
+    \[ \E[\cos(\alpha X)] = \text{Re}(e^{-\alpha^2/2}) = e^{-\alpha^2/2}. \]
+    Finalement, la valeur théorique est $I_\alpha = \alpha e^{-\alpha^2/2}$.
+    \item
+        Soit $I = \E_{\mu_\alpha}[Y]$ l'espérance que l'on souhaite calculer, où $Y$ est la variable identité $Y(x)=x$.
+    \begin{itemize}
+        \item \textbf{Méthode du rejet :} Si on dispose d'un échantillon i.i.d. $(Y_1, \dots, Y_n)$ de loi $\mu_\alpha$, l'estimateur de Monte-Carlo standard est $\hat{I}_n^{\text{rej}} = \frac{1}{n}\sum_{i=1}^n Y_i$. Cet estimateur est non biaisé et sa variance est $\frac{1}{n}\Var_{\mu_\alpha}(Y)$.
+        \item \textbf{Méthode de Metropolis-Hastings :} L'échantillon $(X_1, \dots, X_n)$ n'est pas i.i.d. mais la chaîne est ergodique et sa loi stationnaire est $\mu_\alpha$. Le théorème ergodique nous assure que la moyenne empirique converge vers l'espérance sous la loi stationnaire. L'estimateur est $\hat{I}_n^{\text{MH}} = \frac{1}{n-B}\sum_{i=B+1}^n X_i$, où $B$ est la période de "burn-in". Cet estimateur est asymptotiquement non biaisé.
+    \end{itemize}
+    \item \textbf{TP-} Voir le script. On s'attend à ce que l'estimateur par rejet ait une variance plus faible pour un même nombre de points (car indépendants), mais pour un temps de calcul équivalent, la comparaison dépend de l'efficacité relative des algorithmes.
+\end{enumerate}
+\end{solution}
+
 \begin{exercice}
 Une pièce d'échec se déplace aléatoirement sur un échiquier de $8\times 8$ cases. En partant d'une position fixée (disons en bas à gauche) et en ne faisant que des déplacements autorisés, on veut modéliser une distribution uniforme $\mu$ sur l'échiquier.
 \begin{enumerate}
@@ -148,6 +257,37 @@ Une pièce d'échec se déplace aléatoirement sur un échiquier de $8\times 8$ 
 \item \textbf{TP-} Adapter l'argument au déplacement du cavalier.
 \end{enumerate}
 \end{exercice}
+
+\begin{solution}
+\begin{enumerate}
+    \item Soit $E$ l'ensemble des 64 cases. La mesure uniforme est $\mu(x)=1/64$ pour tout $x \in E$. Soit $d(x)$ le nombre de mouvements possibles depuis la case $x$. La chaîne de Markov proposée a pour transition $P(x,y) = 1/d(x)$ si $y$ est accessible depuis $x$, et 0 sinon.
+    Pour que $\mu$ soit invariante, il faut qu'elle satisfasse le bilan détaillé : $\mu(x)P(x,y) = \mu(y)P(y,x)$.
+    \[ \frac{1}{64}\frac{1}{d(x)} = \frac{1}{64}\frac{1}{d(y)} \iff d(x)=d(y). \]
+    Pour une tour, le nombre de mouvements depuis n'importe quelle case est toujours 14 (7 horizontaux + 7 verticaux). Donc $d(x)=14$ pour tout $x$. La condition $d(x)=d(y)$ est toujours vérifiée, donc le bilan détaillé est satisfait et la mesure uniforme est invariante. La chaîne est finie, irréductible et apériodique, donc elle converge vers $\mu$.
+    \item Pour que la mesure uniforme $\mu(x)=1/64$ soit invariante, il faut que la condition $\mu P = \mu$ soit satisfaite, soit $\sum_x \mu(x) P(x,y) = \mu(y)$ pour tout $y \in E$.
+
+    Soit $P(x,y) = 1/d(x)$ si $y$ est un mouvement valide depuis $x$, et 0 sinon. La condition d'invariance devient :
+    \[ \sum_{x: y \text{ est accessible depuis } x} \frac{1}{64} \frac{1}{d(x)} = \frac{1}{64} \iff \sum_{x \in \text{Voisins}(y)} \frac{1}{d(x)} = 1. \]
+    (On utilise le fait que $y$ est accessible depuis $x$ si et seulement si $x$ est accessible depuis $y$, donc l'ensemble des $x$ est l'ensemble des voisins de $y$).
+
+    Testons cette condition. Pour la dame, le nombre de mouvements $d(x)$ dépend fortement de la position.
+    Considérons la case du coin $y = \text{a1}$. Le nombre de mouvements possibles depuis cette case est $d(y) = 21$. Ses voisins sont les 7 cases sur la première ligne (sauf a1), les 7 sur la première colonne, et les 7 sur la diagonale, soit 21 voisins.
+    Prenons un voisin, par exemple $x=\text{b2}$. Le nombre de mouvements possibles depuis b2 est $d(x)=23$. Un autre voisin est $x=\text{h8}$ sur la diagonale, $d(h8)=21$. Les valeurs de $d(x)$ ne sont pas constantes pour les voisins de $y$.
+    Il n'y a aucune raison pour que la somme $\sum_{x \in \text{Voisins}(a1)} 1/d(x)$ vaille exactement 1. Par exemple, si tous les voisins avaient 21 mouvements, la somme serait $21 \times (1/21) = 1$. Mais comme certains voisins ont plus de 21 mouvements (e.g. $d(b2)=23$), leur contribution $1/d(x)$ est plus petite que $1/21$, donc la somme sera inférieure à 1. La mesure uniforme n'est donc pas invariante.
+
+    \item On peut utiliser l'algorithme de Metropolis-Hastings. On veut simuler $\mu(x)=1/64$.
+    \begin{itemize}
+        \item Proposition : on choisit une destination $y$ uniformément parmi les $d(x)$ mouvements autorisés depuis $x$. Le noyau de proposition est $Q(x,y)=1/d(x)$.
+        \item Acceptation : Le taux est
+            \[
+                \alpha_{xy} = \min\left(1, \frac{\mu(y)Q(y,x)}{\mu(x)Q(x,y)}\right) = \min\left(1, \frac{(1/64)(1/d(y))}{(1/64)(1/d(x))}\right) = \min\left(1, \frac{d(x)}{d(y)}\right).
+            \]
+    \end{itemize}
+    La chaîne est : 1. Proposer un mouvement $y$. 2. Accepter ce mouvement avec probabilité $\min(1, d(x)/d(y))$. Si le mouvement est rejeté, la dame reste sur place (stationnement). Cette chaîne a bien $\mu$ pour mesure invariante.
+
+    \item \textbf{TP-} Le même raisonnement s'applique. Un cavalier a un nombre de mouvements qui dépend de sa position (de 2 au coin à 8 au centre). La marche aléatoire simple ne converge pas vers l'uniforme. L'algorithme de Metropolis-Hastings avec noyau de proposition $Q(x,y)=1/d(x)$ et taux d'acceptation $\alpha_{xy} = \min(1, d(x)/d(y))$ fonctionnera.
+\end{enumerate}
+\end{solution}
 
 \begin{exercice}[Retour sur le sac à dos]
 On considère un ensemble de $K$ objets, chacun possédant un poids $m_1,\ldots,m_k$ exprimé en kg. On dispose d'un sac à dos dans lequel on souhaite mettre un certain nombre d'objets, dont le poids total ne dépassera pas les 10kg.
@@ -197,7 +337,7 @@ où $Z_\beta$ est une constante de normalisation bien choisie.
 \begin{enumerate}
   \item On note $M = \max\{c\cdot m, c \in \mathcal{A}\}$ le poids maximal accessible et $\mathcal{M} = \{c \in \mathcal{A} : c\cdot m = M\}$. Montrer que $\lim_{\beta \to \infty} \mu_\beta = \rho$, où $\rho$ est la loi uniforme sur $\mathcal{M}$.
   \item Décrire l'algorithme de Metropolis-Hastings permettant de simuler $\mu_\beta$ pour une valeur de $\beta$ fixé.
-  \item On se propose alors d'estimer $M$ par $\hat{M}_n := \max_{k \leq n} X^{(\beta)}_k$ où $X^{(\beta)}$ est la chaîne de Markov de matrice de transition $P^{\mu_\beta}$. Montrer que $\lim_{n \to \infty} \hat{M}_n = M$ p.s.
+  \item On se propose alors d'estimer $M$ par $\hat{M}_n := \max_{k \leq n} \left\{X^{(\beta)}_k \cdot m\right\}$ où $X^{(\beta)}$ est la chaîne de Markov de matrice de transition $P^{\mu_\beta}$. Montrer que $\lim_{n \to \infty} \hat{M}_n = M$ p.s.
   \item \textbf{TP-} On pose $K=8$, $w = (3,3,3,5,5,5,5,5)$. On part de $X^{(\beta)}_0 = (0,0,0,1,1,0,0,0)$. Estimer, en fonction du paramètre $\beta$, le nombre moyen d'étapes nécessaires pour obtenir $\hat{M}_n = 9$. On pourra considérer $\beta = 0.01$, $0.1$, $1$ et $10$.
   \item Expliquer pourquoi une valeur de $\beta$ trop petite ou trop grande peuvent toutes deux conduirent à une convergence ralentie de $(\hat{M}_n)$.
 \end{enumerate}
@@ -214,6 +354,87 @@ On considère une chaine de Markov inhomogène $(Z_n)$ de matrice de transition 
 Plutôt que d'essayer de déterminer le sac à dos le plus lourd, nous sommes maintenant intéressés par la répartition des différents objets dans le plus petit nombre de sac à dos possibles de poids tous inférieurs à 10kg. Proposer une variation des algorithmes et méthodes proposées jusqu'ici pour déterminer de façon stochastique des solutions à ce problème. Tester sur un vecteur de $100$ objets de poids choisi aléatoirement entre 1 et 10kg.
 \end{exercice}
 
+\begin{solution}
+Cet exercice est un projet de modélisation MCMC, les solutions sont donc des algorithmes et des justifications.
+\paragraph{Partie 1.}
+\begin{enumerate}
+    \item L'état $D$ est obtenu depuis $C$ en changeant une seule coordonnée $i$. La probabilité de choisir l'indice $i$ est $1/K$. Donc $Q(C,D)=1/K$. Inversement, pour passer de $D$ à $C$, il faut choisir le même indice $i$ et changer la coordonnée. $Q(D,C)=1/K$. Le noyau $Q$ est donc symétrique. Pour un noyau symétrique, la mesure uniforme $\mu(c)=1/2^K$ est invariante si le graphe des transitions est connexe, ce qui est le cas (on peut passer de n'importe quelle configuration à une autre en changeant les coordonnées une par une).
+    \item \textbf{TP-} Voir le script.
+    \item La chaîne de Markov $(C_n)$ est définie sur un espace d'états fini $E=\{0,1\}^K$. Nous avons montré qu'elle est irréductible. De plus, elle est apériodique car il est possible de rester sur place (en choisissant un indice $i$, puis en re-choisissant le même indice $i$, on revient à la configuration de départ en 2 pas. Il est aussi possible de revenir en plus de pas, donc le pgcd des temps de retour est 1).
+
+    Puisque la chaîne est finie, irréductible et apériodique, le \textbf{théorème ergodique} s'applique. Il stipule que pour toute fonction $f: E \to \R$, on a la convergence presque sûre :
+    \[ \lim_{n \to \infty} \frac{1}{n} \sum_{k=1}^n f(C_k) = \E_\mu[f(C)] \quad \text{p.s.} \]
+    où $\mu$ est l'unique mesure stationnaire. Ici, nous avons $f(c) = \ind{\{c = (0,\ldots,0)\}}$. L'espérance sous la mesure uniforme est :
+    \[ \E_\mu[f(C)] = \sum_{c \in E} f(c) \mu(c) = 1 \cdot \mu((0,\ldots,0)) = \frac{1}{2^K}. \]
+    On en déduit bien la convergence demandée.
+    \item \textbf{TP-} Voir le script.
+\end{enumerate}
+\paragraph{Partie 2.}
+\begin{enumerate}
+    \item On veut simuler $\pi(c) = 1/A$ si $c \in \mathcal{A}$ et 0 sinon. On utilise MH avec le noyau $Q$ symétrique.
+    $\frac{\pi(d)Q(d,c)}{\pi(c)Q(c,d)} = \frac{\pi(d)}{\pi(c)}$. Si $c,d \in \mathcal{A}$, $\pi(c)=\pi(d)=1/A$, le ratio vaut 1. Le taux d'acceptation est $\min(1,1)=1$.
+    La transition est : on propose une modification $d$ de $c$. Si $d \in \mathcal{A}$, on accepte. Si $d \notin \mathcal{A}$, $\pi(d)=0$, le ratio est 0, on rejette (on reste en $c$). Cela correspond bien à l'algorithme décrit.
+    \item Le bilan détaillé est satisfait pour $c,d \in \mathcal{A}$ car $Q$ est symétrique et $\pi$ est uniforme sur $\mathcal{A}$. La chaîne est irréductible sur $\mathcal{A}$ (on peut passer de toute config acceptable à une autre), donc elle converge vers $\pi$.
+    \item \textbf{TP-} Voir le script.
+    \item C'est le théorème ergodique appliqué à la fonction $f(c)=\ind{\{\|c\|=1\}}$. La limite est $\E_\pi[f(X)] = \sum_{c \in \mathcal{A}} \pi(c) f(c) = \frac{1}{A} \sum_{c \in \mathcal{A}} \ind{\{\|c\|=1\}}$.
+    L'ensemble des configurations de norme 1 est $\{e_1, \dots, e_K\}$ où $e_i$ a un 1 en position $i$. Une telle configuration $e_i$ est dans $\mathcal{A}$ si son poids $m_i \le 10$. Comme on suppose $\max m_i \le 10$, tous ces $K$ états sont dans $\mathcal{A}$. La somme vaut donc $K$. La limite est $K/A$.
+    \item \textbf{TP-} Voir le script.
+    \item \textbf{TP-} Voir le script.
+\end{enumerate}
+\paragraph{Partie 3.}
+\begin{enumerate}
+    \item Quand $\beta \to \infty$, $e^{\beta c \cdot m}$ devient infiniment grand pour les configurations qui maximisent $c \cdot m = M$, et négligeable pour les autres. La mesure de probabilité se concentre donc sur l'ensemble $\mathcal{M}$ des configurations optimales. Comme tous les éléments de $\mathcal{M}$ ont le même poids, la limite est la loi uniforme sur cet ensemble.
+    \item Le noyau de proposition $Q$ est symétrique. Le taux d'acceptation de $c$ vers $d$ est $\alpha(c,d) = \min\left(1, \frac{\mu_\beta(d)}{\mu_\beta(c)}\right) = \min\left(1, e^{\beta(d\cdot m - c\cdot m)}\right)$.
+    \item Soit $(X_n^{(\beta)})$ une chaîne de Markov irréductible sur l'espace d'états fini $\mathcal{A}$. Par le théorème ergodique, la chaîne visite chaque état $c \in \mathcal{A}$ une infinité de fois presque sûrement.
+
+    Soit $\mathcal{M} = \{c \in \mathcal{A} : c\cdot m = M\}$ l'ensemble des configurations optimales. Puisque la chaîne est irréductible, elle visitera au moins une configuration $c^* \in \mathcal{M}$ en un temps fini $\tau < \infty$ (p.s.).
+    L'estimateur est $\hat{M}_n = \max_{0 \le k \le n} \{X_k^{(\beta)} \cdot m\}$.
+    C'est une suite croissante (au sens large) et bornée par $M$. Elle converge donc p.s. vers une limite $\hat{M}_\infty \le M$.
+
+    Comme la chaîne visite un état $c^* \in \mathcal{M}$ en un temps fini $\tau$, cela signifie que pour tout $n \ge \tau$, on a :
+    \[ \hat{M}_n = \max_{0 \le k \le n} \{X_k^{(\beta)} \cdot m\} \ge X_\tau^{(\beta)} \cdot m = M. \]
+    Puisque $\hat{M}_n$ est toujours inférieur ou égal à $M$, on a $\hat{M}_n = M$ pour tout $n \ge \tau$.
+
+    Comme $\tau$ est fini presque sûrement, la suite $(\hat{M}_n)$ est égale à $M$ à partir d'un certain rang (aléatoire). Par conséquent, sa limite est $M$ presque sûrement.
+    \[ \lim_{n \to \infty} \hat{M}_n = M \quad \text{p.s.} \]
+      % L'algorithme de recuit simulé (simulated annealing) montre que si $\beta_n \to \infty$ suffisamment lentement, la chaîne converge vers la mesure uniforme sur les états optimaux.
+    \item \textbf{TP-} Voir le script.
+    \item Si $\beta$ est trop petit ($\approx 0$), la marche explore l'espace presque uniformément, elle a du mal à "descendre" vers les états de haute énergie (poids lourd). Si $\beta$ est trop grand, la chaîne se retrouve piégée très vite dans un optimum local (un sac assez lourd mais pas maximal) car les probabilités de transition vers des états de poids plus faible sont quasi nulles.
+\end{enumerate}
+\paragraph{Partie 4.}
+\begin{enumerate}
+    \item[1.] \textbf{TP-} Voir le script Python. Il s'agit d'adapter la fonction de simulation de la partie 3 pour que le paramètre `beta` change à chaque itération `n`.
+    \item[2.] C'est l'algorithme du \textbf{recuit simulé}.
+    \begin{itemize}
+        \item $(\beta_n = e^n)$ et $(\beta_n=n)$ : Le "refroidissement" (augmentation de $\beta$) est très rapide. La chaîne se fige très vite dans un état, qui est probablement un optimum local mais pas global. Elle n'a pas le temps d'explorer l'espace.
+        \item $(\beta_n = \log n)$ : C'est le refroidissement canonique. Un théorème (non trivial) montre que si $\beta_n = c \log n$ avec une constante $c$ assez grande, la distribution de $Z_n$ converge vers la mesure uniforme sur l'ensemble des optima globaux $\mathcal{M}$.
+        \item $(\beta_n = \log \log n)$ : Le refroidissement est très lent. La chaîne explore beaucoup, mais la convergence vers l'optimum sera très lente.
+    \end{itemize}
+\end{enumerate}
+
+\paragraph{Partie 5.}
+Ceci est le problème du \textbf{Bin Packing}, un problème NP-difficile. On peut l'aborder avec une approche de type recuit simulé.
+\begin{itemize}
+    \item \textbf{Espace d'états :} Une configuration n'est plus un seul sac, mais une partition des $K$ objets en $S$ sacs, $C = (\text{sac}_1, \dots, \text{sac}_S)$. Chaque sac doit être une configuration acceptable.
+    \item \textbf{Fonction coût/énergie :} La fonction à minimiser est simplement le nombre de sacs utilisés, $V(C) = S$.
+    \item \textbf{Noyau de proposition :} Une transition simple consiste à prendre un objet au hasard et le déplacer dans un autre sac (un des sacs existants ou un nouveau). Par exemple :
+    \begin{enumerate}
+        \item Choisir un objet $i$ au hasard.
+        \item Choisir un sac de destination $j$ au hasard (parmi les sacs actuels ou un nouveau sac vide).
+        \item Proposer de déplacer l'objet $i$ dans le sac $j$.
+    \end{enumerate}
+    \item \textbf{Algorithme :} On applique le recuit simulé.
+    \begin{enumerate}
+        \item Partir d'une configuration (ex: un objet par sac).
+        \item A chaque étape $n$, proposer un mouvement $C \to C'$.
+        \item Si le mouvement est valide (le sac de destination ne dépasse pas la capacité), calculer la variation d'énergie $\Delta V = V(C') - V(C)$.
+        \item Accepter le mouvement avec probabilité $\min(1, e^{-\beta_n \Delta V})$. Notez que si $\Delta V < 0$ (on utilise moins de sacs), le mouvement est toujours accepté.
+    \end{enumerate}
+\end{itemize}
+En choisissant un refroidissement lent (e.g., $\beta_n = c \log n$), l'algorithme convergera vers une solution proche de l'optimum.
+
+\end{solution}
+
 \begin{exercice}[Recuit simulé et refroidissement trop rapide]
 Soit $E=\{1,2,3\}$ et $V:E\to \R$ donnée par $V(1)=0$, $V(2)=1$ et $V(3)=-1$ (la fonction $V$ possède un minimum local en $1$ et un minimum global en $3$).
 
@@ -226,5 +447,34 @@ $\P[X_n=3]\leq \sum_{k=0}^{n-2}\P[X_k=1,X_{k+1}=2] .$
 \item Montrer que $\P[X_k=1,X_{k+1}=2]\le \P[X_{k+1}=2\lvert X_k=1 ]$. En déduire que pour $c$ suffisamment grand, $\P[X_n= 3]$ ne tend pas vers $1$ lorsque $n$ tend vers l'infini.
 \end{enumerate}
 \end{exercice}
+
+\begin{solution}
+\begin{enumerate}
+    \item Le recuit simulé est un algorithme de MH avec une température qui varie. Ici, la mesure cible à l'étape $n$ est $\mu_n(x) \propto e^{-V(x)/T_n}$.
+    La probabilité d'acceptation d'une proposition $y$ depuis $x$ à l'étape $n$ est :
+    \[ \alpha_n(x,y) = \min\left(1, \frac{\mu_n(y)Q(y,x)}{\mu_n(x)Q(x,y)}\right) = \min\left(1, \frac{Q(y,x)}{Q(x,y)} e^{-(V(y)-V(x))/T_n}\right). \]
+    \item On calcule les probabilités de transition $P_n(x,y)$ pour $x \neq y$.
+    $P_n(x,y) = Q(x,y) \alpha_n(x,y)$.
+    \begin{itemize}
+        \item $P_n(1,2) = Q(1,2) \min(1, \frac{Q(2,1)}{Q(1,2)} e^{-(V(2)-V(1))/T_n}) = 1 \cdot \min(1, \frac{1/2}{1} e^{-1/T_n}) = \frac{1}{2}e^{-1/T_n}$.
+        \item $P_n(2,1) = Q(2,1) \min(1, \frac{Q(1,2)}{Q(2,1)} e^{-(V(1)-V(2))/T_n}) = \frac{1}{2} \min(1, 2 e^{1/T_n}) = 1/2$.
+        \item $P_n(2,3) = Q(2,3) \min(1, \frac{Q(3,2)}{Q(2,3)} e^{-(V(3)-V(2))/T_n}) = \frac{1}{2} \min(1, 2 e^{-(-1-1)/T_n}) = \frac{1}{2}\min(1, 2e^{2/T_n}) = 1/2$.
+        \item $P_n(3,2) = Q(3,2) \min(1, \frac{Q(2,3)}{Q(3,2)} e^{-(V(2)-V(3))/T_n}) = 1 \cdot \min(1, \frac{1}{2} e^{-2/T_n}) = \frac{1}{2}e^{-2/T_n}$.
+    \end{itemize}
+    \item Pour atteindre l'état 3 en partant de 1, la chaîne doit obligatoirement passer par l'état 2. Soit $\tau = \inf\{k \ge 0 : X_k = 2\}$ le premier temps de passage en 2.
+    \[ \{X_n=3\} \subseteq \bigcup_{k=0}^{n-1} \{X_k=1, X_{k+1}=2\}. \]
+    L'événement "être en 3 à l'instant n" implique qu'on a dû, à un moment, sauter de 1 à 2.
+    Par l'inégalité de l'union (union bound) :
+    \[ \P(X_n=3) \le \P\left(\bigcup_{k=0}^{n-2} \{X_k=1, X_{k+1}=2\}\right) \le \sum_{k=0}^{n-2} \P(X_k=1, X_{k+1}=2). \]
+    L'indice s'arrête à $n-2$ car il faut au moins un pas pour aller de 2 à 3.
+    \item On a $\P(X_k=1, X_{k+1}=2) = \P(X_{k+1}=2|X_k=1)\P(X_k=1)$. Puisque $\P(X_k=1) \le 1$, on a bien $\P(X_k=1, X_{k+1}=2) \le P_k(1,2)$.
+    \[ P_k(1,2) = \frac{1}{2}e^{-1/T_k} = \frac{1}{2}e^{-c\log(k+1)} = \frac{1}{2}(k+1)^{-c}. \]
+    La somme est donc majorée par $\sum_{k=0}^{n-2} \frac{1}{2}(k+1)^{-c}$.
+    C'est une série de Riemann. Si $c > 1$, la série $\sum (k+1)^{-c}$ converge vers une valeur finie $S_c$.
+    Donc, $\P(X_n=3) \le \frac{1}{2}S_c < \infty$.
+    Pour que $\P(X_n=3)$ tende vers 1, il faudrait que cette somme diverge.
+    Si on choisit $c$ suffisamment grand (par exemple $c=2$), la somme est finie, et on ne peut pas garantir que la probabilité tende vers 1. Le refroidissement est "trop rapide", la chaîne n'a pas le temps d'explorer l'espace et de s'échapper du minimum local en 1. La condition de convergence du recuit simulé est que la somme des probabilités de transition doit diverger, ce qui impose ici $c \le 1$.
+\end{enumerate}
+\end{solution}
 
 \end{document}
