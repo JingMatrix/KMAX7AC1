@@ -1,0 +1,230 @@
+\documentclass{exercices}
+
+\usepackage[french]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{multicol,epsfig,csquotes}
+\usepackage{enumerate}
+\usepackage{xcolor}
+\usepackage{amsmath,amssymb,amsthm,enumitem,bbm,latexsym}
+\usepackage[normalem]{ulem}
+\usepackage{hyperref}
+\usepackage{listings}
+
+\usetikzlibrary{arrows.meta, automata,
+                positioning,
+                quotes}
+
+%%%%%%%%%% environnements
+%\theoremstyle{definition}
+%\newtheorem{exo}{Exercice}
+
+
+%%%%%%%%%% macros
+
+
+
+
+\begin{document}
+{
+\noindent {\sc M1 MAPI3  -  Simulations stochastiques \hfill 2025-2026}\\
+Jianyu Ma \hfill \textit{jianyu.ma@math.univ-toulouse.fr}\\
+Bastien Mallein \hfill \textit{bastien.mallein@math.univ-toulouse.fr}\\
+Pierre Petit \hfill \textit{pierre.petit@math.univ-toulouse.fr}}
+
+
+\vspace{2ex}
+
+ \hrule
+\begin{center}
+\textbf{\large TD 5 \& TP 4 - Algorithme de Métropolis-Hasting \& Méthodes MCMC}
+\vspace{2ex}
+\end{center}
+\hrule
+
+\bigskip
+
+
+Soit $E$ un espace d'état fini et $\mu$ une mesure de probabilité sur $E$ qui charge tous les états. Rappelons que l'algorithme de Metropolis-Hastings pour un noyau auxiliaire de transition $Q$ (tel que $Q(x,y)=0$ si et seulement si $Q(y,x)=0$) s'écrit:
+
+\noindent Etape 0 :
+\texttt{Initialiser} $X_0$ ;
+
+\noindent Etape n+1 :
+
+\texttt{Choisir} $Y$ \texttt{selon la loi} $Q(X_n,\cdot)$ ;
+
+\texttt{Poser} $X_{n+1} = Y$ \texttt{avec proba} $\min(1,\frac{\mu(Y)Q(Y,X_{n})}{\mu(X_n)Q(X_n,Y)})$, \texttt{sinon poser} $X_{n+1} = X_n$.
+
+Alors, sous de bonnes hypothèses, la chaîne $(X_n)$ admet $\mu$ pour mesure invariante.
+
+
+\medskip
+
+\begin{exercice}
+Soit $E$ un espace d'état fini, et $Q : E \times E \to [0,1]$ une matrice stochastique telle que $Q(x,y) > 0 \iff Q(y,x) > 0$.
+\begin{enumerate}
+  \item Montrer que si la probabilité d'acceptation de la transition $\min\left( 1 , \frac{\mu(y)Q(y,x)}{\mu(x)Q(x,y)}\right)$ est remplacée par
+$
+  \frac{\mu(y)Q(y,x)}{\mu(y)Q(y,x)+\mu(x)Q(x,y)},
+$
+alors la chaîne de Markov définie par l'algorithme de Metropolis-Hastings aura encore $\mu$ pour mesure invariante.
+\item On remplace plus généralement la probabilité d'acceptation-rejet par
+$
+  \alpha\left(\frac{\mu(y)Q(y,x)}{\mu(x)Q(x,y)}\right),
+$
+avec $\alpha:\R_+\to ]0,1]$. Donner une condition suffisante sur la fonction $\alpha$ pour que la mesure $\mu$ soit la mesure invariante de la chaîne de Markov définie par l'algorithme de Metropolis-Hastings.
+\item Montrer qu'une telle fonction doit nécessairement vérifier $\alpha(x) \leq \min(1,x)$.
+\item En déduire que $\min(1,x)$ est la plus grande fonction d'acceptation garantissant le fonctionnement de l'algorithme de Metropolis Hasgings.
+\end{enumerate}
+\end{exercice}
+
+\begin{exercice}[Méthode de Métropolis-Hastings sur l'espace $\{1,2,3\}$]
+On considère dans cet exercice l'espace d'états $\{1,2,3\}$ de dimension $3$ et $Q=\begin{pmatrix}
+0&a_1&a_2\\
+c_1&b_1&a_3\\
+c_2&c_3&b_2
+\end{pmatrix}.$ La matrice $Q$ est symétrique dès lors que $(a_1,a_2,a_3)=(c_1,c_2,c_3)$.
+\begin{enumerate}
+\item Quelles sont les conditions sur les paramètres pour avoir une matrice de transition ?
+\item \textbf{TP -} Ecrire un programme qui permet de simuler une chaine de markov de matrice de transition $Q$ (prendre une des matrices ci-dessous).
+\item On veut dans la suite simuler la loi de probabilité $\mu=(1/6,1/2,1/3)$.
+ \begin{enumerate}
+   \item Écrire la matrice de transition $P$ de la chaîne $X_n$ obtenue grâce à cet algorithme.
+   \item Vérifier que $\mu$ est bien une mesure invariante de cette chaîne de Markov.
+ \end{enumerate}
+ \item  \textbf{TP -} On veut dans la suite simuler la loi de probabilité $\nu = (3/5,1/10,3/10)$. On utilisera les 3 matrices de transition ci-dessous :
+ \[
+ Q_1=\begin{pmatrix}
+ 0&0.5&0.5\\
+ 0.6&0.3&0.1\\
+ 0.3&0.4&0.3
+ \end{pmatrix}, \quad
+ Q_2=\begin{pmatrix}
+ 0&0.3&0.7\\
+ 0.3&0.4&0.3\\
+ 0.7&0.3&0.0
+ \end{pmatrix}, \quad
+ Q_3=\begin{pmatrix}
+ 0&1&0\\
+ 0.5&0&0.5\\
+ 0&1&0
+ \end{pmatrix}.
+ \]
+ \begin{enumerate}
+   \item Utiliser l'algorithme de Metropolis Hasting pour simuler une chaine de Markov de loi invariante $\nu$.
+   \item Vérifier numériquement que $\frac{1}{n}\sum_{i=1}^n\mathbf{1}_{X_i=x} \overset{p.s.}{\underset{n\to\infty}{\longrightarrow}}\mu(x)$.
+    \item  Pour comparer les vitesses de convergences pour ces matrices, nous allons calculer la distance en variation totale entre la mesure empirique du vecteur $X_1, \dots X_n$ et $\nu$ :
+  $$d_{VT}(X, \mu)=\sum_{x=1}^3 \lvert \frac{1}{n}\sum_{i=1}^n\mathbf{1}_{X_i=x}-\mu(x)\lvert. $$
+On tracera l'évolution de cette quantité pour différentes valeurs de $n$ (entre 0 et 300) pour chacune de ces trois matrices, sur le même graphe.
+  \end{enumerate}
+\end{enumerate}
+\end{exercice}
+
+\begin{exercice}[Metropolis-Hastings pour des variables à densité]
+Le but est de générer des échantillons selon la loi sur $\R$ de densité
+$\mu_\alpha(x)=\frac{1}{\sqrt{2\pi}}e^{-x^2/2}(1+\sin(\alpha x) ),$
+pour $\alpha>0$.
+\begin{enumerate}
+\item Vérifier que pour tout $\alpha > 0$, $\mu_\alpha$ est une densité de probabilité.
+\item \textbf{TP- }Tracer la densité pour plusieurs valeurs de $\alpha>0$.
+\item Proposer un algorithme de simulation de $\mu_\alpha$ par méthode du rejet.
+\item Proposer un algorithme de simulation de $\mu_\alpha$ par l'algorithme de Métropolis-Hastings, en utilisant pour chaîne de Markov initiale la chaine définie par récurrence par $Y_{n+1} = Y_n + Z_{n+1}$ où $(Z_n)$ sont des v.a. i.i.d. de loi normale centrée réduite.
+\item \textbf{TP-} On choisira maintenant $\alpha=2.$ Coder l'algorithme précédent pour simuler un échantillon de taille $n=1000$.
+Mesurer le temps de calcul nécessaire.
+\item \textbf{TP- } Comparer ce temps au temps nécessaire pour simuler un échantillon de $1000$ variables avec la méthode du rejet.
+\item ($\star$) Déterminer la valeur théorique de $\int x \mu_\alpha(x) \dd x$.
+\item Proposer une estimation de cette valeur utilisant la méthode du rejet, utilisant la méthode de Métropolis-Hastings.
+\item \textbf{TP- } Comparer l'erreur quadratique moyenne de ces deux estimateurs, en réalisant 1000 estimations indépendantes et laissant fonctionner les deux algorithmes un temps équivalent.
+\end{enumerate}
+\end{exercice}
+
+\begin{exercice}
+Une pièce d'échec se déplace aléatoirement sur un échiquier de $8\times 8$ cases. En partant d'une position fixée (disons en bas à gauche) et en ne faisant que des déplacements autorisés, on veut modéliser une distribution uniforme $\mu$ sur l'échiquier.
+\begin{enumerate}
+\item On considère une tour (tous les mouvements horizontaux et verticaux sont autorisés). Montrer que choisir de façon équiprobable un déplacement autorisé à chaque étape conduit à une chaîne de Markov de mesure invariante $\mu$. La loi de la position de la tour converge donc vers $\mu$.
+\item Montrer que pour une dame, choisir de façon équiprobable un déplacement autorisé à chaque étape conduit à une chaîne de Markov qui n'a pas $\mu$ pour mesure invariante.
+\item Décrire une chaîne de Markov pour la dame utilisant les déplacements autorisés et le stationnement (laisser la dame sur place) de mesure invariante $\mu$.
+\item \textbf{TP-} Adapter l'argument au déplacement du cavalier.
+\end{enumerate}
+\end{exercice}
+
+\begin{exercice}[Retour sur le sac à dos]
+On considère un ensemble de $K$ objets, chacun possédant un poids $m_1,\ldots,m_k$ exprimé en kg. On dispose d'un sac à dos dans lequel on souhaite mettre un certain nombre d'objets, dont le poids total ne dépassera pas les 10kg.
+
+\paragraph{Partie 1.}
+On appellera \emph{configuration} un élément $c = (c_1,\ldots,c_K) \in \{0,1\}^K$, tel que l'élément $j$ est dans le sac si $c_j = 1$, l'élément est hors du sac si $c_j = 0$. Cette configuration sera encodée en python par une liste \texttt{c} de longueur \texttt{K}. On définit une chaine de Markov $(C_n)$ sur $\{0,1\}^K$ de la façon suivante: à chaque étape $n$, on tire un indice $I_{n+1}$ au hasard. Si la configuration $C_n$ contient l'objet $I_{n+1}$ (i.e. si $C_n(I_n) = 1$), alors on retire cet objet. Sinon on ajoute l'objet $I_{n+1}$. On note $Q$ la matrice de transition de cette chaine.
+\begin{enumerate}
+  \item Montrer que si $C$ est une configuration ne contenant pas l'objet indicé $i$ et $D$ est la configuration obtenue en ajoutant l'objet $i$ à $C$, on a $Q(C,D) = Q(D,C) = 1/K$. En déduire que la mesure invariante de la chaîne $C$ est la loi uniforme.
+  \item \textbf{TP-} Construisez une fonction permettant de simuler la chaine de Markov $(C_n)$.
+  \item Montrer que $\lim_{n \to \infty} \frac{1}{n} \sum_{k=1}^n \ind{\{C_k = (0,\ldots,0)\}} = \frac{1}{2^K}$ p.s. Nommez le théorème appliqué ici.
+  \item \textbf{TP-} Vérifier numériquement ce résultat pour $K=4$.
+\end{enumerate}
+
+\paragraph{Partie 2.}
+On rappelle que le poids de l'objet $j$ est noté $m_j$, et on définira une liste \texttt{w} de longueur $K$ contenant les poids des différents objets. Une configuration est dite \emph{acceptable} si $c\cdot m = \sum_{i=1}^K c_i m_i \leq 10$. On note
+$\mathcal{A} = \{c \in \{0,1\}^K : c \cdot m \leq 25 \}$ l'ensemble des configurations acceptables. On construit à partir de $Q$ une chaine de Markov $(X_n)$ sur $\mathcal{A}$ ayant pour mesure invariante la mesure uniforme sur $\mathcal{A}$.
+
+Si $\mu$ est une mesure de probabilités, on rappelle que la chaîne de matrice de transition
+\[
+  P^\mu(x,y) =Q(x,y) \min\left(1, \frac{\mu(y)Q(y,x)}{\mu(x) Q(x,y)}\right),
+\]
+admet $\mu$ pour mesure invariante.
+
+\begin{enumerate}
+  \item On pose $\pi$ la mesure uniforme sur $\mathcal{A}$. Montrer que pour tout $(c,d) \in \mathcal{A}$, on a
+  $
+    P^\pi(c,d) = Q(c,d),
+  $
+  avec $P^\pi(c,d) = 0$ si $d \not \in \mathcal{A}$. En d'autres termes, à chaque étape on essaie d'ajouter ou d'enlever un objet uniformément au hasard. Si on essaie d'ajouter un objet tel que le poids total du sac dépasse 10, on ne rajoute pas cet objet.
+  \item Vérifier que la mesure uniforme est bien invariante pour cette chaîne de Markov, et que $X_n$ converge en loi vers $\pi$.
+  \item \textbf{TP-} Construisez une fonction permettant de simuler la chaine de Markov $(X_n)$ de matrice de transition $P^\pi$.
+  \item On note $A$ le cardinal de $\mathcal{A}$ (i.e. le nombre de configurations accessibles) et on suppose que $\max m_i \leq 10$. Montrer que
+  $
+    \lim_{n \to \infty} \frac{1}{n} \sum_{k=1}^n(\ind{\{\|X_k\|=1\}}) = \frac{K}{A}
+  $ p.s.
+  où $\|x\|$ est la norme $1$ de $x$ (i.e. le nombre d'objets dans la configuration).
+  \item \textbf{TP-} Grâce à la fonction définie plus haut, estimez $\frac{K}{A}$ pour $K = 5$ et $w = (2,4,6,8,10)$. Déduisez-en une estimation de $A$, et comparez à la valeur exacte de $10$.
+  \item \textbf{TP-} Estimer la valeur de $A$ lorsque $K = 55$, avec 1 objet de poids 1kg, 2 de poids 2kg, 3 de poids 3kg, ... 10 de poids 10kg.
+\end{enumerate}
+
+\paragraph{Partie 3.}
+On cherche maintenant à trouver une configuration permettant de maximiser le poids total porté dans le sac. Pour ce faire, on se propose d'utiliser la mesure de Gibbs favorisant les sacs lourds. On pose $\mu_\beta$ la mesure de probabilité sur $\mathcal{A}$ définie par
+$
+  \mu_\beta(c) = \frac{1}{Z_\beta} e^{\beta c.m},
+$
+où $Z_\beta$ est une constante de normalisation bien choisie.
+\begin{enumerate}
+  \item On note $M = \max\{c\cdot m, c \in \mathcal{A}\}$ le poids maximal accessible et $\mathcal{M} = \{c \in \mathcal{A} : c\cdot m = M\}$. Montrer que $\lim_{\beta \to \infty} \mu_\beta = \rho$, où $\rho$ est la loi uniforme sur $\mathcal{M}$.
+  \item Décrire l'algorithme de Metropolis-Hastings permettant de simuler $\mu_\beta$ pour une valeur de $\beta$ fixé.
+  \item On se propose alors d'estimer $M$ par $\hat{M}_n := \max_{k \leq n} X^{(\beta)}_k$ où $X^{(\beta)}$ est la chaîne de Markov de matrice de transition $P^{\mu_\beta}$. Montrer que $\lim_{n \to \infty} \hat{M}_n = M$ p.s.
+  \item \textbf{TP-} On pose $K=8$, $w = (3,3,3,5,5,5,5,5)$. On part de $X^{(\beta)}_0 = (0,0,0,1,1,0,0,0)$. Estimer, en fonction du paramètre $\beta$, le nombre moyen d'étapes nécessaires pour obtenir $\hat{M}_n = 9$. On pourra considérer $\beta = 0.01$, $0.1$, $1$ et $10$.
+  \item Expliquer pourquoi une valeur de $\beta$ trop petite ou trop grande peuvent toutes deux conduirent à une convergence ralentie de $(\hat{M}_n)$.
+\end{enumerate}
+
+\paragraph{Partie 4.}
+On considère une chaine de Markov inhomogène $(Z_n)$ de matrice de transition $P^{\mu_{\beta_n}}$ à l'étape $n$.
+\begin{enumerate}
+  \item \textbf{TP-} Construisez une fonction permettant de simuler la chaine $(Z_n)$.
+  \item Étudier la convergence de $(Z_n)$ pour les choix suivants de température inverse : $(\beta_n) \in \{(e^n), (n), (\log n), (\log \log n)\}$.
+  Expliquez les résultats observés.
+\end{enumerate}
+
+\paragraph{Partie 5.}
+Plutôt que d'essayer de déterminer le sac à dos le plus lourd, nous sommes maintenant intéressés par la répartition des différents objets dans le plus petit nombre de sac à dos possibles de poids tous inférieurs à 10kg. Proposer une variation des algorithmes et méthodes proposées jusqu'ici pour déterminer de façon stochastique des solutions à ce problème. Tester sur un vecteur de $100$ objets de poids choisi aléatoirement entre 1 et 10kg.
+\end{exercice}
+
+\begin{exercice}[Recuit simulé et refroidissement trop rapide]
+Soit $E=\{1,2,3\}$ et $V:E\to \R$ donnée par $V(1)=0$, $V(2)=1$ et $V(3)=-1$ (la fonction $V$ possède un minimum local en $1$ et un minimum global en $3$).
+
+\begin{enumerate}
+\item Ecrire l'algorithme de recuit simulé pour la matrice de transition $Q_{1,2} = Q_{3,2} = 1$, $Q_{2,1} = Q_{2,3} = 1/2$ et la suite de température $T_n=\frac{1}{c\log (n+1)}$, $n\geq 1$, $c>0$.
+\item Ecrire la matrice de transition $P_n$ correspondante à la température $T_n$.
+%\item\textbf{ TP- } Simuler numériquement l'algorithme du recuit simuler et tracer plusieurs trajectoires pour différentes valeurs de $c>0$.
+\item On suppose maintenant que la chaîne de Markov $(X_n)_{n\geq 0}$ évoluant selon ces transitions et part de $X_0=1$. Montrer que, pour tout $n\geq 2$, on a
+$\P[X_n=3]\leq \sum_{k=0}^{n-2}\P[X_k=1,X_{k+1}=2] .$
+\item Montrer que $\P[X_k=1,X_{k+1}=2]\le \P[X_{k+1}=2\lvert X_k=1 ]$. En déduire que pour $c$ suffisamment grand, $\P[X_n= 3]$ ne tend pas vers $1$ lorsque $n$ tend vers l'infini.
+\end{enumerate}
+\end{exercice}
+
+\end{document}

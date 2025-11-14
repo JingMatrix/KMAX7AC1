@@ -84,7 +84,7 @@ def ex1():
     ax3_twin = ax3.twinx()
     ax3_twin.plot(t_conv, n_conv / t_conv, 'r--', alpha=0.7, label='$N_t/t$')
     ax3_twin.axhline(lam, color='g', linestyle=':',
-                     lw=2, label=f'$\lambda={lam}$')
+                     lw=2, label=f'$\\lambda={lam}$')
     ax3_twin.set_ylabel("$N_t/t$")
     ax3_twin.legend(loc='lower right')
 
@@ -133,7 +133,7 @@ def ex5():
     lam_s, mu_s = 2.0, 3.0
     t_s, k_s = simulate_queue(lam_s, mu_s, 200)
     ax1.plot(t_s, k_s)
-    ax1.set_title(f'Cas stable ($\lambda={lam_s} < \mu={mu_s}$)')
+    ax1.set_title(f'Cas stable ($\\lambda={lam_s} < \\mu={mu_s}$)')
     ax1.grid(True)
 
     # Cas critique: lambda = mu
@@ -141,7 +141,7 @@ def ex5():
     lam_c, mu_c = 2.0, 2.0
     t_c, k_c = simulate_queue(lam_c, mu_c, 200)
     ax2.plot(t_c, k_c)
-    ax2.set_title(f'Cas critique ($\lambda={lam_c} = \mu={mu_c}$)')
+    ax2.set_title(f'Cas critique ($\\lambda={lam_c} = \\mu={mu_c}$)')
     ax2.grid(True)
 
     # Cas explosif: lambda > mu
@@ -149,7 +149,7 @@ def ex5():
     lam_e, mu_e = 3.0, 2.0
     t_e, k_e = simulate_queue(lam_e, mu_e, 200)
     ax3.plot(t_e, k_e)
-    ax3.set_title(f'Cas instable ($\lambda={lam_e} > \mu={mu_e}$)')
+    ax3.set_title(f'Cas instable ($\\lambda={lam_e} > \\mu={mu_e}$)')
     ax3.grid(True)
     plt.tight_layout()
     plt.show()
@@ -161,7 +161,7 @@ def ex5():
     ax_q7 = plt.subplot(1, 2, 1)
     ax_q7.plot(t_e_long, k_e_long / t_e_long, label='$W_t/t$')
     ax_q7.axhline(lam_e - mu_e, color='r', linestyle='--',
-                  label=f'$\lambda-\mu = {lam_e - mu_e:.1f}$')
+                  label=f'$\\lambda-\\mu = {lam_e - mu_e:.1f}$')
     ax_q7.set_title('Convergence de $W_t/t$ dans le cas instable')
     ax_q7.set_xlabel('Temps (t)')
     ax_q7.set_ylim(bottom=0)
@@ -190,7 +190,7 @@ def ex5():
     ax_q8 = plt.subplot(1, 2, 2)
     ax_q8.bar(k_th, pi_empirique, label='Proportion de temps (empirique)')
     ax_q8.plot(k_th, pi_theorique, 'ro-', label='Loi stationnaire (théorique)')
-    ax_q8.set_title('Vérification de la loi stationnaire ($\lambda < \mu$)')
+    ax_q8.set_title('Vérification de la loi stationnaire ($\\lambda < \\mu$)')
     ax_q8.set_xlim(right=15)  # Zoom
     ax_q8.legend()
     plt.tight_layout()
