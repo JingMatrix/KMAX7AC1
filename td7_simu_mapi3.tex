@@ -1,0 +1,484 @@
+\documentclass[solutions]{exercices}
+
+\usepackage[french]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{multicol,epsfig,csquotes}
+\usepackage{enumerate}
+\usepackage{xcolor}
+\usepackage{amsmath,amssymb,amsthm,enumitem,bbm,latexsym}
+\usepackage[normalem]{ulem}
+\usepackage{hyperref}
+\usepackage{listings}
+
+\usetikzlibrary{arrows.meta, automata,
+                positioning,
+                quotes}
+
+%%%%%%%%%% environnements
+%\theoremstyle{definition}
+%\newtheorem{exo}{Exercice}
+
+
+%%%%%%%%%% macros
+
+
+\newtheorem{thmfr}{Théorème}[section]
+%\newtheorem*{thmfr*}{Théorème}
+\newtheorem{defnfr}[thmfr]{Définition}
+\newtheorem{corfr}[thmfr]{Corollaire}
+\newtheorem{remfr}[thmfr]{Remarque}
+%\newtheorem*{remfr*}{Remarque}
+\newtheorem{propfr}[thmfr]{Proposition}
+\newtheorem{lemfr}[thmfr]{Lemme}
+
+
+\begin{document}
+{
+\noindent {\sc M1 MAPI3  -  Simulations stochastiques \hfill 2025-2026}\\
+Jianyu Ma \hfill \textit{jianyu.ma@math.univ-toulouse.fr}\\
+Bastien Mallein \hfill \textit{bastien.mallein@math.univ-toulouse.fr}\\
+Pierre Petit \hfill \textit{pierre.petit@math.univ-toulouse.fr}}
+
+\vspace{2ex}
+
+\hrule
+\begin{center}
+	\textbf{\large TD 7 \& TP 6 - Algorithme de Robbins--Monro}
+	\vspace{2ex}
+\end{center}
+\hrule
+
+\bigskip
+
+\begin{exercice}[Regression et descente de gradient stochastique]
+
+	\textbf{Partie 1 - Régression linéaire :}
+	On suppose que l'on observe des couples $(Y_i, X_i)$ i.i.d suivant un modèle de régression
+	\[
+		Y_i=a^*X_i+b^*+\epsilon_i
+	\]
+	où $\epsilon_i \sim \mathcal{N}(0,1)$ i.i.d.\@ et est indépendant de $X_i$.
+	On veut écrire une procédure de type Robbins-Monro pour estimer séquentiellement $(a^*,b^*)$ à partir des données.
+	\begin{enumerate}
+		\item Vérifier que si $Y=a^* X+b^*+\epsilon$,  le couple $(a^*,b^*)$ est un minimum de la fonction $\phi(a,b)=\E[(Y-(aX+b))^2]$.
+		\item On rappelle que l'algorithme de Robbins-Monro pour trouver les points d'annulation d'un gradient $\nabla \phi(\theta)=\E( H(\theta,X))$ est donné par $  \theta_{n+1}=\theta_n-\gamma_{n+1}H(\theta_n,X_{n+1})$ pour $(\gamma_n)$ une suite de pas positifs bien choisie et $(X_n)$ une suite de variables aléatoires i.i.d. de même loi que $X$. Proposer un algorithme de type Robbins-Monro pour estimer le couple $(a,b)$ à partir des réalisations de $(X_n,Y_n)$.
+		\item \textbf{TP - }On veut maintenant tester cet algorithme sur un jeu de donné.
+		      Charger le jeu de donné en utilisant les commandes :
+		      \begin{verbatim}
+U=np.loadtxt('TP6-exo1.txt')
+X=U[:,0]
+Y=U[:,1]
+\end{verbatim}
+		      Afficher sur un graphique les données.
+		\item \textbf{TP - } Implémenter l'algorithme de Robbins Monro sur les données et tracer sur le graphique précédent la droite de regression obtenue ($y=a_nx+b_n$) {(on utilisera successivement différentes suites de pas $\gamma_{n+1}=0.2/(n+1) $, et $\gamma_{n+1}=1.3/(n+1)$ )}. Que pensez-vous de la convergence ?
+		\item \textbf{TP - }Comparer les valeurs obtenues avec l'estimateur des moindres carrés pour la régression linéaire.
+		      (Pour rappel, l'estimateur des moindres carré est donné par
+		      $\hat{a}=\frac{\sum(X_i-\bar{X})(Y_i-\bar{Y})}{\sum(X_i-\bar{X})^2}$ et $\hat{b}=\bar{Y}-\hat{a}\bar{X}$.)
+	\end{enumerate}
+
+	\begin{solution}
+		\begin{enumerate}
+			\item Pour trouver le minimum de la fonction $\phi(a,b)$, qui est une fonction des moindres carrés, on cherche les points où son gradient s'annule.
+			      \[ \phi(a,b) = \mathbb{E}[(Y-aX-b)^2]. \]
+			      La fonction à l'intérieur de l'espérance est différentiable et convexe par rapport à $(a,b)$. On peut donc dériver sous le signe espérance. Le gradient de $\phi$ par rapport au vecteur $\theta = (a,b)$ est $\nabla \phi(a,b) = (\frac{\partial \phi}{\partial a}, \frac{\partial \phi}{\partial b})$.
+			      \[ \frac{\partial \phi}{\partial a} = \mathbb{E}\left[\frac{\partial}{\partial a}(Y-aX-b)^2\right] = \mathbb{E}[-2X(Y-aX-b)]. \]
+			      \[ \frac{\partial \phi}{\partial b} = \mathbb{E}\left[\frac{\partial}{\partial b}(Y-aX-b)^2\right] = \mathbb{E}[-2(Y-aX-b)]. \]
+			      Le gradient est nul si $\mathbb{E}[X(Y-aX-b)]=0$ et $\mathbb{E}[Y-aX-b]=0$.
+
+			      Remplaçons $Y$ par sa définition $Y=a^* X+b^*+\epsilon$. En utilisant $\E[\epsilon]=0$ et l'indépendance de $\epsilon$ et $X$ (qui implique $\E[X\epsilon]=\E[X]\E[\epsilon]=0$) :
+			      \begin{align*}
+				      \mathbb{E}[Y-aX-b]    & = \mathbb{E}[a^*X+b^*+\epsilon-aX-b] = (a^*-a)\mathbb{E}[X] + (b^*-b).                   \\
+				      \mathbb{E}[X(Y-aX-b)] & = \mathbb{E}[X(a^*X+b^*+\epsilon-aX-b)] = (a^*-a)\mathbb{E}[X^2] + (b^*-b)\mathbb{E}[X].
+			      \end{align*}
+			      Le gradient s'annule donc si $(a,b)$ est solution du système linéaire :
+			      \[ \begin{pmatrix} \mathbb{E}[X^2] & \mathbb{E}[X] \\ \mathbb{E}[X] & 1 \end{pmatrix} \begin{pmatrix} a^*-a \\ b^*-b \end{pmatrix} = \begin{pmatrix} 0 \\ 0 \end{pmatrix}. \]
+			      La matrice de ce système a pour déterminant $\mathbb{E}[X^2] - (\mathbb{E}[X])^2 = \text{Var}(X)$. Si on suppose que $X$ n'est pas une variable aléatoire constante (i.e., $\text{Var}(X) > 0$), la matrice est inversible et l'unique solution est $a^*-a=0$ et $b^*-b=0$, soit $(a,b)=(a^*,b^*)$.
+			      Puisque $\phi$ est une fonction quadratique (donc convexe), ce point critique est bien un minimum global.
+
+			\item L'algorithme de Robbins-Monro vise à trouver les zéros du gradient $\nabla \phi(\theta) = \mathbb{E}[H(\theta,Z)]$. Il prend la forme $\theta_{n+1}=\theta_n-\gamma_{n+1}H(\theta_n,Z_{n+1})$.
+			      Ici, le paramètre est $\theta=(a,b)$ et l'observation est $Z=(X,Y)$. Le gradient est $\nabla\phi(a,b) = \mathbb{E}\left[-2(Y-aX-b) \begin{pmatrix} X \\ 1 \end{pmatrix}\right]$.
+			      Nous pouvons donc choisir pour $H$ le terme à l'intérieur de l'espérance, qui est un estimateur non biaisé du gradient :
+			      \[ H((a,b),(X,Y)) = -2(Y-aX-b)\begin{pmatrix} X \\ 1 \end{pmatrix}. \]
+			      En notant $\theta_n=(a_n, b_n)$ et en utilisant la nouvelle observation $(X_{n+1}, Y_{n+1})$, l'algorithme s'écrit :
+			      \[ \begin{pmatrix} a_{n+1} \\ b_{n+1} \end{pmatrix} = \begin{pmatrix} a_n \\ b_n \end{pmatrix} - \gamma_{n+1} \left( -2(Y_{n+1}-a_nX_{n+1}-b_n) \begin{pmatrix} X_{n+1} \\ 1 \end{pmatrix} \right). \]
+			      Cela donne les deux équations de mise à jour explicites :
+			      \[ a_{n+1} = a_n + 2\gamma_{n+1} (Y_{n+1}-a_nX_{n+1}-b_n)X_{n+1} \]
+			      \[ b_{n+1} = b_n + 2\gamma_{n+1} (Y_{n+1}-a_nX_{n+1}-b_n). \]
+			      La suite des pas $(\gamma_n)$ doit satisfaire les conditions classiques $\sum \gamma_n = \infty$ et $\sum \gamma_n^2 < \infty$, par exemple $\gamma_n=c/n$.
+
+			\item \textbf{TP -} Voir le script Python.
+			\item \textbf{TP -} Voir le script Python.
+			\item \textbf{TP -} Voir le script Python.
+		\end{enumerate}
+	\end{solution}
+
+	\textbf{Partie 2 - Modèle autoregressif : }
+	On considère ici le modèle autorégressif réel
+	suivant~:
+	\[
+		X_{n+1}=\theta^* X_{n}+\epsilon_{n+1}
+	\]
+	\begin{itemize}
+		\item La suite observ\'ee est $X=(X_{n})_{n\geq 0}$ (on choisit $X_{0}=1$
+		      arbitrairement).
+		\item Le bruit $\epsilon= (\epsilon_{n})_{n\geq 0}$ est une suite de variables
+		      al\'eatoires i.i.d. $\mathcal{N}(0,\sigma^2).$
+		\item Le paramètre $\theta^*\in(-1,1)$ est inconnu.
+	\end{itemize}
+	On veut construire un algorithme de gradient stochastique pour estimer la valeur du paramètre $\theta^*$ inconnue. Pour cela, on suppose que l'on observe une suite de couple $(X_n, X_{n+1})_{n\ge1}$ et que l'on souhaite minimiser la fonction
+	\[
+		f(\theta)=\E((X_{n+1}-\theta X_n)^2).
+	\]
+	\begin{enumerate}
+		\item Justifier que l'algorithme récursif $$\theta_{n+1}=\theta_n+2\gamma_{n+1}X_n(X_{n+1}-\theta_nX_n)$$ est l'algorithme de gradient stochastique associé.
+		\item \textbf{TP - } En choisissant une valeur de $\theta^*$ simuler un jeu de données correspondant au modèle auto-regressif.
+		\item \textbf{TP - }  Coder l'agorithme de Robbins Monro pour ces données. Étudier empiriquement la convergence presque sure de l'algorithme et le théorème de la limite centrale pour la suite de pas $\gamma_{n}=g_1/n$ et $g_1<1$.
+	\end{enumerate}
+\end{exercice}
+
+\begin{solution}
+	\begin{enumerate}
+		\item On cherche à minimiser la fonction $f(\theta) = \mathbb{E}[(X_{n+1}-\theta X_n)^2]$. Cette fonction est quadratique en $\theta$, donc convexe, et son minimum est atteint lorsque sa dérivée s'annule. En justifiant la dérivation sous le signe espérance (car l'expression est un polynôme), on obtient :
+		      \[ f'(\theta) = \frac{d}{d\theta}\mathbb{E}[(X_{n+1}-\theta X_n)^2] = \mathbb{E}\left[-2X_n(X_{n+1}-\theta X_n)\right]. \]
+		      Nous voulons trouver $\theta^*$ tel que $f'(\theta^*) = 0$.
+
+		      L'algorithme de Robbins-Monro vise à trouver les zéros d'une fonction $g(\theta)$ qui peut s'écrire comme une espérance $g(\theta) = \mathbb{E}[H(\theta, Z)]$. L'algorithme prend la forme $\theta_{n+1} = \theta_n - \gamma_{n+1} H(\theta_n, Z_{n+1})$.
+
+		      Dans notre cas, on pose $g(\theta) = f'(\theta)$. L'observation au pas $n+1$ est le couple $Z_{n+1} = (X_n, X_{n+1})$. On peut définir la fonction $H$ par :
+		      \[ H(\theta, (X_n, X_{n+1})) = -2X_n(X_{n+1}-\theta X_n). \]
+		      On vérifie bien que $\mathbb{E}[H(\theta, Z_{n+1}) | \mathcal{F}_n] = f'(\theta)$, où $\mathcal{F}_n = \sigma(X_0, ..., X_n)$, faisant de $H$ un estimateur non-biaisé de la dérivée.
+
+		      L'algorithme de Robbins-Monro s'écrit alors :
+		      \[ \theta_{n+1} = \theta_n - \gamma_{n+1} \left( -2X_n(X_{n+1}-\theta_n X_n) \right) = \theta_n + 2\gamma_{n+1}X_n(X_{n+1}-\theta_n X_n). \]
+		      Ceci est précisément l'algorithme de descente de gradient stochastique proposé pour minimiser $f(\theta)$.
+		\item \textbf{TP -} Voir le script Python.
+		\item \textbf{TP -} Voir le script Python.
+	\end{enumerate}
+\end{solution}
+
+\begin{exercice}[Bandit à deux bras]
+	Une machine à sous a deux leviers. La probabilité de gagner avec le levier $A$ (respectivement $B$) est inconnue et vaut $p_A$ (resp. $p_B$). Un joueur va chercher à optimiser son gain moyen, par un choix judicieux des leviers.
+
+	\noindent\textbf{Première stratégie :} À l'instant $n+1$, il choisit le levier $A$ si le taux de réussite du levier $A$ est supérieur ou égal au taux de réussite du levier $B$, où le taux de réussite du levier est calculé par $\frac{1 + \text{nombre de réussites}}{1 + \text{nombre de tentatives}}$, calculée sur les états précédents. On initialise l'algorithme en supposant que chacun des deux  disant que tant qu'on n'a pas joué avec un levier, le taux de réussite est nul.
+	\begin{enumerate}
+		\item On suppose que $p_A>p_B$. Expliquer pourquoi la situation suivante représente un piège susceptible d'arriver avec une probabilité non nulle : le joueur perd d'abord avec le levier $A$ puis gagne avec le levier $B$.
+		\item \textbf{TP - }Simuler cette stratégie.
+	\end{enumerate}
+
+	\begin{solution}
+		\begin{enumerate}
+			\item Le piège réside dans le fait que l'algorithme peut se fixer sur le levier sous-optimal (ici, B) après une séquence de résultats initiaux malchanceux. Supposons un départ à zéro (0 tentative, 0 succès pour chaque levier). La règle d'initialisation nous dit que le taux de réussite est $\frac{1 + \text{réussites}}{1 + \text{tentatives}}$.
+			      \begin{itemize}
+				      \item \textbf{Initialisation :} Taux de A = $\frac{1+0}{1+0}=1$. Taux de B = $\frac{1+0}{1+0}=1$. En cas d'égalité, on choisit A.
+				      \item \textbf{Premier tirage :} Le joueur choisit A et perd. La probabilité de cet événement est $1-p_A$.
+				            Les taux de réussite deviennent :
+				            \begin{itemize}
+					            \item Taux de A : $\frac{1+0}{1+1} = 0.5$ (1 tentative, 0 succès).
+					            \item Taux de B : $\frac{1+0}{1+0} = 1$ (0 tentative, 0 succès).
+				            \end{itemize}
+				      \item \textbf{Deuxième tirage :} Comme le taux de B (1) est maintenant supérieur à celui de A (0.5), le joueur choisit le levier B. Il gagne. La probabilité de cet événement est $p_B$.
+				            Les taux de réussite deviennent :
+				            \begin{itemize}
+					            \item Taux de A : $\frac{1+0}{1+1} = 0.5$.
+					            \item Taux de B : $\frac{1+1}{1+1} = 1$ (1 tentative, 1 succès).
+				            \end{itemize}
+			      \end{itemize}
+			      À ce stade, le joueur est "piégé". Le taux de réussite de B est de 1, et celui de A est de 0.5. Le joueur continuera à choisir B. Même si B perd ensuite, son taux de réussite diminuera lentement (passant à $2/3 \approx 0.67$), restant probablement au-dessus de celui de A. Le joueur n'explorera plus jamais le levier A, qui est pourtant le meilleur.
+
+			      La probabilité que ce scénario piège initial (perdre avec A, puis gagner avec B) se produise est le produit des probabilités des événements indépendants :
+			      \[ \P(\text{piège}) = (1-p_A) \times p_B. \]
+			      Comme $p_A, p_B \in (0,1)$, cette probabilité est non nulle.
+			\item \textbf{TP -} Voir le script Python.
+		\end{enumerate}
+	\end{solution}
+
+	\noindent \textbf{Deuxième stratégie :} Le joueur commence avec le levier $A$. À l'instant $n+1$, il utilise le levier utilisé à l'instant précédent s'il a gagné, l'autre levier s'il a perdu.
+	\begin{enumerate}
+		\item On note $Z_n$ le nom du levier tiré par le joueur à l'instant $n$. Montrer que $Z_n$ est une chaîne de Markov dont on déterminera la mesure invariante.
+		\item En déduire le gain moyen du joueur sur le temps long en fonction de $p_A$ et $p_B$.
+		\item \textbf{TP -} Comparer le gain moyen du joueur sur 100 parties pour ces deux stratégies, pour $p_A = 0.9$ et $p_B = 0.1$, et pour $p_A = 0.45$ et $p_B = 0.55$.
+	\end{enumerate}
+
+	\begin{solution}
+		\begin{enumerate}
+			\item Soit $Z_n \in \{A, B\}$ le levier choisi à l'étape $n$. Le choix du levier $Z_{n+1}$ ne dépend que de $Z_n$ et du résultat du tirage à l'instant $n$ (succès ou échec), et non des choix précédents. C'est donc une chaîne de Markov. La matrice de transition $P_{ij} = \mathbb{P}(Z_{n+1}=j | Z_n=i)$ est :
+			      \begin{itemize}
+				      \item $P_{AA} = p_A$ (il gagne avec A, il reste sur A).
+				      \item $P_{AB} = 1-p_A$ (il perd avec A, il change pour B).
+				      \item $P_{BB} = p_B$ (il gagne avec B, il reste sur B).
+				      \item $P_{BA} = 1-p_B$ (il perd avec B, il change pour A).
+			      \end{itemize}
+			      Soit $P = \begin{pmatrix} p_A & 1-p_A \\ 1-p_B & p_B \end{pmatrix}$. La mesure invariante $\pi = (\pi_A, \pi_B)$ vérifie $\pi P = \pi$ et $\pi_A+\pi_B=1$. La première équation du système est :
+			      $\pi_A p_A + \pi_B (1-p_B) = \pi_A$.
+			      $\pi_A - \pi_A p_A = \pi_B (1-p_B) \implies \pi_A(1-p_A) = (1-\pi_A)(1-p_B)$.
+			      $\pi_A - \pi_A p_A = 1 - p_B - \pi_A + \pi_A p_B \implies \pi_A(2 - p_A - p_B) = 1 - p_B$.
+			      La mesure invariante est donc : $\pi_A = \frac{1-p_B}{2-p_A-p_B}$ et $\pi_B = \frac{1-p_A}{2-p_A-p_B}$.
+			\item Le gain moyen à long terme est l'espérance du gain sous la mesure stationnaire :
+			      \[ G = \pi_A p_A + \pi_B p_B = \frac{(1-p_B)p_A + (1-p_A)p_B}{2-p_A-p_B} = \frac{p_A - p_A p_B + p_B - p_A p_B}{2-p_A-p_B} = \frac{p_A+p_B-2p_Ap_B}{2-p_A-p_B}. \]
+			\item \textbf{TP -} Voir le script Python.
+		\end{enumerate}
+	\end{solution}
+
+	\noindent\textbf{Troisième stratégie :} à l'instant $n+1$, il choisit la machine $A$ (resp. $B$) avec probabilité $\theta_{n}$ (resp. $1-\theta_{n}$) et
+	\[
+		\theta_{n+1}=\begin{cases}
+			\theta_{n}                        & \text{ s'il a perdu}           \\
+			\theta_{n}+\gamma_n(1-\theta_{n}) & \text{ s'il a gagné avec $A$}  \\
+			\theta_{n}-\gamma_n\theta_{n}     & \text{ s'il a gagné avec $B$.}
+		\end{cases}
+	\]
+	On choisit arbitrairement $\theta_0 \in (0,1)$, et $(\gamma_{n})$ est une suite d\'ecroissante positive non sommable et de carr\'e sommable (avec $0<\gamma_{0}<1$). Il est possible de montrer que $\theta_n$ converge vers $1$ si $A$ est la meilleure machine ($p_A>p_B$) et vers $0$ sinon.
+	\begin{enumerate}
+		\item Montrer que $0<\theta_{n}<1$.
+		\item Calculer le champ moyen $\mathbb{E}[(\theta_{n+1}-\theta_{n})/\gamma_n|\mathcal{F}_{n}]$ de l'algorithme.
+		\item Montrer que si $p_A>p_B$ alors $\mathbb{E}[\theta_n]$ est croissant .
+		\item Vérifier que si $(A_n, B_n)$ sont des évènements indépendants de probabilités respectives, $p_A$, $p_B$ et sont indépendants d'une suite de variables i.i.d uniformes $( U_n)$ sur $[0,1]$ alors on peut écrire
+		      \[
+			      \theta_{n+1}=\theta_{n}-\gamma_{n}\left(\theta_n\mathbf{1}_{B_{n+1}}\mathbf{1}_{U_{n+1}>\theta_n}- (1-\theta_n)\mathbf{1}_{A_{n+1}}\mathbf{1}_{U_{n+1}\le \theta_n}) \right)
+		      \]
+		      Pour quelle fonction $h$ écrit-on un algorithme de Robbins-Monro ? Vérifier que l'algorithme converge vers $0$ ou $1$ en fonction de la différence $p_A-p_B$.
+		\item \textbf{TP - }Illustrer cette stratégie par des simulations. En particulier, mettre en évidence la convergence du taux de réussite global vers $\max(p_A,p_B)$.
+	\end{enumerate}
+\end{exercice}
+
+\begin{solution}
+	\begin{enumerate}
+		\item Par récurrence. $\theta_0 \in (0,1)$. Supposons $\theta_n \in (0,1)$. Alors $1-\theta_n \in (0,1)$. On suppose $\gamma_n \in (0,1)$.
+		      \begin{itemize}
+			      \item Si A est choisi et gagne : $\theta_{n+1} = \theta_n + \gamma_n(1-\theta_n) = (1-\gamma_n)\theta_n + \gamma_n$. C'est un barycentre de $\theta_n$ et 1, donc $\theta_n < \theta_{n+1} < 1$.
+			      \item Si B est choisi et gagne : $\theta_{n+1} = \theta_n - \gamma_n\theta_n = \theta_n(1-\gamma_n)$. C'est un produit de deux nombres dans $(0,1)$, donc $0 < \theta_{n+1} < \theta_n$.
+			      \item En cas de perte, $\theta_{n+1}=\theta_n \in (0,1)$.
+		      \end{itemize}
+		      Dans tous les cas, si $\theta_n \in (0,1)$, alors $\theta_{n+1} \in (0,1)$.
+		\item L'espérance est prise sur le choix du levier et son résultat.
+		      \begin{align*}
+			      \mathbb{E}[(\theta_{n+1}-\theta_n)/\gamma_n | \mathcal{F}_n]
+			       & = \P(\text{A choisi et gagne})(\Delta\theta/\gamma_n) + \P(\text{B choisi et gagne})(\Delta\theta/\gamma_n) \\
+			       & = (\theta_n p_A)(1-\theta_n) + ((1-\theta_n)p_B)(-\theta_n)                                                 \\
+			       & = \theta_n(1-\theta_n)p_A - \theta_n(1-\theta_n)p_B                                                         \\
+			       & = \theta_n(1-\theta_n)(p_A-p_B).
+		      \end{align*}
+		\item $\mathbb{E}[\theta_{n+1}]-\mathbb{E}[\theta_n] = \mathbb{E}[\gamma_n h(\theta_n)] = \gamma_n \mathbb{E}[\theta_n(1-\theta_n)(p_A-p_B)]$.
+		      Comme $\theta_n \in (0,1)$, le terme $\theta_n(1-\theta_n)$ est p.s. positif. Si $p_A > p_B$, alors $p_A-p_B > 0$. L'espérance d'une variable positive est positive, donc $\mathbb{E}[\theta_{n+1}]-\mathbb{E}[\theta_n] > 0$.
+
+		\item La réécriture de l'algorithme utilise une variable aléatoire uniforme $U_{n+1}$ pour choisir le levier. Si $U_{n+1} \le \theta_n$, on choisit A (probabilité $\theta_n$) ; sinon, on choisit B (probabilité $1-\theta_n$). Les variables $\mathbf{1}_{A_{n+1}}$ et $\mathbf{1}_{B_{n+1}}$ indiquent un gain pour les leviers respectifs.
+		      L'incrément $\theta_{n+1}-\theta_n$ est non nul seulement en cas de gain, et la formule est correcte.
+
+		      L'algorithme de Robbins-Monro s'écrit $\theta_{n+1}=\theta_n-\gamma_{n}H(\theta_n,Z_{n+1})$. En identifiant les termes, on pose :
+		      \[ H(\theta, Z) = \theta\mathbf{1}_{B}\mathbf{1}_{U>\theta} - (1-\theta)\mathbf{1}_{A}\mathbf{1}_{U\le \theta} \]
+		      où $Z=(A,B,U)$ représente les variables aléatoires du tirage. La convergence de l'algorithme est gouvernée par les zéros du champ moyen $h(\theta) = - \mathbb{E}[H(\theta,Z)]$.
+		      Comme calculé à la question 2, le champ moyen associé est $\mathbb{E}[(\theta_{n+1}-\theta_{n})/\gamma_n|\mathcal{F}_{n}] = \theta_n(1-\theta_n)(p_A-p_B)$. L'algorithme cherche donc les zéros de $h(\theta) = \theta(1-\theta)(p_A-p_B)$.
+		      Les racines de $h(\theta)=0$ sont $\theta=0$ et $\theta=1$.
+
+		      Pour démontrer rigoureusement la convergence de cet algorithme, une analyse simple n'est pas suffisante.
+		      La preuve de convergence nécessite une approche plus sophistiquée en trois étapes :
+		      \begin{enumerate}
+			      \item D'abord, nous utilisons la théorie des martingales pour prouver que la suite $(\theta_n)$ converge bien vers une limite $\theta_\infty$.
+			      \item Ensuite, nous utilisons le théorème de Robbins-Siegmund et une fonction de Lyapunov pour caractériser l'ensemble des valeurs possibles pour cette limite.
+			      \item Enfin, nous synthétisons ces deux résultats pour obtenir la conclusion finale, qui est subtile.
+		      \end{enumerate}
+
+		      Supposons pour toute la démonstration que $p_A > p_B$. Le cas $p_B > p_A$ est symétrique.
+
+		      \textbf{Étape 1 : Existence de la limite (Théorie des Martingales)}
+
+		      Considérons la forme additive de l'algorithme : $\theta_{n+1} = \theta_n + \gamma_n K_n$. Comme démontré à la question 2, l'espérance conditionnelle de $\theta_{n+1}$ vérifie :
+		      \[ \mathbb{E}[\theta_{n+1}|\mathcal{F}_n] = \theta_n + \gamma_n \mathbb{E}[K_n|\mathcal{F}_n] = \theta_n + \gamma_n \underbrace{\theta_n(1-\theta_n)(p_A-p_B)}_{\ge 0}. \]
+		      Puisque $p_A-p_B>0$, le terme de drift est positif, et nous avons $\mathbb{E}[\theta_{n+1}|\mathcal{F}_n] \ge \theta_n$. La suite $(\theta_n)$ est donc une sous-martingale.
+		      De plus, comme démontré à la question 1, si $\theta_0 \in (0,1)$, alors $\theta_n \in (0,1)$ pour tout $n$. La suite est donc bornée.
+
+		      Le théorème de la convergence des martingales (de Doob) s'applique : une sous-martingale bornée converge presque sûrement.
+		      Nous avons donc la certitude que $\theta_n$ converge vers une variable aléatoire $\theta_\infty$. C'est le fondement de notre raisonnement.
+
+		      \textbf{Étape 2 : Caractérisation de la limite (Théorème de Robbins-Siegmund)}
+
+		      Maintenant que nous savons que la limite existe, nous cherchons à déterminer ses valeurs possibles. Pour cela, nous utilisons une fonction de Lyapunov mesurant la distance au carré à la cible que l'on espère atteindre, $\theta^*=1$.
+		      Soit $V(\theta) = (\theta-1)^2$.
+		      L'algorithme s'écrit $\theta_{n+1} = \theta_n - \gamma_n H_n$, où $H_n = H(\theta_n, Z_{n+1})$.
+		      Notons que
+		      \begin{align*}
+			      V(\theta_{n+1}) & = ((\theta_n-1) - \gamma_n H_n)^2                                \\
+			                      & = (\theta_n-1)^2 - 2\gamma_n (\theta_n-1) H_n + \gamma_n^2 H_n^2 \\
+			                      & = V(\theta_n) - 2\gamma_n (\theta_n-1) H_n + \gamma_n^2 H_n^2.
+		      \end{align*}
+		      Prenons l'espérance conditionnelle par rapport à $\mathcal{F}_n$ :
+		      \[ \mathbb{E}[V(\theta_{n+1})|\mathcal{F}_n] = V(\theta_n) - 2\gamma_n (\theta_n-1) \mathbb{E}[H_n|\mathcal{F}_n] + \gamma_n^2 \mathbb{E}[H_n^2|\mathcal{F}_n]. \]
+		      Nous avons $\mathbb{E}[H_n|\mathcal{F}_n] = -h(\theta_n) = \theta_n(1-\theta_n)(p_B-p_A)$. Le terme central devient :
+		      \[ -2\gamma_n(\theta_n-1)h(\theta_n) = -2\gamma_n(\theta_n-1)\theta_n(1-\theta_n)(p_B-p_A) = -2\gamma_n\theta_n(1-\theta_n)^2(p_A-p_B). \]
+		      Le terme d'erreur est borné, car $|H_n|\le 1$, donc $\mathbb{E}[H_n^2|\mathcal{F}_n] \le 1$.
+		      On obtient l'inégalité clé :
+		      \[ \mathbb{E}[V(\theta_{n+1})|\mathcal{F}_n] \le V(\theta_n)
+			      + \underbrace{\gamma_n^2}_{\beta_{n+1}}
+			      - \underbrace{2\gamma_n \theta_n (1-\theta_n)^2 (p_A-p_B)}_{U_{n+1}}
+			      . \]
+		      Cette inégalité est de la forme requise par le théorème de Robbins-Siegmund avec $V_n=V(\theta_n)$, $\alpha_{n+1}=0$, $\beta_{n+1}=\gamma_n^2$ et $U_{n+1} = 2\gamma_n \theta_n (1-\theta_n)^2 (p_A-p_B) \ge 0$.
+		      Les conditions du théorème de Robbins-Siegmund sont satisfaites car $\sum \beta_n = \sum \gamma_n^2 < \infty$ et $U_n \ge 0$. Une des conclusions du théorème est que la somme des termes de "force corrective" est finie :
+		      \[ \sum_{n=1}^\infty U_n = \sum_{n=1}^{\infty} \gamma_n \left( 2\theta_n (1-\theta_n)^2 (p_A-p_B) \right) < \infty \quad \text{p.s.} \]
+
+		      \textbf{Étape 3 : Synthèse et conclusion rigoureuse}
+
+		      Nous combinons maintenant les résultats des deux étapes par un raisonnement par l'absurde.
+		      \begin{itemize}
+			      \item De l'étape 1, nous savons que $\theta_n \to \theta_\infty$ p.s.
+			      \item Par continuité, la suite $k_n = 2\theta_n(1-\theta_n)^2(p_A-p_B)$ converge donc p.s. vers $L = 2\theta_\infty(1-\theta_\infty)^2(p_A-p_B)$.
+		      \end{itemize}
+		      Supposons qu'il existe un événement de probabilité non nulle sur lequel la limite $\theta_\infty$ prend une valeur $c \in (0,1)$. Sur cet événement, la limite $L$ serait une constante strictement positive.
+
+		      Par définition de la convergence, si $k_n \to L > 0$, alors il existe un rang $N$ à partir duquel $k_n > L/2$ pour tout $n>N$.
+		      Considérons la somme de l'étape 2 sur cet événement :
+		      \[ \sum_{n=1}^\infty \gamma_n k_n = \sum_{n=1}^N \gamma_n k_n + \sum_{n=N+1}^\infty \gamma_n k_n > \sum_{n=1}^N \gamma_n k_n + \sum_{n=N+1}^\infty \gamma_n (L/2). \]
+		      Puisque $\sum \gamma_n = \infty$, la somme de queue $\sum_{n=N+1}^\infty \gamma_n$ diverge également. Le membre de droite de l'inégalité est donc infini. Cela impliquerait que $\sum \gamma_n k_n$ diverge, ce qui contredit le résultat de Robbins-Siegmund.
+
+		      Notre supposition initiale est donc fausse. La limite $\theta_\infty$ ne peut pas prendre de valeurs dans $(0,1)$.
+		      Par conséquent, la variable aléatoire $\theta_\infty$ ne peut prendre que les valeurs $0$ ou $1$. C'est une variable de Bernoulli.
+
+		      Pour finir, déterminons la probabilité de succès. Soit $p = P(\theta_\infty=1)$.
+		      Nous revenons au résultat de l'étape 1 : $(\theta_n)$ est une sous-martingale bornée. Cela implique que son espérance est non-décroissante.
+		      \[ \mathbb{E}[\theta_n] \ge \mathbb{E}[\theta_{n-1}] \ge \dots \ge \mathbb{E}[\theta_0] = \theta_0. \]
+		      Par le théorème de la convergence bornée, nous pouvons échanger la limite et l'espérance :
+		      \[ \mathbb{E}[\theta_\infty] = \lim_{n\to\infty} \mathbb{E}[\theta_n]. \]
+		      En combinant ces deux points, nous avons $\mathbb{E}[\theta_\infty] \ge \theta_0$.
+		      L'espérance d'une variable de Bernoulli valant $p$ est :
+		      \[ \mathbb{E}[\theta_\infty] = 1 \cdot P(\theta_\infty = 1) + 0 \cdot P(\theta_\infty = 0) = p. \]
+		      La conclusion finale et correcte est donc :
+		      \[ P(\theta_\infty = 1) \ge \theta_0. \]
+		      L'algorithme n'est pas garanti de converger vers la bonne solution. Il a une probabilité de succès $p$ qui dépend de son point de départ $\theta_0$. Il existe une probabilité non-nulle, $1-p \le 1-\theta_0$, de converger vers le mauvais bras.
+		\item \textbf{TP -} Voir le script Python.
+	\end{enumerate}
+\end{solution}
+
+\begin{exercice}[Etimation r\'ecursive d'un quantile]
+	Soit $(X_{n})$ une suite de variables al\'eatoires i.i.d. de fonction de répartition $F$ régulière et de densit\'e $f>0$. Pour $\alpha\in]0,1[$, on note $\theta_{\alpha}$ le quantile d'ordre $\alpha$ de la loi $F$~: $F(\theta_{\alpha})=\alpha$. Afin d'estimer r\'ecursivement $\theta_{\alpha}$ on
+	utilise l'algorithme stochastique r\'ecursif~:
+
+	\[
+		\theta_{n+1}=\theta_{n}-\gamma_{n+1}
+		(\ind{X_{n+1}\leq{\theta}_{n}}-\alpha),
+	\]
+	où $\theta_{0}$ est arbitraire et $(\gamma_{n+1})_{n\ge0}$ est une suite
+	d\'ecroissante positive non sommable et de carr\'e sommable.
+	\begin{enumerate}
+		\item Calculer le champ moyen $\mathbb{E}[(\theta_{n+1}-{\theta}_{n})/\gamma_{n+1}\,|\mathcal{F}_{n}]$ de l'algorithme.
+		\item Utiliser le théorème de Robbins Monro pour montrer que l'algorithme converge vers $\theta_\alpha$.
+		\item \textbf{TP - }On se place dans le cas o\`u $F$ est la fonction de répartition d'une loi normale standard $\mathcal{N}(0,1)$ et la suite de pas est $\gamma_{n+1}=2/(n+1)$.
+		      \'Etudier numériquement la convergence de
+		      la suite $({\theta}_{n})$ dans le cas des trois quartiles $\alpha=3/4$.
+		\item \textbf{TP - }Que pouvez-vous dire numériquement de la loi des fluctuations c'est à dire de la quantité $\sqrt{n}(\theta_n-\theta_\alpha)$. \\
+		      Que se passe-t-il pour une suite de pas $\gamma_{n+1}=2(n+1)^{-2/3}$ ?
+		\item \textbf{TP - }Dans une situation de la vie réelle, le temps de calcul affecté à l'algorithme est limité. Aussi, on souhaite avoir des informations quantitatives sur l'erreur de l'algorithme à $n$ fixé. Dans ce cas, on estime la vitesse de décroissance de l'erreur en norme $L^2$, c'est à dire de $\E(\theta_n-\theta_\alpha)^2))$ en fonction de $n$ et de la suite de pas $(\gamma_n)$ choisie. \\
+		      Pour les deux suites de pas précédentes, représenter en fonction de $n$ un estimateur Monte Carlo de $\E((\theta_n-\theta_\alpha)^2)$. Faire ensuite un diagramme log-log. Qu'en pensez vous ?
+	\end{enumerate}
+\end{exercice}
+
+\begin{solution}
+	\begin{enumerate}
+		\item Le champ moyen est $h(\theta) = \mathbb{E}[(\theta_{n+1}-\theta_n)/\gamma_n | \mathcal{F}_n]$.
+		      L'espérance est prise sur la nouvelle observation $X_{n+1}$, qui est indépendante de $\mathcal{F}_n$ (qui contient $\theta_n$).
+		      \begin{align*}
+			      h(\theta_n) & = \mathbb{E}[-(\mathbb{I}_{\{X_{n+1}\le \theta_n\}}-\alpha) | \mathcal{F}_n] \\
+			                  & = -(\mathbb{E}[\mathbb{I}_{\{X_{n+1}\le \theta_n\}} | \mathcal{F}_n]-\alpha) \\
+			                  & = -(\mathbb{P}(X_{n+1}\le \theta_n)-\alpha) = -(F(\theta_n)-\alpha).
+		      \end{align*}
+		      où $F$ est la fonction de répartition de $X$.
+		\item Pour appliquer le théorème de convergence de Robbins-Monro, nous devons vérifier les hypothèses du Théorème \ref{thm:RM} et de la Proposition \ref{prop:RM}.
+		      L'algorithme est $\theta_{n+1}=\theta_{n}-\gamma_{n+1}(\ind{X_{n+1}\leq{\theta}_{n}}-\alpha)$.
+		      Le champ moyen est $h(\theta) = - \mathbb{E}[(\ind{X\leq{\theta}}-\alpha)] = -(F(\theta)-\alpha) = \alpha - F(\theta)$.
+		      La solution recherchée est $\theta_\alpha$ telle que $h(\theta_\alpha)=0$, c'est-à-dire $F(\theta_\alpha)=\alpha$.
+
+		      Choisissons comme fonction de Lyapunov $V(x) = (x-\theta_\alpha)^2+1$.
+		      Vérifions les propriétés de la Définition \ref{def:lyap}:
+		      \begin{itemize}
+			      \item[i)] $\nabla V(x) = 2(x-\theta_\alpha)$. $|\nabla V(x)-\nabla V(y)| = |2(x-\theta_\alpha)-2(y-\theta_\alpha)| = 2|x-y|$. La fonction est gradient-Lipschitz avec $L=2$.
+			      \item[ii)] $\min V(x) = V(\theta_\alpha) = 1 > 0$.
+			      \item[iii)] $\lim_{|x|\to\infty} V(x) = +\infty$. La fonction est coercive.
+			      \item[iv)] $|\nabla V(x)|^2 = 4(x-\theta_\alpha)^2 = 4(V(x)-1) \le 4V(x)$. Elle est sous-quadratique.
+		      \end{itemize}
+		      $V$ est une fonction de Lyapunov valide. Vérifions maintenant les hypothèses du Théorème \ref{thm:RM}.
+		      \begin{itemize}
+			      \item[1)] $\langle \nabla V(x), h(x) \rangle = -2(x-\theta_\alpha)(F(x)-\alpha)$.
+			            Comme $F$ est une fonction de répartition, elle est non-décroissante.
+			            Si $x>\theta_\alpha$, alors $x-\theta_\alpha>0$ et $F(x)\ge F(\theta_\alpha)=\alpha$, donc $F(x)-\alpha\ge 0$.
+			            Si $x<\theta_\alpha$, alors $x-\theta_\alpha<0$ et $F(x)\le F(\theta_\alpha)=\alpha$, donc $F(x)-\alpha\le 0$.
+			            Dans les deux cas, $(x-\theta_\alpha)(F(x)-\alpha)\ge 0$. Donc $\langle \nabla V(x), h(x) \rangle = -2(x-\theta_\alpha)(F(x)-\alpha) \le 0$.
+
+			      \item[2)] $|h(x)|^2 = |\alpha-F(x)|^2$. Comme $F(x)\in[0,1]$ et $\alpha\in]0,1[$, on a $|h(x)|^2 \le 1$.
+			            On a $1 \le C(1+V(x))$ pour $C=1$ car $V(x)\ge 1$. L'hypothèse 2 est vérifiée.
+
+			      \item[3)] $\Delta M_{n+1} = h(\theta_n) - H(\theta_n, X_{n+1}) = (\alpha-F(\theta_n)) - (\alpha - \ind{X_{n+1}\le\theta_n}) = \ind{X_{n+1}\le\theta_n} - F(\theta_n)$.
+			            $\mathbb{E}[|\Delta M_{n+1}|^2|\mathcal{F}_n] = \mathbb{E}[(\ind{X_{n+1}\le\theta_n} - F(\theta_n))^2 | \mathcal{F}_n]$. C'est la variance d'une Bernoulli de paramètre $p=F(\theta_n)$, qui est $p(1-p)=F(\theta_n)(1-F(\theta_n)) \le 1/4$.
+			            On a donc $\mathbb{E}[|\Delta M_{n+1}|^2|\mathcal{F}_n] \le 1/4 \le 1(1+V(\theta_n))$ pour $C=1$. L'hypothèse 3 est vérifiée.
+		      \end{itemize}
+		      Toutes les conditions du Théorème \ref{thm:RM} sont satisfaites. Pour montrer la convergence vers $\theta_\alpha$, on utilise la Proposition \ref{prop:RM}. Il faut que l'ensemble $\{x, \langle \nabla V(x),h(x)\rangle=0\}$ soit un singleton.
+		      Cet ensemble est $\{x, 2(x-\theta_\alpha)(\alpha-F(x))=0\}$. Ceci est vrai si $x=\theta_\alpha$ ou si $F(x)=\alpha$.
+		      L'énoncé précise que la densité $f>0$, ce qui implique que la fonction de répartition $F$ est strictement croissante. Par conséquent, l'équation $F(x)=\alpha$ a une unique solution, qui est $x=\theta_\alpha$.
+		      L'ensemble est donc $\{\theta_\alpha\}$. La condition est vérifiée.
+		      D'après la Proposition \ref{prop:RM}, on conclut que $\theta_n \to \theta_\alpha$ presque sûrement.
+		\item \textbf{TP -} Voir le script Python.
+		\item \textbf{TP -} Voir le script Python.
+		\item \textbf{TP -} Voir le script Python.
+	\end{enumerate}
+\end{solution}
+
+\newpage
+\section{Rappel du Cours}
+
+Pour tout $n\ge0$, on définit $\mathcal{F}_{n}$ la tribu engendrée par les variables aléatoires $(\theta_0, \cdots, \theta_n, Y_0, \cdots Y_{n})$.
+
+\begin{thmfr}[Théorème de Robbins-Siegmund]
+	Soient $(U_n), (V_n), (\alpha_n)$ et $(\beta_n)$ quatre suites de variables aléatoires positives et $\mathcal{F}_n$-adaptées telles que
+	\begin{itemize}
+		\item[(1)] $(\alpha_n)$,  $(\beta_n)$ et $(U_n)$ sont prévisibles (i.e. $\alpha_{n+1}$ est $\mathcal{F}_n$-mesurable).
+		\item[(2)] $\sup_{n\in\N} \prod_{k=1}^n (1+\alpha_k) <\infty $ presque surement
+		\item[(3)] $\sum_{n=0}^{\infty} \E(\beta_n)<\infty$
+		\item[(4)] Pour tout $n\in \N$,
+		      \begin{equation}
+			      \label{eq:ineg_rec}
+			      \E(V_{n+1}\lvert\mathcal{F}_n) \le V_n(1+\alpha_{n+1})+\beta_{n+1}-U_{n+1}
+		      \end{equation}
+	\end{itemize}
+	Alors
+	\begin{itemize}
+		\item[a)]$V_n\longrightarrow V_\infty$ presque surement et $V_\infty\in L^1$
+		\item[b)]$\sup_{n\in\N} \E(V_n)<\infty$
+		\item[c)]$\sum_{n}\E(U_n)<\infty$ et $\sum_{n}U_n<\infty $ presque sûrement.
+	\end{itemize}
+\end{thmfr}
+
+\begin{defnfr}
+	\label{def:lyap}
+	Dans ce cours, on dira qu'une fonction $V:E\mapsto \R_+$ est une fonction de Lyapunov si
+	\begin{itemize}
+		\item[i)] pour tout $(x,y)\in E^2$, $\lvert \lvert \nabla V(x)-\nabla V(y)\lvert\lvert \le L \lvert \lvert x-y\lvert\lvert$ pour $L>0$ une constante. (gradient-Lipschitz)
+		\item[ii)] $\min_{x\in E} V(x) = m>0$
+		\item[iii)] $\lim_{\lvert x\lvert \to \infty} V(x)=+\infty$ (coercive)
+		\item[iv)] $ \lvert \lvert \nabla V(x)^2\lvert\lvert \le C(1+V(x)) $ (sous quadratique)
+	\end{itemize}
+\end{defnfr}
+Un exemple typique de telle fonction est la fonction $V(x)=x^2+1$.
+
+\begin{thmfr}
+	\label{thm:RM}
+	Supposons qu'il existe une fonction de Lyapunov $V$ vérifiant les hypothèses de la Définition \ref{def:lyap} et se comportant bien vis à vis de l'algorithme, c'est à dire telle que :
+	\begin{itemize}
+		\item[1)]$\langle \nabla V(x), h(x) \rangle \ge0$ pour tout $x\in E$ (positive le long des trajectoires)
+		\item[2)]$\lvert h(x)\lvert^2 \le C(1+V(x))$ (asymptotique contrôlée par $V$)
+		\item[3)]$\E(\lvert\Delta M_{n+1}\lvert^2\lvert \mathcal{F}_n)\le C(1+V(\theta_n))$ (contrôle du bruit)
+	\end{itemize}
+	Alors
+	\begin{itemize}
+		\item[a)] $\sup_n \E(V(\theta_n))<\infty$
+		\item[b)] $\sum \gamma_n \langle \nabla V(\theta_n),h(\theta_n)\rangle <\infty$
+		\item[c)]$ V(\theta_n)\to V_\infty $ presque surement et $V_\infty\in L^1$
+		\item[d)] $\theta_{n+1}-\theta_n \to 0$ presque surement et dans $L^2$
+	\end{itemize}
+\end{thmfr}
+\begin{propfr}
+	\label{prop:RM}
+	Si de plus $$\{x, \langle \nabla V(x),h(x)\rangle=0\}=\{x^*\}$$ alors
+	\begin{itemize}
+		\item[e)] $x^*$ est l'unique minimum de $V$
+		\item[f)] $\theta_n\mapsto x^*$ presque surement.
+	\end{itemize}
+\end{propfr}
+\end{document}
